@@ -1,0 +1,9 @@
+<stack>
+  <description brief="ccny_ground_station">ccny_ground_station</description>
+  <author>Maintained by Gautier</author>
+  <license>BSD</license>  
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ccny_ground_station</url>
+  <depend stack="ros" />
+
+</stack>
