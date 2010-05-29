@@ -1,0 +1,9 @@
+<stack>
+  <description brief="scan_tools">scan_tools</description>
+  <author>Maintained by William Morris, Ivan Dryanovski, Gautier Dumonteil et al</author>
+  <license>GPL</license>  
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/scan_tools</url>
+  <depend stack="ros" />
+
+</stack>

@@ -1,0 +1,20 @@
+<package>
+  <description brief="laser_ortho_projector">
+
+     laser_ortho_projector
+
+  </description>
+  <author>Ivan Dryanovski</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/laser_ortho_projector</url>
+
+  <depend package="roscpp"/>
+  <depend package="sensor_msgs"/> 
+  <depend package="geometry_msgs"/> 
+  <depend package="message_filters"/>
+  <depend package="tf"/> 
+
+</package>
+
+
