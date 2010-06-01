@@ -1,0 +1,14 @@
+<launch>
+  <param name="/use_sim_time" value="true"/>
+  <node pkg="rviz" type="rviz" name="rviz" 
+    args="-d $(find laser_ortho_projector)/demo/demo.vcg"/>
+  <node pkg="rosbag" type="rosbag" name="rosbag" 
+    args="play $(find laser_ortho_projector)/demo/demo.bag --clock"/>
+  <node pkg="laser_ortho_projector" type="laser_ortho_projector" name="laser_ortho_projector" output="screen">
+    <param name="world_frame" value="odom"/>
+    <param name="laser_ortho_frame" value="laser_ortho"/>
+    <param name="publish_cloud" value="true"/>
+    <param name="tf_tolerance" value="0.10"/>
+  </node>
+</launch>
+
