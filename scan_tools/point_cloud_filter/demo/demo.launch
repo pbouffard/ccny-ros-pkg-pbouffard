@@ -1,0 +1,14 @@
+<launch>
+  <param name="/use_sim_time" value="true"/>
+  <node pkg="rviz" type="rviz" name="rviz"
+    args="-d $(find point_cloud_filter)/demo/demo.vcg"/>
+  <node pkg="tf" type="static_transform_publisher" name="world_to_swissranger" 
+    args="0 0 0.5 1.57 0 1.57 world swissranger 10" />
+  <node pkg="rosbag" type="rosbag" name="rosbag" 
+    args="play $(find point_cloud_filter)/demo/demo.bag --clock"/>
+  <node pkg="point_cloud_filter" type="point_cloud_filter" name="point_cloud_filter" output="screen">
+    <param name="min_confidence" value="0.99"/>
+  </node>
+</launch>
+
+
