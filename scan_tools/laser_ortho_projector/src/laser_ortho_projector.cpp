@@ -21,14 +21,6 @@ LaserOrthoProjector::LaserOrthoProjector()
     worldFrame_ = "world";
   if(!nh_private.getParam("laser_ortho_frame", laserOrthoFrame_))
     laserOrthoFrame_ = "laser_ortho";
-
-  if(!nh_private.getParam("scan_topic", scanTopic_))
-    scanTopic_ = "scan";
-  if(!nh_private.getParam("scan_ortho_topic", scanOrthoTopic_))
-    scanOrthoTopic_ = "scan_ortho";
-  if(!nh_private.getParam("cloud_ortho_topic", cloudOrthoTopic_))
-    cloudOrthoTopic_ = "cloud_ortho";
-
   if(!nh_private.getParam("publish_cloud", publishCloud_))
     publishCloud_ = true;
   if(!nh_private.getParam("tf_tolerace", tfTolerance_))
@@ -40,15 +32,10 @@ LaserOrthoProjector::LaserOrthoProjector()
   scanFilter_ = new tf::MessageFilter<sensor_msgs::LaserScan>(*scanFilterSub_, tfListener_, worldFrame_, 10);
   scanFilter_->registerCallback(boost::bind(&LaserOrthoProjector::scanCallback, this, _1));
   scanFilter_->setTolerance(ros::Duration(tfTolerance_));
-	ROS_INFO("LaserOrthoProjector listening on topic: %s", scanTopic_.c_str()); 
 
-  // **** advertise orthogonal scan
-  scanPublisher_ = nh_private.advertise<laser_ortho_projector::LaserScanWithAngles>(scanOrthoTopic_, 10);
-	ROS_INFO("LaserOrthoProjector publishing on topic: %s", scanOrthoTopic_.c_str()); 
-
-  // **** advertise point cloud representation of orthogonal scan
+  // **** advertise orthogonal scan & pointcloud
+  scanPublisher_  = nh_private.advertise<laser_ortho_projector::LaserScanWithAngles>(scanOrthoTopic_, 10);
   cloudPublisher_ = nh_private.advertise<sensor_msgs::PointCloud>(cloudOrthoTopic_, 10);
-	ROS_INFO("LaserOrthoProjector publishing on topic: %s", cloudOrthoTopic_.c_str()); 
 }
 
 LaserOrthoProjector::~LaserOrthoProjector()

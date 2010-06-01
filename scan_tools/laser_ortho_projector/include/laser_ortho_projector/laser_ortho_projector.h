@@ -11,6 +11,10 @@
 #include <message_filters/subscriber.h>
 #include <laser_ortho_projector/LaserScanWithAngles.h>
 
+static const std::string scanTopic_       = "scan";
+static const std::string scanOrthoTopic_  = "scan_ortho";
+static const std::string cloudOrthoTopic_ = "cloud_ortho";
+
 class LaserOrthoProjector
 {
 	public:
@@ -24,10 +28,6 @@ class LaserOrthoProjector
 
     std::string worldFrame_;
     std::string laserOrthoFrame_;
-
-    std::string scanTopic_;
-    std::string scanOrthoTopic_;
-    std::string cloudOrthoTopic_; 
 
     bool publishCloud_;
     int tfTolerance_;
