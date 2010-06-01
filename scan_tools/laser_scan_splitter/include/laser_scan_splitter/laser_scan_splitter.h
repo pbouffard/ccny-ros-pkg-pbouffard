@@ -22,7 +22,7 @@ class LaserScanSplitter
     std::vector<std::string> publishedScanTopics_;    
     std::vector<std::string> publishedLaserFrames_;
     std::vector<int> sizes_;
-    int sizeSum_;
+    unsigned int sizeSum_;
 
 		// publishers & subscirbers
 

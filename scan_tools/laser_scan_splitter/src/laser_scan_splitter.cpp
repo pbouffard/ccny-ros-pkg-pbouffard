@@ -36,7 +36,7 @@ LaserScanSplitter::LaserScanSplitter()
   tokenize(sizesString, sizesTokens);
 
   sizeSum_ = 0;
-  for(int i = 0; i < sizesTokens.size(); i++)
+  for(unsigned int i = 0; i < sizesTokens.size(); i++)
   {
     sizes_.push_back(atoi(sizesTokens[i].c_str()));
     sizeSum_ += sizes_[i];
@@ -59,7 +59,7 @@ LaserScanSplitter::LaserScanSplitter()
   scanSubscriber_ = nh.subscribe(scanTopic_, 100,  &LaserScanSplitter::scanCallback, this);
 
   // **** advertise topics
-  for (int i = 0; i < publishedScanTopics_.size(); i++)
+  for (unsigned int i = 0; i < publishedScanTopics_.size(); i++)
   {
     scanPublishers_.push_back(ros::Publisher());
     scanPublishers_[i] = nh_private.advertise<sensor_msgs::LaserScan>(publishedScanTopics_[i], 10);
@@ -85,7 +85,7 @@ void LaserScanSplitter::scanCallback(const sensor_msgs::LaserScanConstPtr& scan)
   // **** copy information over
   int r = 0;
 
-  for (int i = 0; i < publishedScanTopics_.size(); i++)
+  for (unsigned int i = 0; i < publishedScanTopics_.size(); i++)
   {
     sensor_msgs::LaserScan scanSegment;
 
