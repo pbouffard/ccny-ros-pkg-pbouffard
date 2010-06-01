@@ -52,27 +52,27 @@ void PointCloudFilter::pointCloudCallback(const sensor_msgs::PointCloudConstPtr&
   sensor_msgs::PointCloud filteredCloud;
   filteredCloud.header = cloud->header;
 
+  // copy the channel names
   if(copyChannels_)
   {
     filteredCloud.channels.resize(cloud->channels.size());
-    for (int i = 0; i < cloud->channels.size(); i++)
+    for (unsigned int i = 0; i < cloud->channels.size(); i++)
       filteredCloud.channels[i].name = cloud->channels[i].name;
   }
 
-  for (int i = 0; i < cloud->points.size(); i++)
+  for (unsigned int i = 0; i < cloud->points.size(); i++)
   {
     double value = cloud->channels[1].values[i];
 
     if (value >= min_confidence_)
     {
       // copy the point
-
       filteredCloud.points.push_back(cloud->points[i]);
   
       // copy the channel data
       if(copyChannels_)
       {
-        for (int c = 0; c < cloud->channels.size(); c++)
+        for (unsigned int c = 0; c < cloud->channels.size(); c++)
         {
           double v = cloud->channels[c].values[i];
           filteredCloud.channels[c].values.push_back(v);
