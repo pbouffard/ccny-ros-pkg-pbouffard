@@ -1,11 +1,12 @@
 <package>
   <description brief="laser_ortho_projector">
 
-     laser_ortho_projector
+  The laser_ortho_projector package calculates orthogonal 
+  projections of `LaserScan` messages. 
 
   </description>
   <author>Ivan Dryanovski</author>
-  <license>BSD</license>
+  <license>GPL</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/laser_ortho_projector</url>
 
