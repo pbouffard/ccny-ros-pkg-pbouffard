@@ -7,7 +7,9 @@
   <node pkg="rosbag" type="rosbag" name="rosbag" 
     args="play $(find point_cloud_filter)/demo/demo.bag --clock"/>
   <node pkg="point_cloud_filter" type="point_cloud_filter" name="point_cloud_filter" output="screen">
-    <param name="min_confidence" value="0.99"/>
+    <param name="channel" value="1"/>
+    <param name="min_value" value="248"/>
+    <param name="max_value" value="255"/>
   </node>
 </launch>
 

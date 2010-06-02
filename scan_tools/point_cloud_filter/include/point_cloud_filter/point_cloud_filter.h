@@ -12,7 +12,9 @@ class PointCloudFilter
 {
 	private:
   
-    int min_confidence_;
+    int channel_;
+    double minValue_;
+    double maxValue_;
     bool copyChannels_;
 
     ros::Publisher  pointCloudPublisher_;

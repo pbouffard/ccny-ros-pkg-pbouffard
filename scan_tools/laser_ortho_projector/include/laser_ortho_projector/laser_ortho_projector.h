@@ -11,48 +11,47 @@
 #include <message_filters/subscriber.h>
 #include <laser_ortho_projector/LaserScanWithAngles.h>
 
-static const std::string scanTopic_       = "scan";
-static const std::string scanOrthoTopic_  = "scan_ortho";
+static const std::string scanTopic_ = "scan";
+static const std::string scanOrthoTopic_ = "scan_ortho";
 static const std::string cloudOrthoTopic_ = "cloud_ortho";
 
 class LaserOrthoProjector
 {
-	public:
-  
-    LaserOrthoProjector();
-    virtual ~LaserOrthoProjector();
+public:
 
-	private:
+  LaserOrthoProjector ();
+  virtual ~ LaserOrthoProjector ();
 
-    // paramaters
+private:
 
-    std::string worldFrame_;
-    std::string laserOrthoFrame_;
+  // paramaters
 
-    bool publishCloud_;
-    int tfTolerance_;
+  std::string worldFrame_;
+  std::string laserOrthoFrame_;
 
-    // transforms
+  bool publishCloud_;
+  int tfTolerance_;
 
-    tf::StampedTransform worldToLaser_;
-    double roll_, pitch_, yaw_;
+  // transforms
 
-		// publishers & subscirbers
-		ros::Publisher  scanPublisher_;
-		ros::Publisher  cloudPublisher_;
+  tf::StampedTransform worldToLaser_;
+  double roll_, pitch_, yaw_;
 
-    message_filters::Subscriber<sensor_msgs::LaserScan>* scanFilterSub_;
-    tf::MessageFilter<sensor_msgs::LaserScan>* scanFilter_;
+  // publishers & subscirbers
+  ros::Publisher scanPublisher_;
+  ros::Publisher cloudPublisher_;
 
-    tf::TransformListener    tfListener_;
-    tf::TransformBroadcaster tfBroadcaster_;
+  message_filters::Subscriber < sensor_msgs::LaserScan > *scanFilterSub_;
+  tf::MessageFilter < sensor_msgs::LaserScan > *scanFilter_;
 
-		void scanCallback(const sensor_msgs::LaserScanConstPtr& scan);
-    void publishWorldToLaserOrthoTf(ros::Time time);
-    void publishScanOrtho(const sensor_msgs::LaserScanConstPtr& scan,
-                          laser_ortho_projector::LaserScanWithAngles& scanOrtho);
-    void publishCloudOrtho(const laser_ortho_projector::LaserScanWithAngles& scanOrtho);
+  tf::TransformListener tfListener_;
+  tf::TransformBroadcaster tfBroadcaster_;
+
+  void scanCallback (const sensor_msgs::LaserScanConstPtr & scan);
+  void publishWorldToLaserOrthoTf (ros::Time time);
+  void publishScanOrtho (const sensor_msgs::LaserScanConstPtr & scan,
+                         laser_ortho_projector::LaserScanWithAngles & scanOrtho);
+  void publishCloudOrtho (const laser_ortho_projector::LaserScanWithAngles & scanOrtho);
 };
 
 #endif // LASER_ORTHO_PROJECTION_LASER_ORTHO_PROJECTION_H
-
