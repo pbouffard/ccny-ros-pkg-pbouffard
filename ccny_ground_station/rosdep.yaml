@@ -1,2 +1,3 @@
 libosmgpsmap:
-  ubuntu: libosmgpsmap0 libosmgpsmap0-dev
+  ubuntu:
+      '10.04': libosmgpsmap0 libosmgpsmap-dev

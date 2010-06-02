@@ -26,23 +26,23 @@
 
 class AppData
 {
-	public:
+public:
 
-	    GtkWidget * window;
-	    GtkWidget * map_box;
-	    GtkWidget * map_container;
-	    GtkWidget * statusbar;
-	    GtkWidget * range_zoom;
-		 GdkEventButton *event;  
+  GtkWidget * window;
+  GtkWidget *map_box;
+  GtkWidget *map_container;
+  GtkWidget *statusbar;
+  GtkWidget *range_zoom;
+  GdkEventButton *event;
 
-	    OsmGpsMap * map;
-	    OsmGpsMapSource_t map_provider;
-	    bool draw_path;
-	    int map_zoom_max;
-	    int map_current_zoom;
-	    const char * repo_uri;
-	    const char * friendly_name;
-    	 char * cachedir;	
+  OsmGpsMap *map;
+  OsmGpsMapSource_t map_provider;
+  bool draw_path;
+  int map_zoom_max;
+  int map_current_zoom;
+  const char *repo_uri;
+  const char *friendly_name;
+  char *cachedir;
 };
 
 #endif

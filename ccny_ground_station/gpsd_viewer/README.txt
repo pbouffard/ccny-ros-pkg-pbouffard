@@ -39,4 +39,5 @@ Then, in a shell:
 	
 Run the example:
 	roscd gpsd_viewer/
+	./setup.sh
 	roslaunch example/example.launch
