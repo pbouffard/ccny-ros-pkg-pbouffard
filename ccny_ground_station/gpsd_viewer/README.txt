@@ -27,7 +27,7 @@ Requirements:
 gpsd_viewer requires OsmGpsMap libraries and include files to
 be available in order to build. 
 Make sure all packages dependances are check.
-
+This pkg run curently only on 10.04 ubuntu due to lib change.
 ------------------------------------------------------------
 ------------------------------------------------------------
 Basic Usage:
@@ -39,5 +39,6 @@ Then, in a shell:
 	
 Run the example:
 	roscd gpsd_viewer/
+	cd demo/
 	./setup.sh
-	roslaunch example/example.launch
+	roslaunch demo.launch
