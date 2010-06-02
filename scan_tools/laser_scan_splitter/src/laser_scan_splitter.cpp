@@ -1,3 +1,24 @@
+/*
+*  Laser Scan Splitter
+*  Copyright (C) 2010, CCNY Robotics Lab
+*  Ivan Dryanovski <ivan.dryanovski@gmail.com>
+*  William Morris <morris@ee.ccny.cuny.edu>
+*  http://robotics.ccny.cuny.edu
+*
+*  This program is free software: you can redistribute it and/or modify
+*  it under the terms of the GNU General Public License as published by
+*  the Free Software Foundation, either version 3 of the License, or
+*  (at your option) any later version.
+*
+*  This program is distributed in the hope that it will be useful,
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*  GNU General Public License for more details.
+*
+*  You should have received a copy of the GNU General Public License
+*  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include "laser_scan_splitter/laser_scan_splitter.h"
 
 int main (int argc, char **argv)
@@ -40,20 +61,15 @@ LaserScanSplitter::LaserScanSplitter ()
   {
     sizes_.push_back (atoi (sizesTokens[i].c_str ()));
     sizeSum_ += sizes_[i];
-    if (sizes_[i] == 0)
-    {
-      ROS_ERROR ("LaserScanSplitter: Scan size cannot be zero. Quitting");
-      exit (0);
-    }
+
+    ROS_ASSERT_MSG ((sizes_[i] > 0), "LaserScanSplitter: Scan size cannot be zero. Quitting.");
   }
 
   // **** check that topic, frames, and sizes vectors have same sizes
-  if ((publishedScanTopics_.size () != publishedLaserFrames_.size ()) ||
-      (sizes_.size () != publishedLaserFrames_.size ()))
-  {
-    ROS_ERROR ("LaserScanSplitter: Invalid parameters. Quitting.");
-    exit (0);
-  }
+
+  ROS_ASSERT_MSG ((publishedScanTopics_.size () == publishedLaserFrames_.size ()) &&
+                  (sizes_.size () == publishedLaserFrames_.size ()),
+                  "LaserScanSplitter: Invalid parameters. Quitting.");
 
   // **** subscribe to laser scan messages
   scanSubscriber_ = nh.subscribe (scanTopic_, 100, &LaserScanSplitter::scanCallback, this);
