@@ -22,6 +22,15 @@
 
 #include "ar_pose/ar_single.h"
 
+int main (int argc, char **argv)
+{
+  ros::init (argc, argv, "ar_single");
+  ros::NodeHandle n;
+  ar_pose::ARSinglePublisher arSingle(n);
+  ros::spin();
+  return 0;
+}
+
 namespace ar_pose
 {
   ARSinglePublisher::ARSinglePublisher (ros::NodeHandle & n):n_ (n), it_ (n_)
@@ -31,84 +40,60 @@ namespace ar_pose
     ros::NodeHandle n_param ("~");
     XmlRpc::XmlRpcValue xml_marker_center;
 
-    if (n_param.hasParam ("camera_image_topic"))
-    {
-      n_param.getParam ("camera_image_topic", local_path);
-    }
-    else
-    {
-      local_path = "/camera/image";
-    }
-    sprintf (camera_image_topic_, "%s", local_path.c_str ());
-    ROS_INFO ("Camera Image Topic: %s", camera_image_topic_);
+    ROS_INFO("Starting ArSinglePublisher");
 
-    if (n_param.hasParam ("camera_info_topic"))
-    {
-      n_param.getParam ("camera_info_topic", local_path);
-    }
-    else
-    {
-      local_path = "/camera/camera_info";
-    }
-    sprintf (camera_info_topic_, "%s", local_path.c_str ());
-    ROS_INFO ("Camera Info Topic: %s", camera_info_topic_);
+    // **** get parameters
 
-    if (n_param.hasParam ("cam_param"))
-    {
-      n_param.getParam ("cam_param", local_path);
-    }
-    else
-    {
-      local_path = "data/camera_para.dat";
-    }
-    sprintf (cam_param_filename_, "%s/%s", package_path.c_str (), local_path.c_str ());
-    ROS_INFO ("Camera Parameter Filename: %s", cam_param_filename_);
+    if (!n_param.getParam("publish_tf", publishTf_))
+      publishTf_ = true;
+    ROS_INFO ("\tPublish transforms: %d", publishTf_);
 
-    n_param.param ("marker_pattern", local_path, std::string ("data/patt.hiro"));
-    sprintf (pattern_filename_, "%s/%s", package_path.c_str (), local_path.c_str ());
-    ROS_INFO ("Marker Pattern Filename: %s", pattern_filename_);
+    if (!n_param.getParam("publish_visual_markers", publishVisualMarkers_))
+      publishVisualMarkers_ = true;
+    ROS_INFO ("\tPublish visual markers: %d", publishVisualMarkers_);
 
-    n_param.param ("marker_width", marker_width_, 80.0);
-    ROS_INFO ("Marker Width: %.1f", marker_width_);
+    if (!n_param.getParam("threshold", threshold_))
+      threshold_ = 100;
+    ROS_INFO ("\tThreshold: %d", threshold_);
 
-/*
-   if (n_param.hasParam("marker_center"))
-   {
-      n_param.getParam("marker_center", xml_marker_center);
-      for (int i = 0; i < 2; i++) {
-         ROS_DEBUG("XML Parameter %s", xml_marker_center.toXml().c_str());
-         marker_center_[i] = (double)(xml_marker_center[i]);
-      }
-   }
-   else {
-      marker_center_[0] = 0.0;
-      marker_center_[1] = 0.0;
-   }
-*/
-    n_param.param ("marker_center_x", marker_center_[0], 0.0);
-    n_param.param ("marker_center_y", marker_center_[1], 0.0);
-    ROS_INFO ("Marker Center: (%.1f,%.1f)", marker_center_[0], marker_center_[1]);
-
-    n_param.param ("threshold", threshold_, 100);
-    ROS_INFO ("Threshold %d", threshold_);
+    if (!n_param.getParam("marker_frame", markerFrame_))
+      markerFrame_ = "ar_marker";
+    ROS_INFO ("\tMarker frame: %s", markerFrame_.c_str());
 
     // If mode=0, we use arGetTransMat instead of arGetTransMatCont
     // The arGetTransMatCont function uses information from the previous image
     // frame to reduce the jittering of the marker
-    n_param.param ("history_mode", history_mode, 1);
-    ROS_INFO ("History_mode %d", history_mode);
+    if (!n_param.getParam("use_history", useHistory_))
+      useHistory_ = true;
+    ROS_INFO("\tUse history: %d", useHistory_);
 
-    n_param.param ("tf_publisher", tf_publisher_, 1);
-    ROS_INFO ("Tf publisher %d", tf_publisher_);
+    if (!n_param.getParam("cam_param", local_path))
+      local_path = "data/camera_para.dat";
+
+    sprintf (cam_param_filename_, "%s/%s", package_path.c_str(), local_path.c_str());
+    ROS_INFO ("\tCamera Parameter Filename: %s", cam_param_filename_);
+
+    n_param.param ("marker_pattern", local_path, std::string ("data/patt.hiro"));
+    sprintf (pattern_filename_, "%s/%s", package_path.c_str (), local_path.c_str ());
+    ROS_INFO ("\tMarker Pattern Filename: %s", pattern_filename_);
+
+    n_param.param ("marker_width", marker_width_, 80.0);
+    ROS_INFO ("\tMarker Width: %.1f", marker_width_);
+
+    n_param.param ("marker_center_x", marker_center_[0], 0.0);
+    n_param.param ("marker_center_y", marker_center_[1], 0.0);
+    ROS_INFO ("\tMarker Center: (%.1f,%.1f)", marker_center_[0], marker_center_[1]);
+
+    // **** subscribe
 
     ROS_INFO ("Subscribing to info topic");
-    sub_ = n_.subscribe (camera_info_topic_, 1, &ARSinglePublisher::camInfoCallback, this);
+    sub_ = n_.subscribe (cameraInfoTopic_, 1, &ARSinglePublisher::camInfoCallback, this);
     getCamInfo_ = false;
     
-    armarker_pub_ = n_.advertise<ar_pose::ARMarker>("ar_pose_marker", 0);
+    // **** advertsie 
 
-    rviz_marker_pub_ = n_.advertise<visualization_msgs::Marker>("visualization_marker", 0);
-    shape = visualization_msgs::Marker::CUBE;
+    arMarkerPub_   = n_.advertise<ar_pose::ARMarker>("ar_pose_marker", 0);
+    rvizMarkerPub_ = n_.advertise<visualization_msgs::Marker>("visualization_marker", 0);
   }
 
   ARSinglePublisher::~ARSinglePublisher (void)
@@ -126,10 +111,10 @@ namespace ar_pose
       xsize_ = cam_info_.width;
       ysize_ = cam_info_.height;
       ROS_INFO ("Image size (x,y) = (%d,%d)", xsize_, ysize_);
-      arInit ();
+      arInit();
 
       ROS_INFO ("Subscribing to image topic");
-      cam_sub_ = it_.subscribe (camera_image_topic_, 1, &ARSinglePublisher::getTransformationCallback, this);
+      cam_sub_ = it_.subscribe (cameraImageTopic_, 1, &ARSinglePublisher::getTransformationCallback, this);
       getCamInfo_ = true;
     }
   }
@@ -189,7 +174,7 @@ namespace ar_pose
     if (arDetectMarker (dataPtr, threshold_, &marker_info, &marker_num) < 0)
     {
       ROS_FATAL ("arDetectMarker failed");
-      ROS_BREAK ();             // FIX: I don't think this should be fatal... -Bill
+      ROS_BREAK ();             // FIXME: I don't think this should be fatal... -Bill
     }
 
     // check for known patterns
@@ -207,102 +192,105 @@ namespace ar_pose
           k = i;
       }
     }
-    if (k == -1)
-      contF = 0;
-    else if (k != -1)
-    {
-      // get the transformation between the marker and the real camera
-      //double cam_trans[3][4];
-      double quat[4], pos[3];
 
-      if (history_mode == 0 || contF == 0)
-      {
+    if (k != -1)
+    {
+      // **** get the transformation between the marker and the real camera
+      double arQuat[4], arPos[3];
+
+      if (!useHistory_ || contF == 0)
         arGetTransMat (&marker_info[k], marker_center_, marker_width_, marker_trans_);
-      }
       else
-      {
         arGetTransMatCont (&marker_info[k], marker_trans_, marker_center_, marker_width_, marker_trans_);
-      }
+
       contF = 1;
 
       //arUtilMatInv (marker_trans_, cam_trans);
-      arUtilMat2QuatPos (marker_trans_, quat, pos);
+      arUtilMat2QuatPos (marker_trans_, arQuat, arPos);
+
+      // **** convert to ROS frame
+
+      double quat[4], pos[3];
+    
+      pos[0] = arPos[0] * AR_TO_ROS;
+      pos[1] = arPos[1] * AR_TO_ROS;
+      pos[2] = arPos[2] * AR_TO_ROS;
+
+      quat[0] = arQuat[0];
+      quat[1] = arQuat[1];
+      quat[2] = arQuat[2];
+      quat[3] = arQuat[3];
 
       ROS_DEBUG (" QUAT: Pos x: %3.1f  y: %3.1f  z: %3.1f", pos[0], pos[1], pos[2]);
       ROS_DEBUG ("     Quat qx: %3.2f qy: %3.2f qz: %3.2f qw: %3.2f", quat[0], quat[1], quat[2], quat[3]);
 
-		ar_pose_marker_.header.frame_id = "head_camera";
-		ar_pose_marker_.header.stamp = ros::Time::now();
-		ar_pose_marker_.id = marker_info->id;
-		ar_pose_marker_.pose.pose.position.x = pos[0] / 1000;
-		ar_pose_marker_.pose.pose.position.y = pos[1] / 1000;
-		ar_pose_marker_.pose.pose.position.z = pos[2] / 1000;
+      // **** publish the marker
 
-		ar_pose_marker_.pose.pose.orientation.x = quat[0];
-		ar_pose_marker_.pose.pose.orientation.y = quat[1];
-		ar_pose_marker_.pose.pose.orientation.z = quat[2];
-		ar_pose_marker_.pose.pose.orientation.w = quat[3];
+		  ar_pose_marker_.header.frame_id = image_msg->header.frame_id;
+		  ar_pose_marker_.header.stamp    = image_msg->header.stamp;
+		  ar_pose_marker_.id              = marker_info->id;
+
+		  ar_pose_marker_.pose.pose.position.x = pos[0];
+		  ar_pose_marker_.pose.pose.position.y = pos[1];
+		  ar_pose_marker_.pose.pose.position.z = pos[2];
+
+		  ar_pose_marker_.pose.pose.orientation.x = quat[0];
+		  ar_pose_marker_.pose.pose.orientation.y = quat[1];
+		  ar_pose_marker_.pose.pose.orientation.z = quat[2];
+		  ar_pose_marker_.pose.pose.orientation.w = quat[3];
 		
-		ar_pose_marker_.confidence = marker_info->cf;
+		  ar_pose_marker_.confidence = marker_info->cf;
 
-		armarker_pub_.publish(ar_pose_marker_);
-		ROS_DEBUG ("Published ar_single marker ");
+		  arMarkerPub_.publish(ar_pose_marker_);
+		  ROS_DEBUG ("Published ar_single marker ");
 		
-		if(tf_publisher_)
-		{
-			transform_.header.frame_id = "head_camera";
-			transform_.header.stamp = ros::Time::now();
-			transform_.child_frame_id = "ar_single";
-			transform_.transform.translation.x = pos[0] / 1000;
-			transform_.transform.translation.y = pos[1] / 1000;
-			transform_.transform.translation.z = pos[2] / 1000;
+      // **** publish transform between camera and marker
 
-			transform_.transform.rotation.x = quat[0];
-			transform_.transform.rotation.y = quat[1];
-			transform_.transform.rotation.z = quat[2];
-			transform_.transform.rotation.w = quat[3];
+      btQuaternion rotation (quat[0], quat[1], quat[2], quat[3]);
+      btVector3 origin(pos[0], pos[1], pos[2]);
+      btTransform t(rotation, origin);
 
-			broadcaster_.sendTransform (transform_);
-			ROS_DEBUG ("Published ar_single tf ");
+      if(publishTf_)
+      {
+        tf::StampedTransform camToMarker (t, image_msg->header.stamp, image_msg->header.frame_id, markerFrame_.c_str());
+        broadcaster_.sendTransform(camToMarker);
+      }
+
+      // **** publish visual marker
+
+      if(publishVisualMarkers_)
+      {
+        btVector3 markerOrigin(0, 0, 0.01);
+        btTransform m(btQuaternion::getIdentity(), markerOrigin);
+        btTransform markerPose = t * m; // marker pose in the camera frame
+      
+        tf::poseTFToMsg(markerPose, rvizMarker_.pose);
+
+			  rvizMarker_.header.frame_id = image_msg->header.frame_id;
+			  rvizMarker_.header.stamp = image_msg->header.stamp;
+			  rvizMarker_.id = 1;
+
+			  rvizMarker_.scale.x = marker_width_ * AR_TO_ROS;
+			  rvizMarker_.scale.y = marker_width_ * AR_TO_ROS;
+			  rvizMarker_.scale.z = 0.02;
+			  rvizMarker_.ns = "basic_shapes";
+			  rvizMarker_.type = visualization_msgs::Marker::CUBE;
+			  rvizMarker_.action = visualization_msgs::Marker::ADD;
+			  rvizMarker_.color.r = 0.0f;
+			  rvizMarker_.color.g = 1.0f;
+			  rvizMarker_.color.b = 0.0f;
+			  rvizMarker_.color.a = 1.0;
+			  rvizMarker_.lifetime = ros::Duration();
 			
-			rviz_marker_.header.frame_id = "head_camera ";
-			rviz_marker_.header.stamp = ros::Time::now();
-			rviz_marker_.ns = "basic_shapes";
-			rviz_marker_.id = 1;
-			rviz_marker_.type = shape;
-			rviz_marker_.action = visualization_msgs::Marker::ADD;
-			rviz_marker_.pose.position.x = pos[0] / 1000;
-			rviz_marker_.pose.position.y = pos[1] / 1000;
-			rviz_marker_.pose.position.z = pos[2] / 1000;
-			rviz_marker_.pose.orientation.x = quat[0];
-			rviz_marker_.pose.orientation.y = quat[1];
-			rviz_marker_.pose.orientation.z = quat[2];
-			rviz_marker_.pose.orientation.w = quat[3];
-			rviz_marker_.scale.x = 0.1;
-			rviz_marker_.scale.y = 0.1;
-			rviz_marker_.scale.z = 0.01;
-			rviz_marker_.color.r = 0.0f;
-			rviz_marker_.color.g = 1.0f;
-			rviz_marker_.color.b = 0.0f;
-			rviz_marker_.color.a = 1.0;
-			rviz_marker_.lifetime = ros::Duration();
-			
-			rviz_marker_pub_.publish(rviz_marker_);
-			ROS_DEBUG ("Published rviz_marker tf ");
-		}
+			  rvizMarkerPub_.publish(rvizMarker_);
+			  ROS_DEBUG ("Published visual marker");
+      }
     }
     else
     {
+      contF = 0;
       ROS_DEBUG ("Failed to locate marker");
     }
   }
 }                               // end namespace ar_pose
 
-int main (int argc, char **argv)
-{
-  ros::init (argc, argv, "ar_single");
-  ros::NodeHandle n;
-  ar_pose::ARSinglePublisher ar_single (n);
-  ros::spin ();
-  return 0;
-}
