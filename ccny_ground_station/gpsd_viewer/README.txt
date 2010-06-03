@@ -28,6 +28,9 @@ gpsd_viewer requires OsmGpsMap libraries and include files to
 be available in order to build. 
 Make sure all packages dependances are check.
 This pkg run curently only on 10.04 ubuntu due to lib change.
+
+This is currently compatible with the UMD gpsd_client
+http://www.ros.org/browse/details.php?name=gpsd_client
 ------------------------------------------------------------
 ------------------------------------------------------------
 Basic Usage:
