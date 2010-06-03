@@ -31,6 +31,8 @@ This pkg run curently only on 10.04 ubuntu due to lib change.
 
 This is currently compatible with the UMD gpsd_client
 http://www.ros.org/browse/details.php?name=gpsd_client
+If you have trouble compiling gpsd_client try our git mirror
+http://robotics.ccny.cuny.edu/git/umd-ros-pkg.git
 ------------------------------------------------------------
 ------------------------------------------------------------
 Basic Usage:
