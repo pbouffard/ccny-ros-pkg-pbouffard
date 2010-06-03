@@ -1,11 +1,7 @@
 <package>
   <description brief="point_cloud_filter">
 
-  PointCloud messages provide space for additional channels, 
-  allowing values such as condifence or intensity to be attached 
-  to each point in the cloud. The [[point_cloud_filter]] 
-  reads in a `Point Cloud` message, and discards any points whose 
-  channel value falls outside a specified treshold interval.
+  PointCloud messages provide space for additional channels, allowing values such as condifence or intensity to be attached to each point in the cloud. The point_cloud_filterreads in a Point Cloud message, and discards any points whose channel value falls outside a specified treshold interval.
  
  </description>
   <author>Ivan Dryanovski</author>
