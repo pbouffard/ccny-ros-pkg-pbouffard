@@ -1,4 +1,19 @@
-gpsd_viewer:
+libosmgpsmap0:
   ubuntu:
-      '10.04': libosmgpsmap0 libosmgpsmap-dev gpsd libglade2-dev libgtk2.0-dev glade-gnome
+    '10.04': libosmgpsmap0
+libosmgpsmap-dev:
+  ubuntu:
+    '10.04': libosmgpsmap-dev
+gpsd:
+  ubuntu:
+    '10.04': gpsd
+libglade2-dev:
+  ubuntu:
+    '10.04': libglade2-dev
+libgtk2.0-dev:
+  ubuntu:
+    '10.04': libgtk2.0-dev
+glade-gnome:
+  ubuntu:
+    '10.04': glade-gnome
 
