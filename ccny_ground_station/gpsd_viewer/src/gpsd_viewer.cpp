@@ -20,6 +20,8 @@
 
 #include "gpsd_viewer/gpsd_viewer.h"
 #include <ros/package.h>
+#include <gps_common/GPSFix.h>
+#include <gps_common/GPSStatus.h>
 
 AppData *data;
 
@@ -39,19 +41,19 @@ int main (int argc, char **argv)
   return (0);
 }
 
-void gpsOdomCallback (const nav_msgs::Odometry::ConstPtr & msg)
+void gpsFixCallback (const gps_common::GPSFix::ConstPtr & msg)
 {
 
   ROS_INFO ("Receiving gps data");
 
   //Center osmmap on gps data received
-  osm_gps_map_set_center (data->map, msg->pose.pose.position.x, msg->pose.pose.position.y);
+  osm_gps_map_set_center (data->map, msg->latitude, msg->longitude);
 
   //Draw point 
-  osm_gps_map_draw_gps (data->map, msg->pose.pose.position.x, msg->pose.pose.position.y, 10);
+  osm_gps_map_draw_gps (data->map, msg->latitude, msg->longitude, 10);
 
   gchar *msg_statusbar =
-    g_strdup_printf ("lat:%f, lon:%f", (float) msg->pose.pose.position.x, (float) msg->pose.pose.position.y);
+    g_strdup_printf ("lat:%f, lon:%f", (float) msg->latitude, (float) msg->longitude);
   gtk_statusbar_push (GTK_STATUSBAR (data->statusbar), 1, msg_statusbar);
 
   if (!data->draw_path)
@@ -66,8 +68,8 @@ void *startROS (void *)
   ros::init (argc, argv, "gpsd_viewer");
 
   ros::NodeHandle n;
-  ros::Subscriber odo_sub;
-  odo_sub = n.subscribe ("/gps_odom", 1, &gpsOdomCallback);
+  ros::Subscriber fix_sub;
+  fix_sub = n.subscribe ("/fix", 1, &gpsFixCallback);
 
   ROS_INFO ("Spinning");
   ros::spin ();
