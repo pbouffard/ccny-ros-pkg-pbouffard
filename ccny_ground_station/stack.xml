@@ -1,6 +1,6 @@
 <stack>
   <description brief="ccny_ground_station">ccny_ground_station</description>
-  <author>Maintained by Gautier</author>
+  <author>Maintained by William Morris, Ivan Dryanovski, Gautier Dumonteil</author>
   <license>GPL</license>  
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/ccny_ground_station</url>
