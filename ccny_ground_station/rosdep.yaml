@@ -5,8 +5,7 @@ libosmgpsmap-dev:
   ubuntu:
     '10.04': libosmgpsmap-dev
 gpsd:
-  ubuntu:
-    '10.04': gpsd
+  ubuntu: gpsd libgps-dev
 libglade2-dev:
   ubuntu:
     '10.04': libglade2-dev
