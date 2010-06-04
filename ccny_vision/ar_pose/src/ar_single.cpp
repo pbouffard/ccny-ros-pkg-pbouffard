@@ -71,12 +71,6 @@ namespace ar_pose
       useHistory_ = true;
     ROS_INFO("\tUse history: %d", useHistory_);
 
-    if (!n_param.getParam("cam_param", local_path))
-      local_path = "data/camera_para.dat";
-
-    sprintf (cam_param_filename_, "%s/%s", package_path.c_str(), local_path.c_str());
-    ROS_INFO ("\tCamera Parameter Filename: %s", cam_param_filename_);
-
     n_param.param ("marker_pattern", local_path, std::string ("data/patt.hiro"));
     sprintf (pattern_filename_, "%s/%s", package_path.c_str (), local_path.c_str ());
     ROS_INFO ("\tMarker Pattern Filename: %s", pattern_filename_);
@@ -109,8 +103,7 @@ namespace ar_pose
     if (!getCamInfo_)
     {
       cam_info_ = (*cam_info);
-      
-      //cam_param_.mat[3][4];
+
       cam_param_.xsize = cam_info_.width;
       cam_param_.ysize = cam_info_.height;
       
@@ -127,11 +120,16 @@ namespace ar_pose
       cam_param_.mat[1][3] = cam_info_.P[7];
       cam_param_.mat[2][3] = cam_info_.P[11];
      
-     	cam_param_.dist_factor[0] = cam_info_.D[0];
+      /* FIXME : don't work with ROS distortion factor
+      * ROS Calibration : D=[0.025751483065329935, -0.10530741936574876,
+		*	-0.0024821434601277623, -0.0031632353637182972, 0.0000]
+		* ARToolkit Calibration : D=[265.000000, 257.000000, 4.600000,
+		*	1.002303, 0.0000]*/
+      cam_param_.dist_factor[0] = cam_info_.D[0];
 		cam_param_.dist_factor[1] = cam_info_.D[1];
 		cam_param_.dist_factor[2] = cam_info_.D[2];
 		cam_param_.dist_factor[3] = cam_info_.D[3];
-
+     
       arInit();
 
       ROS_INFO ("Subscribing to image topic");
@@ -141,17 +139,7 @@ namespace ar_pose
   }
 
   void ARSinglePublisher::arInit ()
-  {
-    ARParam wparam;
-
-    // Setup the initial camera parameters
-    ROS_INFO ("Loading Camera Parameters");
-    /*if (arParamLoad (cam_param_filename_, 1, &wparam) < 0)
-    {
-      ROS_ERROR ("Camera parameter load error: %s", cam_param_filename_);
-      ROS_BREAK ();
-    }
-    arParamChangeSize (&wparam, xsize_, ysize_, &cam_param_);*/
+  {   
     arInitCparam (&cam_param_);
 
     ROS_INFO ("*** Camera Parameter ***");
@@ -238,9 +226,9 @@ namespace ar_pose
       pos[1] = arPos[1] * AR_TO_ROS;
       pos[2] = arPos[2] * AR_TO_ROS;
 
-      quat[0] = arQuat[0];
-      quat[1] = arQuat[1];
-      quat[2] = arQuat[2];
+      quat[0] = -arQuat[0];
+      quat[1] = -arQuat[1];
+      quat[2] = -arQuat[2];
       quat[3] = arQuat[3];
 
       ROS_DEBUG (" QUAT: Pos x: %3.5f  y: %3.5f  z: %3.5f", pos[0], pos[1], pos[2]);
@@ -292,11 +280,11 @@ namespace ar_pose
 			  rvizMarker_.header.stamp = image_msg->header.stamp;
 			  rvizMarker_.id = 1;
 
-			  rvizMarker_.scale.x = 2.0 * markerWidth_ * AR_TO_ROS;
+			  rvizMarker_.scale.x = 1.0 * markerWidth_ * AR_TO_ROS;
 			  rvizMarker_.scale.y = 1.0 * markerWidth_ * AR_TO_ROS;
 			  rvizMarker_.scale.z = 0.5 * markerWidth_ * AR_TO_ROS;
 			  rvizMarker_.ns = "basic_shapes";
-			  rvizMarker_.type = visualization_msgs::Marker::SPHERE;
+			  rvizMarker_.type = visualization_msgs::Marker::CUBE;
 			  rvizMarker_.action = visualization_msgs::Marker::ADD;
 			  rvizMarker_.color.r = 0.0f;
 			  rvizMarker_.color.g = 1.0f;
