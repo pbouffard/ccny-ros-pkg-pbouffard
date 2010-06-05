@@ -6,7 +6,6 @@ Map Viewer for GPS position data provided by gpsd_client
   <license>GPL</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/gpsd_viewer</url>
-
   <depend package="roscpp"/>
   <depend package="nav_msgs"/>
   <depend package="gps_common"/>
