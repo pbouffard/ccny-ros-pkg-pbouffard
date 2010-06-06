@@ -1,0 +1,8 @@
+<stack>
+  <description brief="asctec_drivers">Driver Stack for AscTec Products</description>
+  <author>Maintained by William Morris, Ivan Dryanovski et al.</author>
+  <license>GPL</license>  
+  <review status="experimental" notes="Under active development"/>
+  <url>http://ros.org/wiki/asctec_drivers</url>
+  <depend stack="ros" />
+</stack>

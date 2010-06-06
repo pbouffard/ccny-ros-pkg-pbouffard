@@ -1,0 +1,7 @@
+<launch>
+  <node name="imu_calibrate" pkg="asctec_autopilot" type="imu_calibrate" respawn="false" output="screen">
+    <param name="sample_count" type="int" value="100"/>
+    <param name="serial_port" type="string" value="/dev/ttyUSB0"/>
+    <param name="serial_speed" type="int" value="57600"/>
+  </node>
+</launch>
