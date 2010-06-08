@@ -1,6 +1,6 @@
 <package>
   <description brief="asctec_autopilot">
-This is the hardware driver for the AscTec AutoPilot built by Ascending Technologies GmbH. http://www.asctec.de
+This is the hardware driver for the AscTec AutoPilot built by Ascending Technologies GmbH. http://www.asctec.de/
 
 It should be compatible with the Hummingbird and Pelican quadrotor aircraft.
 
