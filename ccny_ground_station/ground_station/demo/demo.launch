@@ -1,0 +1,9 @@
+<launch>
+	<node name="ground_station" pkg="ground_station" type="groundstation" respawn="false" output="screen">
+		<param name="altimeter_unit_is_feet" type="bool" value="false"/>
+		<param name="altimeter_value" type="double" value="100"/>
+		<param name="altimeter_inv_color" type="bool" value="true"/>
+	</node>
+	
+	<node name="fakepose" pkg="ground_station" type="fakepose" respawn="false" output="screen"/>
+</launch>

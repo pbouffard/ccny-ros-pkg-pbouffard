@@ -1,0 +1,18 @@
+<package>
+  <description brief="ground_station">
+
+     ground_station
+
+  </description>
+  <author>Gautier Dumonteil</author>
+  <license>GPL</license>
+  <review status="experimental" notes="This is unstable and under active development."/>
+  <url>http://ros.org/wiki/ground_station</url>
+
+  <depend package="roscpp"/>
+  <depend package="geometry_msgs"/>
+  <rosdep name="libgtk2.0-dev"/>
+
+</package>
+
+
