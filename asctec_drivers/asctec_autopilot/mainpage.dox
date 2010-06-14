@@ -2,14 +2,16 @@
 \mainpage
 \htmlinclude manifest.html
 
-\b asctec_autopilot is ... 
+\b asctec_autopilot is a driver for the Ascending Technologies Pelican and Hummingbird Quadrotor aircraft. It provides access to the sensor information as ros messages and has an interface for sending commands to the aircraft.
 
 <!-- 
 Provide an overview of your package.
 -->
 
-
 \section codeapi Code API
+
+ - \ref Telemetry::enablePolling() : Enable telemetry polling
+ - \ref Telemetry::buildRequest() : Builds the request message for sending to the autopilot.
 
 <!--
 Provide links to specific auto-generated API documentation within your
@@ -21,6 +23,5 @@ If your codebase is fairly large or has different sets of APIs, you
 should use the doxygen 'group' tag to keep these APIs together. For
 example, the roscpp documentation has 'libros' group.
 -->
-
 
 */

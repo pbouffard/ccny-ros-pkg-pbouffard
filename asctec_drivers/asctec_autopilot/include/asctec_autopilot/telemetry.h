@@ -1,51 +1,125 @@
-#ifndef ASCTEC_AUTOPILOT_H
-#define ASCTEC_AUTOPILOT_H
+/*
+ *  AscTec Autopilot Telemetry
+ *  Copyright (C) 2010, CCNY Robotics Lab
+ *  Ivan Dryanovski <ivan.dryanovski@gmail.com>
+ *  William Morris <morris@ee.ccny.cuny.edu>
+ *  http://robotics.ccny.cuny.edu
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-#include <stdio.h>
-#include <sys/termios.h>
-#include <sys/ioctl.h>
-#include <cstring>
-#include <unistd.h>
-#include <cstdlib>
-#include <time.h>
-#include <errno.h>
-#include <bitset>
+#ifndef ASCTEC_AUTOPILOT_TELEMETRY_H
+#define ASCTEC_AUTOPILOT_TELEMETRY_H
 
-#include <ros/ros.h>
-
-#include "asctec_autopilot/crc16.h"
-#include "asctec_autopilot/serial_interface.h"
-
-namespace asctec_autopilot
+namespace asctec
 {
-
-
-  class AutoPilot
+  namespace RequestTypes
   {
-  friend class SerialInterface;
-  public:
-      AutoPilot ();
-     ~AutoPilot ();
-    class SerialInterface *serialInterface__;
-    void enablePolling (uint16_t request, uint16_t interval);
-    void buildRequest();
-    void spin (const ros::TimerEvent & e);
-    // CONVERSION FACTORS
-    static const double PEL_TO_ROS_ANGLE = (1.0 / 1000.0) * 3.14159265 / 180.0;        // converts to rad
-    static const double PEL_TO_ROS_ANGVEL = (1.0 / 64.8) * 3.14159265 / 180.0; // convetts to rad/s
-    static const double PEL_TO_ROS_ACC = (1.0 / 10000.0) * 9.81;       // converts to m/s^s
-    static const double PEL_TO_ROS_HEIGHT = (1.0 / 1000.0);    // converts to m
+    enum RequestType
+    {
+      LL_STATUS,
+      IMU_RAWDATA,
+      IMU_CALCDATA,
+      RC_DATA,
+      CONTROLLER_OUTPUT,
+      GPS_DATA,
+      WAYPOINT,
+      GPS_DATA_ADVANCED,
+      CAM_DATA
+    };
+  }
+  typedef RequestTypes::RequestType RequestType;
 
-    // request descriptors
-    static const uint16_t REQ_LL_STATUS = 0x0001;
-    static const uint16_t REQ_IMU_RAWDATA = 0x0002;
-    static const uint16_t REQ_IMU_CALCDATA = 0x0004;
-    static const uint16_t REQ_RC_DATA = 0x0008;
-    static const uint16_t REQ_CONTROLLER_OUTPUT = 0x0010;
-    static const uint16_t REQ_GPS_DATA = 0x0080;
-    static const uint16_t REQ_WAYPOINT = 0x0100;
-    static const uint16_t REQ_GPS_DATA_ADVANCED = 0x0200;
-    static const uint16_t REQ_CAM_DATA = 0x0800;       // FIXME: Does this even work?
+/**
+ * \brief Telemetry interface for the AscTec AutoPilot.
+ *
+ * This class provides functions to help build request messages
+ * and it also provides a place for both the SerialInterface and
+ * the AutoPilot classes to pass telemetry information.
+ *
+ * The most widely used methods are:
+ *   - Setup:
+ *    - enablePolling()
+ *    - buildRequest()
+ *    - ros::init()
+ */
+
+  class Telemetry
+  {
+  public:
+  /**
+   * \brief Constructor
+   *
+   * This handles telemetry packet storage and processing.
+   *
+   */
+      Telemetry();
+  /**
+   * \brief Destructor
+   *
+   * Please Recycle your electrons.
+   */
+    ~Telemetry();
+    
+  /** \brief Enables Polling of a Request Message
+   *
+   * Due to the limited bandwidth available over the wireless link this function
+   * provides a means of selectivly enabling polling of various request messages.
+   * The interval argument allows for some messages to be polled more frequently
+   * than others, while the offset provides a way to space out the message requests.
+   *
+   * \param msg Message type to poll
+   * \param interval Message Polling Interval (Message Hz = Polling HZ / interval)
+   * \param offset (optional) Polling offset (interval = 2 & offset = 1 -> odd polling)
+   *
+   * \return Void.
+   */
+    void buildRequest ();
+     
+  /** \brief Enables Polling of a Request Message
+   *
+   * Due to the limited bandwidth available over the wireless link this function
+   * provides a means of selectivly enabling polling of various request messages.
+   * The interval argument allows for some messages to be polled more frequently
+   * than others, while the offset provides a way to space out the message requests.
+   *
+   * \param msg Message type to poll
+   * \param interval Message Polling Interval (Message Hz = Polling HZ / interval)
+   * \param offset (optional) Polling offset (interval = 2 & offset = 1 -> odd polling)
+   *
+   * \return Void.
+   */
+    void enablePolling (RequestType msg, uint8_t interval = 1, uint8_t offset = 0);
+    
+    void dumpLL_STATUS();
+    void dumpIMU_RAWDATA();
+    void dumpIMU_CALCDATA();
+    void dumpRC_DATA();
+    
+    bool pollingEnabled_;
+    uint16_t requestCount_;
+    std::bitset < 16 > requestPackets_;
+    
+    static const uint8_t REQUEST_TYPES = 9;
+/*
+    static const uint16_t REQUEST_BITMASK[REQUEST_TYPES] = {
+      0x0001, 0x0002, 0x0004, 0x0008, 0x0010, 0x0080, 0x0100, 0x0200, 0x0800 };
+*/
+    uint16_t REQUEST_BITMASK[REQUEST_TYPES];
+    uint8_t requestInterval_[REQUEST_TYPES];
+    uint8_t requestOffset_[REQUEST_TYPES];
+
     //packet descriptors
     static const uint8_t PD_IMURAWDATA = 0x01;
     static const uint8_t PD_LLSTATUS = 0x02;
@@ -68,43 +142,6 @@ namespace asctec_autopilot
     static const uint8_t PD_GPSDATA = 0x23;
 
     static const uint8_t PD_CAMERACOMMANDS = 0x30;
-  private:
-    ros::Timer timer_;
-    ros::NodeHandle nh_;
-    double freq;
-/*
-  inline
-  void updateCtrlChecksum()
-  {
-  // CTRL_Input.chksum = CTRL_Input.pitch + CTRL_Input.roll + CTRL_Input.yaw + CTRL_Input.thrust + CTRL_Input.ctrl + 0xAAAA;
-  // startstring: >*>di
-  } 
-*/
-    // Data Request
-    // >*>p[unsigned short packets]
-
-
-
-
-
-
-
-
-    struct CTRL_INPUT
-    {                           //serial commands (= Scientific Interface)
-      short pitch;              //Pitch input: -2047..+2047 (0=neutral)
-      short roll;               //Roll input: -2047..+2047 (0=neutral)
-      short yaw;                //(=R/C Stick input) -2047..+2047 (0=neutral)
-      short thrust;             //Collective: 0..4095 = 0..100%
-      short ctrl;               /*control byte:
-                                   bit 0: pitch control enabled
-                                   bit 1: roll control enabled
-                                   bit 2: yaw control enabled
-                                   bit 3: thrust control enabled
-                                   These bits can be used to only enable one axis at a time and thus to control the other axes manually.
-                                   This usually helps a lot to set up and finetune controllers for each axis seperately. */
-      short chksum;
-    };
 
     struct LL_STATUS
     {
@@ -317,42 +354,16 @@ You will receive an acknowledge if a command or a waypoint was received correctl
 >a[1 byte packet descriptor]a<
 
 */
-    struct CMD
-    {
-      struct CTRL_INPUT CTRL_INPUT_;
-    };
 
-      std::bitset < 16 > requestPackets_;
-    uint16_t requestCount_;
-    uint16_t interval_LL_STATUS_;
-    uint16_t offset_LL_STATUS_;
     struct LL_STATUS LL_STATUS_;
-    uint16_t interval_IMU_RAWDATA_;
-    uint16_t offset_IMU_RAWDATA_;
     struct IMU_RAWDATA IMU_RAWDATA_;
-    uint16_t interval_IMU_CALCDATA_;
-    uint16_t offset_IMU_CALCDATA_;
     struct IMU_CALCDATA IMU_CALCDATA_;
-    uint16_t interval_RC_DATA_;
-    uint16_t offset_RC_DATA_;
     struct RC_DATA RC_DATA_;
-    uint16_t interval_CONTROLLER_OUTPUT_;
-    uint16_t offset_CONTROLLER_OUTPUT_;
     struct CONTROLLER_OUTPUT CONTROLLER_OUTPUT_;
-    uint16_t interval_GPS_DATA_;
-    uint16_t offset_GPS_DATA_;
     struct GPS_DATA GPS_DATA_;
-    uint16_t interval_WAYPOINT_;
-    uint16_t offset_WAYPOINT_;
     struct WAYPOINT WAYPOINT_;
-    uint16_t interval_GPS_DATA_ADVANCED_;
-    uint16_t offset_GPS_DATA_ADVANCED_;
     struct GPS_DATA_ADVANCED GPS_DATA_ADVANCED_;
-//    uint16_t interval_CAM_DATA_ = 0;
-//    uint16_t offset_CAM_DATA_ = 8;
-
-    bool pollingEnabled_;
-
-  };                            // end class AutoPilot
-}                               //end namespace asctec_autopilot
+    
+  };                            // end class Telemetry
+}                               //end namespace asctec
 #endif

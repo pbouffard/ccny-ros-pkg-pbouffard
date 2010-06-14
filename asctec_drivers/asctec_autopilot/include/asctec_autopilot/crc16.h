@@ -22,8 +22,9 @@
 #ifndef CRC16_H
 #define CRC16_H
 
-namespace asctec_autopilot
+namespace asctec
 {
+  bool crc_valid (unsigned short packet_crc, void *data, unsigned short cnt);
   unsigned short crc_update (unsigned short crc, unsigned char data);
   unsigned short crc16 (void *data, unsigned short cnt);
 }

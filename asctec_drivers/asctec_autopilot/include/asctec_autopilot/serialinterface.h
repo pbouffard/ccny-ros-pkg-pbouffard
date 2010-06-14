@@ -19,29 +19,35 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ASCTEC_AUTOPILOT_SERIAL_INTERFACE_H
-#define ASCTEC_AUTOPILOT_SERIAL_INTERFACE_H
+#ifndef ASCTEC_AUTOPILOT_SERIALINTERFACE_H
+#define ASCTEC_AUTOPILOT_SERIALINTERFACE_H
 
 #include <stdio.h>
 #include <sys/termios.h>
+#include <sys/ioctl.h>
 #include <cstring>
 #include <unistd.h>
 #include <cstdlib>
 #include <time.h>
+#include <errno.h>
+#include <bitset>
 
 #include <ros/ros.h>
 
-#include "asctec_autopilot/asctec_autopilot.h"
+#include "asctec_autopilot/crc16.h"
+#include "asctec_autopilot/telemetry.h"
 
-namespace asctec_autopilot
+namespace asctec
 {
   class SerialInterface
   {
   public:
     SerialInterface (std::string port = "/dev/ttyUSB0", uint32_t speed = 57600);
     ~SerialInterface ();
-    void write (char *output);
-    bool getPackets (AutoPilot *autopilot);
+
+    void write (char *output, int len);
+    bool getPackets (Telemetry *telemetry);
+    void dumpDebug (void);
     bool getPacket (char *spacket, unsigned char &packet_type, unsigned short &packet_crc, unsigned short &packet_size);
 
     int *scan;
@@ -54,11 +60,10 @@ namespace asctec_autopilot
     void drain ();
     void stall (bool);
 
-    FILE *dev;
-      std::string serialport_name_;
+    FILE *dev_;
+    std::string serialport_name_;
     uint32_t serialport_speed_;
     speed_t serialport_baud_;
-  };                            // end class SerialInterface
-}                               //end namespace asctec_autopilot
-
-#endif                          // ASCTEC_AUTOPILOT_SERIAL_INTERFACE_H
+  };
+}
+#endif
