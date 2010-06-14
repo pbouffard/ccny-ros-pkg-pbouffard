@@ -28,6 +28,7 @@ typedef struct _GtkCompassPrivate
 
   /* widget data */
   gboolean color_mode_inv;
+  gdouble angle;
 
   /* drawing data */
   gdouble x;
@@ -54,7 +55,7 @@ G_DEFINE_TYPE (GtkCompass, gtk_compass, GTK_TYPE_DRAWING_AREA);
 #define GTK_COMPASS_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GTK_COMPASS_TYPE, GtkCompassPrivate))
 
 static void gtk_compass_class_init (GtkCompassClass * klass);
-static void gtk_compass_init (GtkCompass * alt);
+static void gtk_compass_init (GtkCompass * comp);
 static void gtk_compass_destroy (GtkObject * object);
 static void gtk_compass_set_property (GObject * object, guint prop_id, const GValue * value, GParamSpec * pspec);
 
@@ -63,8 +64,8 @@ static gboolean gtk_compass_expose (GtkWidget * graph, GdkEventExpose * event);
 static gboolean gtk_compass_button_press_event (GtkWidget * widget, GdkEventButton * ev);
 static gboolean gtk_compass_motion_notify_event (GtkWidget * widget, GdkEventMotion * ev);
 
-static void gtk_compass_draw (GtkWidget * alt);
-static void gtk_compass_draw_digital (GtkWidget * alt);
+static void gtk_compass_draw (GtkWidget * comp);
+static void gtk_compass_draw_digital (GtkWidget * comp);
 
 static gboolean gtk_compass_debug = FALSE;
 
@@ -101,7 +102,7 @@ static void gtk_compass_class_init (GtkCompassClass * klass)
   return;
 }
 
-static void gtk_compass_init (GtkCompass * alt)
+static void gtk_compass_init (GtkCompass * comp)
 {
   GtkCompassPrivate *priv = NULL;
 
@@ -109,11 +110,11 @@ static void gtk_compass_init (GtkCompass * alt)
   {
     g_debug ("===> gtk_compass_init()");
   }
-  g_return_if_fail (IS_GTK_COMPASS (alt));
+  g_return_if_fail (IS_GTK_COMPASS (comp));
 
-  priv = GTK_COMPASS_GET_PRIVATE (alt);
+  priv = GTK_COMPASS_GET_PRIVATE (comp);
 
-  gtk_widget_add_events (GTK_WIDGET (alt), GDK_BUTTON_PRESS_MASK |
+  gtk_widget_add_events (GTK_WIDGET (comp), GDK_BUTTON_PRESS_MASK |
                          GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK);
   priv->b_mouse_onoff = FALSE;
 
@@ -130,17 +131,17 @@ static void gtk_compass_init (GtkCompass * alt)
 static gboolean gtk_compass_configure_event (GtkWidget * widget, GdkEventConfigure * event)
 {
   GtkCompassPrivate *priv;
-  GtkCompass *alt = GTK_COMPASS (widget);
+  GtkCompass *comp = GTK_COMPASS (widget);
 
   if (gtk_compass_debug)
   {
     g_debug ("===> gtk_compass_configure_event()");
   }
-  g_return_val_if_fail (IS_GTK_COMPASS (alt), FALSE);
+  g_return_val_if_fail (IS_GTK_COMPASS (comp), FALSE);
 
   g_return_val_if_fail (event->type == GDK_CONFIGURE, FALSE);
 
-  priv = GTK_COMPASS_GET_PRIVATE (alt);
+  priv = GTK_COMPASS_GET_PRIVATE (comp);
   g_return_val_if_fail (priv != NULL, FALSE);
 
   if (gtk_compass_debug)
@@ -166,10 +167,10 @@ static gboolean gtk_compass_configure_event (GtkWidget * widget, GdkEventConfigu
   return FALSE;
 }
 
-static gboolean gtk_compass_expose (GtkWidget * alt, GdkEventExpose * event)
+static gboolean gtk_compass_expose (GtkWidget * comp, GdkEventExpose * event)
 {
   GtkCompassPrivate *priv;
-  GtkWidget *widget = alt;
+  GtkWidget *widget = comp;
 
   cairo_t *cr = NULL;
   cairo_status_t status;
@@ -178,9 +179,9 @@ static gboolean gtk_compass_expose (GtkWidget * alt, GdkEventExpose * event)
   {
     g_debug ("===> gtk_compass_expose()");
   }
-  g_return_val_if_fail (IS_GTK_COMPASS (alt), FALSE);
+  g_return_val_if_fail (IS_GTK_COMPASS (comp), FALSE);
 
-  priv = GTK_COMPASS_GET_PRIVATE (alt);
+  priv = GTK_COMPASS_GET_PRIVATE (comp);
   g_return_val_if_fail (priv != NULL, FALSE);
 
   priv->plot_box.width = widget->allocation.width;
@@ -201,7 +202,7 @@ static gboolean gtk_compass_expose (GtkWidget * alt, GdkEventExpose * event)
   cairo_rectangle (cr, 0, 0, priv->plot_box.width, priv->plot_box.height);
   cairo_clip (cr);
 
-  gtk_compass_draw (alt);
+  gtk_compass_draw (comp);
 
   cairo_destroy (cr);
   priv->cr = NULL;
@@ -209,7 +210,7 @@ static gboolean gtk_compass_expose (GtkWidget * alt, GdkEventExpose * event)
   return FALSE;
 }
 
-extern void gtk_compass_redraw (GtkCompass * alt)
+extern void gtk_compass_redraw (GtkCompass * comp)
 {
   GtkWidget *widget;
   GdkRegion *region;
@@ -218,9 +219,9 @@ extern void gtk_compass_redraw (GtkCompass * alt)
   {
     g_debug ("===> gtk_compass_redraw()");
   }
-  g_return_if_fail (IS_GTK_COMPASS (alt));
+  g_return_if_fail (IS_GTK_COMPASS (comp));
 
-  widget = GTK_WIDGET (alt);
+  widget = GTK_WIDGET (comp);
 
   if (!widget->window)
     return;
@@ -233,6 +234,20 @@ extern void gtk_compass_redraw (GtkCompass * alt)
   gdk_region_destroy (region);
 }
 
+extern void gtk_compass_set_angle (GtkCompass * comp, gdouble ang)
+{
+  GtkCompassPrivate *priv;
+
+  if (gtk_compass_debug)
+  {
+    g_debug ("===> gtk_compass_draw()");
+  }
+  g_return_if_fail (IS_GTK_COMPASS(comp));
+
+  priv = GTK_COMPASS_GET_PRIVATE (comp);
+  priv->angle = ang;
+}
+
 extern GtkWidget *gtk_compass_new (void)
 {
   if (gtk_compass_debug)
@@ -242,7 +257,7 @@ extern GtkWidget *gtk_compass_new (void)
   return GTK_WIDGET(gtk_type_new(gtk_compass_get_type()));
 }
 
-static void gtk_compass_draw (GtkWidget * alt)
+static void gtk_compass_draw (GtkWidget * comp)
 {
   GtkCompassPrivate *priv;
 
@@ -250,18 +265,20 @@ static void gtk_compass_draw (GtkWidget * alt)
   {
     g_debug ("===> gtk_compass_draw()");
   }
-  g_return_if_fail (IS_GTK_COMPASS (alt));
+  g_return_if_fail (IS_GTK_COMPASS (comp));
 
-  priv = GTK_COMPASS_GET_PRIVATE (alt);
+  priv = GTK_COMPASS_GET_PRIVATE (comp);
 
   double x, y, rec_x0, rec_y0, rec_width, rec_height, rec_degrees;
   double rec_aspect, rec_corner_radius, rec_radius, radius;
+  double x0,y0,x1,y1,x2,y2,x3,y3;
+  double plane_scale;
   char str[GTK_COMPASS_MAX_STRING];
   int i, factor;
 
-  x = alt->allocation.width / 2;
-  y = alt->allocation.height / 2;
-  radius = MIN (alt->allocation.width / 2, alt->allocation.height / 2) - 5;
+  x = comp->allocation.width / 2;
+  y = comp->allocation.height / 2;
+  radius = MIN (comp->allocation.width / 2, comp->allocation.height / 2) - 5;
 
 	rec_x0=x-radius;    
    rec_y0=y-radius;
@@ -274,6 +291,13 @@ static void gtk_compass_draw (GtkWidget * alt)
 	rec_degrees=M_PI/180.0;
 
 	// Compass base
+	cairo_pattern_t *pat;
+	pat = cairo_pattern_create_radial (115.2, 102.4, 25.6,
+												102.4,  102.4, 128.0);
+	cairo_pattern_add_color_stop_rgba (pat, 0, 0.2, 0.2, 0.2, 1);
+	cairo_pattern_add_color_stop_rgba (pat, 1, 0.1, 0.1, 0.1, 1);
+	cairo_set_source (priv->cr, pat);
+	cairo_set_line_width (priv->cr,0.01*radius);
 	cairo_new_sub_path (priv->cr);
 	cairo_arc (priv->cr, rec_x0+rec_width-rec_radius, rec_y0+rec_radius,
 					rec_radius, -90*rec_degrees, 0*rec_degrees);
@@ -284,12 +308,13 @@ static void gtk_compass_draw (GtkWidget * alt)
 	cairo_arc (priv->cr, rec_x0+rec_radius, rec_y0+rec_radius, rec_radius,
 					180*rec_degrees, 270*rec_degrees);
 	cairo_close_path (priv->cr);
-
+/*
 	if(!priv->color_mode_inv) cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color.red / 65535,
                           (gdouble) priv->bg_color.green / 65535, (gdouble) priv->bg_color.blue / 65535);
 	else cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_inv.red / 65535,
-                          (gdouble) priv->bg_color_inv.green / 65535, (gdouble) priv->bg_color_inv.blue / 65535);
+                          (gdouble) priv->bg_color_inv.green / 65535, (gdouble) priv->bg_color_inv.blue / 65535);*/
 	cairo_fill_preserve (priv->cr);
+		cairo_pattern_destroy (pat);
 	cairo_stroke (priv->cr);
 
 	cairo_arc (priv->cr, x, y, radius, 0, 2 * M_PI);
@@ -303,37 +328,167 @@ static void gtk_compass_draw (GtkWidget * alt)
 	else cairo_set_source_rgb (priv->cr, 1-0.6, 1-0.5, 1-0.5);
 	cairo_stroke (priv->cr);
 
+	pat = cairo_pattern_create_radial (115.2, 102.4, 25.6,
+												102.4,  102.4, 128.0);
+	cairo_pattern_add_color_stop_rgba (pat, 0, 0.8, 0.8, 0.8, 1);
+	cairo_pattern_add_color_stop_rgba (pat, 1, 0.05, 0.05, 0.05, 1);
+	cairo_set_source (priv->cr, pat);
 	cairo_set_line_width (priv->cr,0.01*radius);
 	radius=radius-0.1*radius;
 	cairo_arc (priv->cr, x, y, radius, 0, 2 * M_PI);
-	if(!priv->color_mode_inv) cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color.red / 65535,
-                          (gdouble) priv->bg_color.green / 65535, (gdouble) priv->bg_color.blue / 65535);
+	/*if(!priv->color_mode_inv) //cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color.red / 65535,
+                          //(gdouble) priv->bg_color.green / 65535, (gdouble) priv->bg_color.blue / 65535);
+                          cairo_set_source_rgb (priv->cr, 0.05, 0.05, 0.05);
 	else cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_inv.red / 65535,
                           (gdouble) priv->bg_color_inv.green / 65535, (gdouble) priv->bg_color_inv.blue / 65535);
-	cairo_fill_preserve (priv->cr);
+	cairo_fill_preserve (priv->cr);*/
+	cairo_fill (priv->cr);
+	cairo_pattern_destroy (pat);
 	cairo_stroke (priv->cr);
 
+	plane_scale=0.8;
+	// plane drawing
+	// nez
+	cairo_new_sub_path (priv->cr);
+	x0=x;y0=y-0.35*radius*plane_scale;
+	x1=x-0.05*radius*plane_scale;	y1=y-0.25*radius*plane_scale;
+	x2=x-0.05*radius*plane_scale;	y2=y-0.25*radius*plane_scale;
+	x3=x-0.05*radius*plane_scale;	y3=y-0.09*radius*plane_scale;
+	cairo_move_to (priv->cr, x0, y0);
+	cairo_curve_to (priv->cr, x1, y1, x2, y2, x3, y3);
 
+	x0=x;	y0=y-0.35*radius*plane_scale;
+	x1=x+0.05*radius*plane_scale;	y1=y-0.25*radius*plane_scale;
+	x2=x+0.05*radius*plane_scale;	y2=y-0.25*radius*plane_scale;
+	x3=x+0.05*radius*plane_scale;	y3=y-0.09*radius*plane_scale;
+	cairo_move_to (priv->cr, x0, y0);
+	cairo_curve_to (priv->cr, x1, y1, x2, y2, x3, y3);
+	cairo_line_to(priv->cr,x-0.05*radius*plane_scale,y-0.09*radius*plane_scale);
+	cairo_close_path (priv->cr);
+	cairo_set_line_width (priv->cr,0.02*radius);
+	cairo_set_source_rgb (priv->cr, 1., 0.7, 0.);
+	cairo_fill(priv->cr);
+	cairo_stroke (priv->cr);
+	
+	// aile
+	cairo_new_sub_path (priv->cr);
+	x0=x-0.05*radius*plane_scale;	y0=y-0.1*radius*plane_scale;
+	x1=x-0.3*radius*plane_scale;	y1=y;
+	x2=x-0.3*radius*plane_scale;	y2=y;
+	x3=x-0.3*radius*plane_scale;	y3=y+0.05*radius*plane_scale;
+	cairo_move_to (priv->cr, x+0.05*radius*plane_scale, y0);
+	cairo_line_to (priv->cr, x0, y0);
+	cairo_curve_to (priv->cr, x1, y1, x2, y2, x3, y3);
+	cairo_line_to(priv->cr,x-0.05*radius*plane_scale,y);
+	cairo_line_to(priv->cr,x+0.05*radius*plane_scale,y);
+	cairo_line_to(priv->cr,x+0.3*radius*plane_scale,y+0.05*radius*plane_scale);
+
+	x0=x+0.05*radius*plane_scale;	y0=y-0.1*radius*plane_scale;
+	x1=x+0.3*radius*plane_scale; y1=y;
+	x2=x+0.3*radius*plane_scale; y2=y;
+	x3=x+0.3*radius*plane_scale; y3=y+0.05*radius*plane_scale;
+	cairo_move_to (priv->cr, x0, y0);
+	cairo_curve_to (priv->cr, x1, y1, x2, y2, x3, y3);
+	cairo_close_path (priv->cr);
+	cairo_set_line_width (priv->cr,0.02*radius);
+	cairo_set_source_rgb (priv->cr, 1., 0.7, 0.);
+	cairo_fill(priv->cr);
+	cairo_stroke (priv->cr);
+
+	// queue
+	cairo_new_sub_path (priv->cr);
+	x0=x-0.05*radius*plane_scale;	y0=y;
+	x1=x-0.05*radius*plane_scale;	y1=y+0.1*radius*plane_scale;
+	x2=x-0.05*radius*plane_scale;	y2=y+0.17*radius*plane_scale;
+	x3=x;	y3=y+0.35*radius*plane_scale;
+	cairo_move_to (priv->cr, x+0.05*radius*plane_scale, y0);
+	cairo_line_to (priv->cr, x0, y0);
+	cairo_curve_to (priv->cr, x1, y1, x2, y2, x3, y3);
+	
+	x0=x+0.05*radius*plane_scale;	y0=y;
+	x1=x+0.05*radius*plane_scale;	y1=y+0.1*radius*plane_scale;
+	x2=x+0.05*radius*plane_scale;	y2=y+0.17*radius*plane_scale;
+	x3=x;	y3=y+0.35*radius*plane_scale;
+	cairo_move_to (priv->cr, x0, y0);
+	cairo_curve_to (priv->cr, x1, y1, x2, y2, x3, y3);
+	cairo_move_to (priv->cr, x0, y0);
+	cairo_line_to (priv->cr,x-0.05*radius*plane_scale,y);
+	cairo_close_path (priv->cr);
+	cairo_set_line_width (priv->cr,0.02*radius);
+	cairo_set_source_rgb (priv->cr, 1., 0.7, 0.);
+	cairo_fill (priv->cr);
+	cairo_stroke (priv->cr);
+	
+	// aile queue
+	cairo_new_sub_path (priv->cr);
+	x0=x-0.01*radius*plane_scale;	y0=y+0.24*radius*plane_scale;
+	x1=x-0.1*radius*plane_scale; y1=y+0.29*radius*plane_scale;
+	x2=x-0.1*radius*plane_scale; y2=y+0.29*radius*plane_scale;
+	x3=x-0.1*radius*plane_scale; y3=y+0.32*radius*plane_scale;
+	cairo_move_to (priv->cr, x+0.01*radius*plane_scale, y0);
+	cairo_line_to (priv->cr, x0, y0);
+	cairo_curve_to (priv->cr, x1, y1, x2, y2, x3, y3);
+	cairo_line_to(priv->cr,x-0.005*radius*plane_scale,y1);
+	cairo_line_to(priv->cr,x+0.005*radius*plane_scale,y1);
+	cairo_line_to(priv->cr,x+0.1*radius*plane_scale,y3);
+	
+	x0=x+0.01*radius*plane_scale;	y0=y+0.24*radius*plane_scale;
+	x1=x+0.1*radius*plane_scale; y1=y+0.29*radius*plane_scale;
+	x2=x+0.1*radius*plane_scale; y2=y+0.29*radius*plane_scale;
+	x3=x+0.1*radius*plane_scale; y3=y+0.32*radius*plane_scale;
+	cairo_move_to (priv->cr, x0, y0);
+	cairo_curve_to (priv->cr, x1, y1, x2, y2, x3, y3);
+	cairo_close_path (priv->cr);
+	cairo_set_line_width (priv->cr,0.02*radius);
+	cairo_set_source_rgb (priv->cr, 1., 0.7, 0.);
+	cairo_fill(priv->cr);
+	cairo_stroke (priv->cr);
+	
+	// lines
+	x0=x;y0=y-0.35*radius*plane_scale;
+	cairo_move_to (priv->cr, x0, y0-0.05*radius);
+	cairo_line_to (priv->cr, x0, y0-0.28*radius);
+	cairo_set_line_width (priv->cr,0.015*radius);
+	cairo_stroke (priv->cr);
+	
+	x0=x;	y0=y+0.35*radius*plane_scale;
+	cairo_move_to (priv->cr, x0, y0+0.05*radius);
+	cairo_line_to (priv->cr, x0, y0+0.28*radius);
+	cairo_set_line_width (priv->cr,0.015*radius);
+	cairo_stroke (priv->cr);
+
+	x0=x-0.3*radius*plane_scale; y0=y;
+	cairo_move_to (priv->cr, x0-0.05*radius, y0);
+	cairo_line_to (priv->cr, x0-0.32*radius, y0);
+	cairo_set_line_width (priv->cr,0.015*radius);
+	cairo_stroke (priv->cr);	
+	
+	x0=x+0.3*radius*plane_scale; y0=y;
+	cairo_move_to (priv->cr, x0+0.05*radius, y0);
+	cairo_line_to (priv->cr, x0+0.32*radius, y0);
+	cairo_set_line_width (priv->cr,0.015*radius);
+	cairo_stroke (priv->cr);
+	
   priv->radius = radius;
   priv->x = x;
   priv->y = y;
 
   // draw digital 
-  gtk_compass_draw_digital (alt);
+  gtk_compass_draw_digital (comp);
 
   return;
 }
 
-static void gtk_compass_draw_digital (GtkWidget * alt)
+static void gtk_compass_draw_digital (GtkWidget * comp)
 {
   GtkCompassPrivate *priv;
   if (gtk_compass_debug)
   {
     g_debug ("===> gtk_compass_draw_digital()");
   }
-  g_return_if_fail (IS_GTK_COMPASS (alt));
+  g_return_if_fail (IS_GTK_COMPASS (comp));
 
-  priv = GTK_COMPASS_GET_PRIVATE (alt);
+  priv = GTK_COMPASS_GET_PRIVATE (comp);
 
   double x = priv->x;
   double y = priv->y;
@@ -349,11 +504,14 @@ static void gtk_compass_draw_digital (GtkWidget * alt)
                                CAIRO_FONT_WEIGHT_NORMAL);
       cairo_set_font_size (priv->cr, 0.20*radius);
 		inset = 0.15*radius;
-		cairo_move_to (priv->cr,x-0.069*radius+(radius-inset)*cos(i*M_PI/6-3*M_PI/6),
-								y+0.07*radius+(radius-inset)*sin(i*M_PI/6-3*M_PI/6));
-		if(!priv->color_mode_inv) cairo_set_source_rgb(priv->cr, 0.88, 0.88, 0);
+		cairo_move_to (priv->cr,x-0.069*radius+(radius-inset)*cos(i*M_PI/6-3*M_PI/6+priv->angle),
+								y+0.07*radius+(radius-inset)*sin(i*M_PI/6-3*M_PI/6+priv->angle));
+		if(!priv->color_mode_inv) cairo_set_source_rgb(priv->cr, 1., 1., 0);
 		else cairo_set_source_rgb (priv->cr, 1-0.88, 1-0.88, 1-0.);
-		switch(i)
+	
+		//cairo_save (priv->cr);
+      //cairo_rotate (priv->cr,priv->angle);
+    	switch(i)
 		{
 			case 0:
 				cairo_show_text (priv->cr, "N");
@@ -372,9 +530,9 @@ static void gtk_compass_draw_digital (GtkWidget * alt)
 				else cairo_set_source_rgb (priv->cr, 0., 0., 0.);
 				sprintf(str,"%d",i*3);
 				cairo_show_text (priv->cr, str);	
-				cairo_stroke (priv->cr);
 			}
 		cairo_stroke (priv->cr);
+		//cairo_restore (priv->cr);
 	}
    
    cairo_set_line_width (priv->cr, 0.03 * radius);
@@ -413,10 +571,10 @@ static void gtk_compass_draw_digital (GtkWidget * alt)
 			else cairo_set_source_rgb (priv->cr, 0., 0., 0.);
 		}
 		
-		cairo_move_to (priv->cr,x+(radius-inset)*cos(i*M_PI/18),
-								y+(radius-inset)*sin(i*M_PI/18));
-		cairo_line_to (priv->cr,x+radius*cos(i*M_PI/18),
-								y+radius*sin(i*M_PI/18));
+		cairo_move_to (priv->cr,x+(radius-inset)*cos(i*M_PI/18+priv->angle),
+								y+(radius-inset)*sin(i*M_PI/18+priv->angle));
+		cairo_line_to (priv->cr,x+radius*cos(i*M_PI/18+priv->angle),
+								y+radius*sin(i*M_PI/18+priv->angle));
 		cairo_stroke (priv->cr);
 		cairo_restore (priv->cr);
 	}
@@ -536,7 +694,7 @@ static void gtk_compass_destroy (GtkObject * object)
 static void gtk_compass_set_property (GObject * object, guint prop_id, const GValue * value, GParamSpec * pspec)
 {
   GtkCompassPrivate *priv = NULL;
-  GtkCompass *alt = NULL;
+  GtkCompass *comp = NULL;
 
   if (gtk_compass_debug)
   {
@@ -544,10 +702,10 @@ static void gtk_compass_set_property (GObject * object, guint prop_id, const GVa
   }
   g_return_if_fail (object != NULL);
 
-  alt = GTK_COMPASS (object);
-  g_return_if_fail (IS_GTK_COMPASS (alt));
+  comp = GTK_COMPASS (object);
+  g_return_if_fail (IS_GTK_COMPASS (comp));
 
-  priv = GTK_COMPASS_GET_PRIVATE (alt);
+  priv = GTK_COMPASS_GET_PRIVATE (comp);
   g_return_if_fail (priv != NULL);
 
   switch (prop_id)
