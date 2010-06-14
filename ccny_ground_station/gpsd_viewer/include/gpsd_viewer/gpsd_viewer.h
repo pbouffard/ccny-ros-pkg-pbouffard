@@ -35,6 +35,9 @@
 #include <osmgpsmap/osm-gps-map.h>
 #include <gpsd_viewer/gui/AppData.h>
 
+pthread_t rosThread;
+pthread_t guiThread;
+
 void *startGUI (void *);
 void *startROS (void *);
 void gpsOdomCallback (const nav_msgs::Odometry::ConstPtr &);

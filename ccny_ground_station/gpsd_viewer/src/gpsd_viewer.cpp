@@ -27,16 +27,14 @@ AppData *data;
 
 int main (int argc, char **argv)
 {
-  pthread_t rosThread;
-  pthread_t guiThread;
-
   pthread_create (&guiThread, NULL, startGUI, NULL);
   sleep (1);
   pthread_create (&rosThread, NULL, startROS, NULL);
 
-  // wait guiThread to continu
+  // wait all threads to continu
   pthread_join (guiThread, NULL);
-  ros::shutdown ();
+  pthread_join (rosThread, NULL);
+  //ros::shutdown ();
 
   return (0);
 }
@@ -73,7 +71,7 @@ void *startROS (void *)
 
   ROS_INFO ("Spinning");
   ros::spin ();
-
+  pthread_cancel(guiThread);
   pthread_exit (NULL);
 }
 
@@ -90,7 +88,6 @@ void *startGUI (void *)
 
   std::string package_path = ros::package::getPath (ROS_PACKAGE_NAME);
   sprintf (gui_filename, "%s/%s", package_path.c_str (), "gui.glade");
-
 
   gtk_init (&argc, &argv);
 
@@ -154,6 +151,7 @@ void *startGUI (void *)
 
   // Start main loop
   gtk_main ();
-
-  return (0);
+  
+  pthread_cancel(rosThread);
+  pthread_exit (NULL);
 }
