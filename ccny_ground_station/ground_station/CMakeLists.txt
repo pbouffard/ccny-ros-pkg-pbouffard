@@ -35,6 +35,7 @@ include($ENV{ROS_ROOT}/core/rosbuild/FindPkgConfig.cmake)
 set(GROUNDSTATION groundstation)
 
 set(GROUNDSTATION_SRC   src/gui/gtkaltimeter.c
+								src/gui/gtkcompass.c
 								src/ground_station.cpp)
 
 rosbuild_add_executable(${GROUNDSTATION}  ${GROUNDSTATION_SRC})
