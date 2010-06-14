@@ -32,8 +32,9 @@
 #include <ros/ros.h>
 
 #include "asctec_autopilot/crc16.h"
-#include "asctec_autopilot/asctec.h"
+#include "asctec_autopilot/autopilot.h"
 #include "asctec_autopilot/telemetry.h"
+#include "asctec_autopilot/serialinterface.h"
 
 namespace asctec
 {

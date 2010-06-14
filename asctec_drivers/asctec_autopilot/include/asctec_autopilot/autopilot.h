@@ -36,36 +36,10 @@
 
 #include "asctec_autopilot/crc16.h"
 #include "asctec_autopilot/telemetry.h"
+#include "asctec_autopilot/serialinterface.h"
 
 namespace asctec
 {
-  class SerialInterface
-  {
-  public:
-    SerialInterface (std::string port = "/dev/ttyUSB0", uint32_t speed = 57600);
-    ~SerialInterface ();
-
-    void write (char *output, int len);
-    bool getPackets (Telemetry *telemetry);
-    void dumpDebug (void);
-    bool getPacket (char *spacket, unsigned char &packet_type, unsigned short &packet_crc, unsigned short &packet_size);
-
-    int *scan;
-    bool status;
-    int pt[800];
-    int counter;
-  private:
-      speed_t bitrate (int);
-    void flush ();
-    void drain ();
-    void stall (bool);
-
-    FILE *dev_;
-    std::string serialport_name_;
-    uint32_t serialport_speed_;
-    speed_t serialport_baud_;
-  };                            // end class SerialInterface
-
   class AutoPilot
   {
   public:
