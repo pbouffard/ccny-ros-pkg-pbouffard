@@ -32,65 +32,42 @@
 #include <ros/ros.h>
 
 #include "asctec_autopilot/crc16.h"
-#include "asctec_autopilot/serial_interface.h"
-#include "asctec_autopilot/asctec_autopilot.h"
+#include "asctec_autopilot/asctec.h"
+#include "asctec_autopilot/telemetry.h"
 
-namespace asctec_autopilot
+namespace asctec
 {
   AutoPilot::AutoPilot ()
   {
-//    nh_.param<std::string>("port",    port,    "/dev/ttyUSB0");
-//    SerialInterface serialInterface_ = SerialInterface("/dev/ttyUSB0",57600);
-    SerialInterface serialInterface_ = SerialInterface();
-    pollingEnabled_ = false;
-    timer_ = nh_.createTimer(ros::Duration(1.0/std::max(freq, 1.0)), &AutoPilot::spin, this);
+//      std::string port;
+//      int speed;
+//      nh_.param<std::string>("serial_port",    port,    "/dev/ttyUSB0");
+//      nh_.param<int>("serial_speed",    speed,    57600);
+//      SerialInterface serialInterface = SerialInterface(port,speed);
+      timer_ = nh_.createTimer (ros::Duration (1.0 / std::max (freq, 1.0)), &AutoPilot::spin, this);
   }
   AutoPilot::~AutoPilot ()
   {
+    ROS_DEBUG ("Destroying AutoPilot Interface");
   }
 
   // enablePolling(REQ_LL_STATUS,1);
-  void
-  AutoPilot::enablePolling(uint16_t request, uint16_t interval)
-  {
-    switch(request) {
-      case REQ_LL_STATUS:
-        this->interval_LL_STATUS_ = interval;
-      case REQ_IMU_RAWDATA:
-        this->interval_IMU_RAWDATA_ = interval;
-      case REQ_IMU_CALCDATA:
-        this->interval_IMU_CALCDATA_ = interval;
-      case REQ_RC_DATA:
-        this->interval_RC_DATA_ = interval;
-    }
-  }
 
-  void
-  AutoPilot::buildRequest()
+
+
+  void AutoPilot::spin (const ros::TimerEvent & e)
   {
-    if (this->interval_LL_STATUS_ != 0 && ((this->requestCount_ - this->offset_LL_STATUS_) % this->interval_LL_STATUS_) == 0) {
-      requestPackets_ |= this->REQ_LL_STATUS;
-    }
-    if (this->interval_IMU_RAWDATA_ != 0 && ((this->requestCount_ - this->offset_IMU_RAWDATA_) % this->interval_IMU_RAWDATA_) == 0) {
-      requestPackets_ |= this->REQ_IMU_RAWDATA;
-    }
-    if (this->interval_IMU_CALCDATA_ != 0 && ((this->requestCount_ - this->offset_IMU_CALCDATA_) % this->interval_IMU_CALCDATA_) == 0) {
-      requestPackets_ |= this->REQ_IMU_CALCDATA;
-    }
-    if (this->interval_RC_DATA_ != 0 && ((this->requestCount_ - this->offset_RC_DATA_) % this->interval_RC_DATA_) == 0) {
-      requestPackets_ |= this->REQ_RC_DATA;
-    }
+    ROS_DEBUG("spin()");
+    tele_->requestPackets_ ^= tele_->requestPackets_;
+    tele_->buildRequest ();
+    tele_->requestCount_++;
+    serialInterface_->getPackets(tele_);
   }
-void AutoPilot::spin(const ros::TimerEvent& e)
-{
-//  serialInterface_.getPackets(&this);
-}
 
 }
 
 
-int
-main (int argc, char **argv)
+int main (int argc, char **argv)
 {
   ros::init (argc, argv, "publisher");
   ros::NodeHandle n;
@@ -98,11 +75,15 @@ main (int argc, char **argv)
 //  calcdataPublisher = n.advertise <asctec_autopilot::IMUCalcdata >("PelicanIMUCalcdata", 100);
   ros::Rate loop_rate (10);
 
-  asctec_autopilot::AutoPilot::AutoPilot autopilot;
-  autopilot.enablePolling(autopilot.REQ_LL_STATUS,4);
-  autopilot.enablePolling(autopilot.REQ_IMU_RAWDATA,1);
-  autopilot.enablePolling(autopilot.REQ_RC_DATA,4);
-
+  asctec::AutoPilot::AutoPilot autopilot;
+  asctec::SerialInterface::SerialInterface serial;
+  asctec::Telemetry::Telemetry tele;
+  autopilot.tele_ = &tele;
+  autopilot.tele_->enablePolling(asctec::RequestTypes::IMU_CALCDATA,1);
+  autopilot.tele_->enablePolling(asctec::RequestTypes::IMU_RAWDATA,2,0);
+  autopilot.tele_->enablePolling(asctec::RequestTypes::LL_STATUS,2,1);
+  autopilot.tele_->enablePolling(asctec::RequestTypes::RC_DATA,5);
+  autopilot.serialInterface_ = &serial;
   while (ros::ok ())
   {
     // sleep
@@ -111,4 +92,3 @@ main (int argc, char **argv)
   }
   return 0;
 }
-

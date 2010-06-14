@@ -31,5 +31,6 @@ rosbuild_genmsg()
 
 rosbuild_add_executable(autopilot src/asctec_autopilot.cpp
                                       src/serial_interface.cpp
-                                      src/crc16.cpp)
+                                      src/crc16.cpp src/telemetry.cpp)
 
+rosbuild_add_executable(teletest src/teletest.cpp src/telemetry.cpp)
