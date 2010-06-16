@@ -29,6 +29,7 @@
 #define GTK_COMPASS_MAX_STRING  256   /* Size of a text string */
 #define GTK_COMPASS_MODEL_X 300
 #define GTK_COMPASS_MODEL_Y 300
+#define DEG2RAD(DEG) ((DEG)*((M_PI)/(180.0))) 
 
 G_BEGIN_DECLS 
 typedef struct _GtkCompassClass

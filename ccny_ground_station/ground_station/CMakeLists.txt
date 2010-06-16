@@ -36,6 +36,7 @@ set(GROUNDSTATION groundstation)
 
 set(GROUNDSTATION_SRC   src/gui/gtkaltimeter.c
 								src/gui/gtkcompass.c
+								src/gui/AppData.cpp
 								src/ground_station.cpp)
 
 rosbuild_add_executable(${GROUNDSTATION}  ${GROUNDSTATION_SRC})

@@ -18,34 +18,30 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CCNY_GROUND_STATION_GROUND_STATION_H
-#define CCNY_GROUND_STATION_GROUND_STATION_H
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include <math.h>
-#include <glib.h>
-
-#include <ros/ros.h>
-#include <ros/package.h>
-#include <geometry_msgs/Pose.h>
+#ifndef APP_DATA_H_
+#define APP_DATA_H_
 
 #include <gtk/gtk.h>
-#include <gdk/gdkkeysyms.h>
 
-#include <ground_station/gui/AppData.h>
-#include <ground_station/gui/gtkaltimeter.h>
-#include <ground_station/gui/gtkcompass.h>
+class AppData
+{
+public:
 
-struct arg 
-{ 
-   int argc; 
-   char **argv; 
-}; 
+  // **** main window
+  GtkWidget * window;
+  gboolean    ros_param_read;
+  gboolean    widget_created;
+  
+  // **** altimeter
+  GtkWidget * alt;
+  gint        altimeter_step_value;
+  gboolean    altimeter_unit_is_feet;
+  gboolean    altimeter_inv_color;
+  
+  // **** compass
+  GtkWidget * comp;
+  gboolean    compass_inv_color;
 
-void *startGUI (void *);
-void *startROS (void *);
-void chatterCallback(const geometry_msgs::PoseConstPtr&);
+};
 
 #endif

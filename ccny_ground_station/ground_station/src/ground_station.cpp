@@ -20,49 +20,32 @@
 
 #include <ground_station/ground_station.h>
 
-// a supp
-GtkWidget *alt;
-GtkWidget *comp;
-int altimeter_value;
-bool altimeter_unit_is_feet,altimeter_inv_color;
-static gint gb_stop = FALSE;
-gdouble alti = 0;
+AppData *data;
 
-int main (int argc, char **argv)
+void updateAltimeterCallback(const geometry_msgs::PoseConstPtr& msg)
 {
-  struct arg param; 
-  param.argc = argc; 
-  param.argv = argv; 
+	int angle;
 	
-  pthread_t rosThread;
-  pthread_t guiThread;
+	// **** get GTK thread lock
+	gdk_threads_enter ();
+	
+	// **** update altimeter
+	if(IS_GTK_ALTIMETER(data->alt))		
+	{
+		gtk_altimeter_set_alti (GTK_ALTIMETER(data->alt), msg->position.z);
+		gtk_altimeter_redraw (GTK_ALTIMETER(data->alt));
+	}
+	
+	// **** update compass
+	if(IS_GTK_COMPASS(data->comp))		
+	{
+		angle=(int)msg->position.z /10 % 360;
+		gtk_compass_set_angle(GTK_COMPASS(data->comp), angle);
+		gtk_compass_redraw(GTK_COMPASS(data->comp));
+	}
 
-  pthread_create (&rosThread, NULL, startROS, &param);
-  sleep (3);
-  pthread_create (&guiThread, NULL, startGUI, NULL);
-
-  // wait guiThread to continu
-  pthread_join (guiThread, NULL);
-  ros::shutdown ();
-
-  return (0);
-}
-
-
-static void updateAltitudeCallback (GtkAltimeter * alt)
-{
-  alti++;
-  gtk_altimeter_set_alti (alt, alti);
-  gtk_altimeter_redraw (alt);
-}
- 
-void chatterCallback(const geometry_msgs::PoseConstPtr& msg)
-{
-	//if (!gb_stop){
-		//gtk_altimeter_set_alti (GTK_ALTIMETER(alt), msg->position.z);
-		//gtk_altimeter_redraw (GTK_ALTIMETER(alt));
-		//updateAltitudeCallback(GTK_ALTIMETER(alt));
-	//}
+	// **** release GTK thread lock 
+	gdk_threads_leave ();
 }
 
 void *startROS (void * user)
@@ -72,7 +55,6 @@ void *startROS (void * user)
       struct arg *p_arg = (arg*)user; 
 
 		ros::init (p_arg->argc, p_arg->argv, "ground_station");
-
 		ros::NodeHandle n;
 		
 		std::string local_path;
@@ -84,61 +66,104 @@ void *startROS (void * user)
 
 		// **** get parameters
 
-		if (!n_param.getParam("altimeter_unit_is_feet", altimeter_unit_is_feet))
-			altimeter_unit_is_feet = true;
-		ROS_INFO ("\tAltimeter unit is FEET: %d", altimeter_unit_is_feet);
+		if (!n_param.getParam("altimeter_unit_is_feet", data->altimeter_unit_is_feet))
+			data->altimeter_unit_is_feet = true;
+		ROS_INFO ("\tAltimeter unit is FEET: %d", data->altimeter_unit_is_feet);
 		
-		if (!n_param.getParam("altimeter_value", altimeter_value))
-			altimeter_value = 100;
-		ROS_INFO ("\tAltimeter value: %d", altimeter_value);
+		if (!n_param.getParam("altimeter_step_value", data->altimeter_step_value))
+			data->altimeter_step_value = 100;
+		ROS_INFO ("\tAltimeter step value: %d", data->altimeter_step_value);
 		
-		if (!n_param.getParam("altimeter_inv_color", altimeter_inv_color))
-			altimeter_inv_color = false;
-		ROS_INFO ("\tAltimeter color inversed: %d", altimeter_inv_color);
+		if (!n_param.getParam("altimeter_inv_color", data->altimeter_inv_color))
+			data->altimeter_inv_color = false;
+		ROS_INFO ("\tAltimeter color inversed: %d", data->altimeter_inv_color);
 		
-		sleep(10);		
-		ros::Subscriber chatter_sub = n.subscribe("fake_alti", 1, chatterCallback);
-  	
+		// **** allow widget creation
+		data->ros_param_read = true;
+		
+		// **** wait to widget creation
+		while(!data->widget_created)
+		{
+			ROS_DEBUG("Waiting widgets creation");
+	   }
+			
+		// **** topics subscribing
+		ros::Subscriber sub = n.subscribe("fake_alti", 1, updateAltimeterCallback);
+		
 		ROS_INFO ("Spinning");
 		ros::spin ();
+	}
+	
+	// **** stop the gtk main loop
+	if(GTK_IS_WINDOW(data->window))
+	{
+		gtk_main_quit();
 	}
 	pthread_exit (NULL);
 }
 
-
-void *startGUI (void *)
+int main (int argc, char **argv)
 {
-  GtkWidget *window;
   GtkWidget *hbox;
-  int argc = 0;
-  char **argv;
 
+  struct arg param; 
+  param.argc = argc; 
+  param.argv = argv; 
+	
+  pthread_t rosThread;
+  
+  // **** init threads 
+  g_thread_init (NULL);
+  gdk_threads_init ();
+  gdk_threads_enter ();
+ 
+  // **** init gtk 
   gtk_init(&argc, &argv);
+  
+  // **** allocate data structure
+  data = g_slice_new (AppData);
+  
+  // **** create window
+  data->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  gtk_window_set_title(GTK_WINDOW(data->window), "CityFlyer Ground Station");
+  gtk_window_set_position(GTK_WINDOW(data->window), GTK_WIN_POS_CENTER);
+  gtk_window_set_default_size(GTK_WINDOW(data->window), 700, 500);
 
-  window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  gtk_window_set_title(GTK_WINDOW(window), "CityFlyer Ground Station");
-  gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
-  gtk_window_set_default_size(GTK_WINDOW(window), 700, 500);
-
-  g_signal_connect(G_OBJECT(window), "destroy", 
+  g_signal_connect(G_OBJECT(data->window), "destroy", 
        G_CALLBACK(gtk_main_quit), NULL);
 
   hbox = gtk_hbox_new(TRUE, 1);
-  gtk_container_add(GTK_CONTAINER(window), hbox);
+  gtk_container_add(GTK_CONTAINER(data->window), hbox);
+  
+  // **** create ROS thread
+  pthread_create (&rosThread, NULL, startROS, &param);
+  
+  // **** wait ros finish read params
+  while(!data->ros_param_read)
+  {
+	  ROS_DEBUG("Waiting ROS params");
+  }
     
-  alt = gtk_altimeter_new();
-  g_object_set (GTK_ALTIMETER(alt), "inverse-color", 0, "unit-is-feet", 1, "unit-step-value", 100, NULL);
+  // **** create widgets
+  data->alt = gtk_altimeter_new();
+  g_object_set (GTK_ALTIMETER(data->alt), "inverse-color", data->altimeter_inv_color,
+														"unit-is-feet", data->altimeter_unit_is_feet,
+														"unit-step-value", data->altimeter_step_value,
+														NULL);
 
-  comp = gtk_compass_new();
-  g_object_set (GTK_COMPASS(comp), "inverse-color", 0, NULL);
+  data->comp = gtk_compass_new();
+  g_object_set (GTK_COMPASS(data->comp), "inverse-color", 0, NULL);
   
-  gtk_box_pack_start(GTK_BOX(hbox), GTK_WIDGET(alt), TRUE, TRUE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), GTK_WIDGET(comp), TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(hbox), GTK_WIDGET(data->alt), TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(hbox), GTK_WIDGET(data->comp), TRUE, TRUE, 0);
 
-  gtk_widget_show_all(window);
-    g_timeout_add (100, (GSourceFunc) updateAltitudeCallback, alt);
+  gtk_widget_show_all(data->window);
   
-  gtk_main();
-
-  pthread_exit (NULL);
+  // **** allow ROS spinning
+  data->widget_created = true;
+    
+  gtk_main(); 
+  gdk_threads_leave ();
+  return 0;
 }
+

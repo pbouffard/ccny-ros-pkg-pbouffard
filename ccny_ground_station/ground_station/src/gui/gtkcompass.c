@@ -273,8 +273,6 @@ static void gtk_compass_draw (GtkWidget * comp)
   double rec_aspect, rec_corner_radius, rec_radius, radius;
   double x0,y0,x1,y1,x2,y2,x3,y3;
   double plane_scale;
-  char str[GTK_COMPASS_MAX_STRING];
-  int i, factor;
 
   x = comp->allocation.width / 2;
   y = comp->allocation.height / 2;
@@ -346,7 +344,7 @@ static void gtk_compass_draw (GtkWidget * comp)
 	cairo_pattern_destroy (pat);
 	cairo_stroke (priv->cr);
 
-	plane_scale=0.8;
+	plane_scale=1;
 	// plane drawing
 	// nez
 	cairo_new_sub_path (priv->cr);
@@ -504,13 +502,13 @@ static void gtk_compass_draw_digital (GtkWidget * comp)
                                CAIRO_FONT_WEIGHT_NORMAL);
       cairo_set_font_size (priv->cr, 0.20*radius);
 		inset = 0.15*radius;
-		cairo_move_to (priv->cr,x-0.069*radius+(radius-inset)*cos(i*M_PI/6-3*M_PI/6+priv->angle),
-								y+0.07*radius+(radius-inset)*sin(i*M_PI/6-3*M_PI/6+priv->angle));
+		cairo_move_to (priv->cr,x-0.069*radius+(radius-inset)*cos(i*M_PI/6-3*M_PI/6-DEG2RAD(priv->angle)),
+								y+0.07*radius+(radius-inset)*sin(i*M_PI/6-3*M_PI/6-DEG2RAD(priv->angle)));
 		if(!priv->color_mode_inv) cairo_set_source_rgb(priv->cr, 1., 1., 0);
 		else cairo_set_source_rgb (priv->cr, 1-0.88, 1-0.88, 1-0.);
 	
 		//cairo_save (priv->cr);
-      //cairo_rotate (priv->cr,priv->angle);
+      //cairo_rotate (priv->cr,-DEG2RAD(priv->angle));
     	switch(i)
 		{
 			case 0:
@@ -571,10 +569,10 @@ static void gtk_compass_draw_digital (GtkWidget * comp)
 			else cairo_set_source_rgb (priv->cr, 0., 0., 0.);
 		}
 		
-		cairo_move_to (priv->cr,x+(radius-inset)*cos(i*M_PI/18+priv->angle),
-								y+(radius-inset)*sin(i*M_PI/18+priv->angle));
-		cairo_line_to (priv->cr,x+radius*cos(i*M_PI/18+priv->angle),
-								y+radius*sin(i*M_PI/18+priv->angle));
+		cairo_move_to (priv->cr,x+(radius-inset)*cos(i*M_PI/18-DEG2RAD(priv->angle)),
+								y+(radius-inset)*sin(i*M_PI/18-DEG2RAD(priv->angle)));
+		cairo_line_to (priv->cr,x+radius*cos(i*M_PI/18-DEG2RAD(priv->angle)),
+								y+radius*sin(i*M_PI/18-DEG2RAD(priv->angle)));
 		cairo_stroke (priv->cr);
 		cairo_restore (priv->cr);
 	}
