@@ -29,18 +29,18 @@ public:
 
   // **** main window
   GtkWidget * window;
-  gboolean    ros_param_read;
-  gboolean    widget_created;
-  
+  gboolean ros_param_read;
+  gboolean widget_created;
+
   // **** altimeter
-  GtkWidget * alt;
-  gint        altimeter_step_value;
-  gboolean    altimeter_unit_is_feet;
-  gboolean    altimeter_inv_color;
-  
+  GtkWidget *alt;
+  gint altimeter_step_value;
+  gboolean altimeter_unit_is_feet;
+  gboolean altimeter_inv_color;
+
   // **** compass
-  GtkWidget * comp;
-  gboolean    compass_inv_color;
+  GtkWidget *comp;
+  gboolean compass_inv_color;
 
 };
 

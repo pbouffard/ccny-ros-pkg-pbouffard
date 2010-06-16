@@ -30,8 +30,7 @@
 #define GTK_ALTIMETER_MODEL_X 300
 #define GTK_ALTIMETER_MODEL_Y 300
 
-G_BEGIN_DECLS 
-typedef struct _GtkAltimeterClass
+G_BEGIN_DECLS typedef struct _GtkAltimeterClass
 {
   GtkDrawingAreaClass parent_class;
 
@@ -53,9 +52,9 @@ typedef struct _GtkAltimeter
 
 
 extern GType gtk_altimeter_get_type (void) G_GNUC_CONST;
-extern GtkWidget *gtk_altimeter_new (void);
-extern void gtk_altimeter_set_alti (GtkAltimeter * alt, gdouble alti);
-extern void gtk_altimeter_redraw (GtkAltimeter * alt);
+     extern GtkWidget *gtk_altimeter_new (void);
+     extern void gtk_altimeter_set_alti (GtkAltimeter * alt, gdouble alti);
+     extern void gtk_altimeter_redraw (GtkAltimeter * alt);
 
 G_END_DECLS
 #endif

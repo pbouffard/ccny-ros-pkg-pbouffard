@@ -23,16 +23,16 @@
 
 #include <gtk/gtk.h>
 #include <glib-object.h>
+#include <cairo-svg.h>
 #include <math.h>
 #include <time.h>
 
-#define GTK_COMPASS_MAX_STRING  256   /* Size of a text string */
+#define GTK_COMPASS_MAX_STRING  256     /* Size of a text string */
 #define GTK_COMPASS_MODEL_X 300
 #define GTK_COMPASS_MODEL_Y 300
-#define DEG2RAD(DEG) ((DEG)*((M_PI)/(180.0))) 
+#define DEG2RAD(DEG) ((DEG)*((M_PI)/(180.0)))
 
-G_BEGIN_DECLS 
-typedef struct _GtkCompassClass
+G_BEGIN_DECLS typedef struct _GtkCompassClass
 {
   GtkDrawingAreaClass parent_class;
 
@@ -54,9 +54,9 @@ typedef struct _GtkCompass
 
 
 extern GType gtk_compass_get_type (void) G_GNUC_CONST;
-extern GtkWidget *gtk_compass_new (void);
-extern void gtk_compass_redraw (GtkCompass * comp);
-extern void gtk_compass_set_angle (GtkCompass * comp, gdouble ang);
+     extern GtkWidget *gtk_compass_new (void);
+     extern void gtk_compass_redraw (GtkCompass * comp);
+     extern void gtk_compass_set_angle (GtkCompass * comp, gdouble ang);
 
 
 G_END_DECLS

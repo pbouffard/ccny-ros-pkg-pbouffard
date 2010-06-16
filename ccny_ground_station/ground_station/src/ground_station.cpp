@@ -149,10 +149,13 @@ int main (int argc, char **argv)
   g_object_set (GTK_ALTIMETER(data->alt), "inverse-color", data->altimeter_inv_color,
 														"unit-is-feet", data->altimeter_unit_is_feet,
 														"unit-step-value", data->altimeter_step_value,
+														"radial_color", 1,
 														NULL);
 
   data->comp = gtk_compass_new();
-  g_object_set (GTK_COMPASS(data->comp), "inverse-color", 0, NULL);
+  g_object_set (GTK_COMPASS(data->comp), "inverse-color", 0,
+													  "radial_color", 1,
+														NULL);
   
   gtk_box_pack_start(GTK_BOX(hbox), GTK_WIDGET(data->alt), TRUE, TRUE, 0);
   gtk_box_pack_start(GTK_BOX(hbox), GTK_WIDGET(data->comp), TRUE, TRUE, 0);

@@ -38,14 +38,14 @@
 #include <ground_station/gui/gtkaltimeter.h>
 #include <ground_station/gui/gtkcompass.h>
 
-struct arg 
-{ 
-   int argc; 
-   char **argv; 
-}; 
+struct arg
+{
+  int argc;
+  char **argv;
+};
 
 void *startGUI (void *);
 void *startROS (void *);
-void chatterCallback(const geometry_msgs::PoseConstPtr&);
+void chatterCallback (const geometry_msgs::PoseConstPtr &);
 
 #endif
