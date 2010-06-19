@@ -62,15 +62,6 @@ namespace asctec
     ROS_DEBUG ("Telemetry::buildRequest()");
     for (int i = 0; i < REQUEST_TYPES; i++)
     {
-/*
-      if (requestInterval_[i] != 0) {
-        ROS_INFO("requestInterval_[i] = %d", requestInterval_[i]);
-        ROS_INFO("requestCount_ = %d", requestCount_);
-        ROS_INFO("requestOffset_[i] = %d", requestOffset_[i]);
-        ROS_INFO("REQUEST_BITMASK[i] = %04X", REQUEST_BITMASK[i]);
-        ROS_INFO("output = %d", ((requestCount_ - requestOffset_[i]) % requestInterval_[i] == 0));
-      }
-*/
       if (requestInterval_[i] != 0 && ((requestCount_ - requestOffset_[i]) % requestInterval_[i] == 0))
         requestPackets_ |= REQUEST_BITMASK[i];
     }
@@ -78,12 +69,39 @@ namespace asctec
 
   void Telemetry::enablePolling (RequestType msg, uint8_t interval, uint8_t offset)
   {
+    ros::NodeHandle n;
+    switch (msg)
+    {
+      case RequestTypes::LL_STATUS:
+        requestPublisher_[msg] = n.advertise<asctec_autopilot::LLStatus>(requestToString(msg).c_str(), 10);
+        break;
+//      case RequestTypes::IMU_RAWDATA: {
+      case RequestTypes::IMU_CALCDATA:
+        requestPublisher_[msg] = n.advertise<asctec_autopilot::IMUCalcData>(requestToString(msg).c_str(), 10);
+        break;
+//      case RequestTypes::RC_DATA:    {
+    }
+    
+	  ROS_INFO("Publishing %s data on topic: %s", requestToString(msg).c_str(),requestToString(msg).c_str ()); 
     ROS_DEBUG ("Telemetry::enablePolling()");
     requestInterval_[msg] = interval;
     requestOffset_[msg] = offset;
     pollingEnabled_ = true;
   }
-  
+
+std::string Telemetry::requestToString(RequestTypes::RequestType t)
+{
+   switch (t)
+   {
+      case RequestTypes::LL_STATUS:    { return "LL_STATUS";    }
+      case RequestTypes::IMU_RAWDATA:    { return "IMU_RAWDATA";    }
+      case RequestTypes::IMU_CALCDATA:    { return "IMU_CALCDATA";    }
+      case RequestTypes::RC_DATA:    { return "RC_DATA";    }
+   }
+   return "Unknown";
+}
+
+
   void Telemetry::dumpLL_STATUS() {
     ROS_INFO("LL_STATUS");
     ROS_INFO("--------------------------------");

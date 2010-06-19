@@ -46,6 +46,7 @@ namespace asctec
       ROS_INFO ("Initializing serial port...");
 
       dev_ = fopen (serialport_name_.c_str (), "w+");
+      ROS_DEBUG ("dev: %d", (int)dev_);
       ROS_ASSERT_MSG (dev_ != NULL, "Failed to open serial port: %s", serialport_name_.c_str ());
 
       ROS_ASSERT_MSG (tcgetattr (fileno (dev_), &tio) == 0, "Unknown Error: %s", strerror (errno));
@@ -149,6 +150,7 @@ namespace asctec
     i = fread (stoken, sizeof (char), 3, dev_);
     if (i == 0 || strncmp (stoken, ">*>", 3) != 0)
     {
+      ROS_DEBUG ("dev: %d", (int)dev_);
       ROS_ERROR ("Error Reading Packet Header: %s", strerror (errno));
       ROS_DEBUG ("Read (%d): %s", i, stoken);
       flush ();
@@ -254,6 +256,16 @@ namespace asctec
           }
           telemetry->dumpLL_STATUS();
         }
+        else if (packet_type == Telemetry::PD_IMURAWDATA)
+        {
+          ROS_DEBUG ("Packet type is IMU_RAWDATA");
+          memcpy (&telemetry->IMU_RAWDATA_, spacket, packet_size);
+          if (crc_valid (packet_crc,&telemetry->IMU_RAWDATA_, packet_size)) {
+            result = true;
+            ROS_DEBUG ("Valid CRC!!");
+          }
+          telemetry->dumpIMU_RAWDATA();
+        }
         else if (packet_type == Telemetry::PD_IMUCALCDATA)
         {
           ROS_DEBUG ("Packet type is IMU_CALCDATA");
@@ -263,6 +275,16 @@ namespace asctec
             ROS_DEBUG ("Valid CRC!!");
           }
           telemetry->dumpIMU_CALCDATA();
+        }
+        else if (packet_type == Telemetry::PD_RCDATA)
+        {
+          ROS_DEBUG ("Packet type is RC_DATA");
+          memcpy (&telemetry->RC_DATA_, spacket, packet_size);
+          if (crc_valid (packet_crc,&telemetry->RC_DATA_, packet_size)) {
+            result = true;
+            ROS_DEBUG ("Valid CRC!!");
+          }
+          telemetry->dumpRC_DATA();
         }
         else
         {

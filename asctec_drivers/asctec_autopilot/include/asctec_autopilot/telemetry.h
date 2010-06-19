@@ -22,6 +22,9 @@
 #ifndef ASCTEC_AUTOPILOT_TELEMETRY_H
 #define ASCTEC_AUTOPILOT_TELEMETRY_H
 
+#include "asctec_autopilot/IMUCalcData.h"
+#include "asctec_autopilot/LLStatus.h"
+
 namespace asctec
 {
   namespace RequestTypes
@@ -40,6 +43,7 @@ namespace asctec
     };
   }
   typedef RequestTypes::RequestType RequestType;
+
 
 /**
  * \brief Telemetry interface for the AscTec AutoPilot.
@@ -101,6 +105,7 @@ namespace asctec
    * \return Void.
    */
     void enablePolling (RequestType msg, uint8_t interval = 1, uint8_t offset = 0);
+    std::string requestToString(RequestTypes::RequestType t);
     
     void dumpLL_STATUS();
     void dumpIMU_RAWDATA();
@@ -119,6 +124,7 @@ namespace asctec
     uint16_t REQUEST_BITMASK[REQUEST_TYPES];
     uint8_t requestInterval_[REQUEST_TYPES];
     uint8_t requestOffset_[REQUEST_TYPES];
+    ros::Publisher requestPublisher_[REQUEST_TYPES];
 
     //packet descriptors
     static const uint8_t PD_IMURAWDATA = 0x01;
