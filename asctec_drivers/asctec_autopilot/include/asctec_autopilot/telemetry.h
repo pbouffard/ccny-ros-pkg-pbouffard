@@ -106,11 +106,17 @@ namespace asctec
    */
     void enablePolling (RequestType msg, uint8_t interval = 1, uint8_t offset = 0);
     std::string requestToString(RequestTypes::RequestType t);
+    void publishPackets();
     
     void dumpLL_STATUS();
     void dumpIMU_RAWDATA();
     void dumpIMU_CALCDATA();
     void dumpRC_DATA();
+
+    void copyLL_STATUS();
+//    void copyIMU_RAWDATA();
+    void copyIMU_CALCDATA();
+//    void copyRC_DATA();
     
     bool pollingEnabled_;
     uint16_t requestCount_;
@@ -369,6 +375,8 @@ You will receive an acknowledge if a command or a waypoint was received correctl
     struct GPS_DATA GPS_DATA_;
     struct WAYPOINT WAYPOINT_;
     struct GPS_DATA_ADVANCED GPS_DATA_ADVANCED_;
+    asctec_autopilot::LLStatus LLStatus_;
+    asctec_autopilot::IMUCalcData IMUCalcData_;
     
   };                            // end class Telemetry
 }                               //end namespace asctec

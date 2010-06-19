@@ -60,10 +60,34 @@ namespace asctec
   void Telemetry::buildRequest ()
   {
     ROS_DEBUG ("Telemetry::buildRequest()");
+    // Clear previous packet request
+    requestPackets_ ^= requestPackets_;
     for (int i = 0; i < REQUEST_TYPES; i++)
     {
       if (requestInterval_[i] != 0 && ((requestCount_ - requestOffset_[i]) % requestInterval_[i] == 0))
         requestPackets_ |= REQUEST_BITMASK[i];
+    }
+  }
+  void Telemetry::publishPackets()
+  {
+    for (int i = 0; i < REQUEST_TYPES; i++)
+    {
+      if (requestInterval_[i] != 0 && ((requestCount_ - requestOffset_[i]) % requestInterval_[i] == 0))
+      {
+        switch (i)
+        {
+          case RequestTypes::LL_STATUS:
+            copyLL_STATUS();
+            requestPublisher_[i].publish(LLStatus_);
+            break;
+          case RequestTypes::IMU_CALCDATA:
+            copyIMU_CALCDATA();
+            requestPublisher_[i].publish(IMUCalcData_);
+            break;
+          default:
+            ROS_DEBUG("Unable to publish unknown type");
+        }
+      }
     }
   }
 
@@ -116,6 +140,18 @@ std::string Telemetry::requestToString(RequestTypes::RequestType t)
     ROS_INFO("flightMode:%d",LL_STATUS_.flightMode);
     ROS_INFO("up_time:%d",LL_STATUS_.up_time);
   }
+  void Telemetry::copyLL_STATUS() {
+    LLStatus_.battery_voltage_1 =  LL_STATUS_.battery_voltage_1;
+    LLStatus_.battery_voltage_2 = LL_STATUS_.battery_voltage_2;
+    LLStatus_.status = LL_STATUS_.status;
+    LLStatus_.cpu_load = LL_STATUS_.cpu_load;
+    LLStatus_.compass_enabled = LL_STATUS_.compass_enabled;
+    LLStatus_.chksum_error = LL_STATUS_.chksum_error;
+    LLStatus_.flying = LL_STATUS_.flying;
+    LLStatus_.motors_on = LL_STATUS_.motors_on;
+    LLStatus_.flightMode = LL_STATUS_.flightMode;
+    LLStatus_.up_time = LL_STATUS_.up_time;
+  }
   void Telemetry::dumpIMU_RAWDATA() {
     ROS_INFO("IMU_RAWDATA");
     ROS_INFO("--------------------------------");
@@ -161,6 +197,34 @@ std::string Telemetry::requestToString(RequestTypes::RequestType t)
     ROS_INFO("dheight:%d",IMU_CALCDATA_.dheight);
     ROS_INFO("dheight_reference:%d",IMU_CALCDATA_.dheight_reference);
     ROS_INFO("height_reference:%d",IMU_CALCDATA_.height_reference);
+  }
+  void Telemetry::copyIMU_CALCDATA() {
+    IMUCalcData_.angle_nick = IMU_CALCDATA_.angle_nick;
+    IMUCalcData_.angle_roll = IMU_CALCDATA_.angle_roll;
+    IMUCalcData_.angle_yaw = IMU_CALCDATA_.angle_yaw;
+    IMUCalcData_.angvel_nick = IMU_CALCDATA_.angvel_nick;
+    IMUCalcData_.angvel_roll = IMU_CALCDATA_.angvel_roll;
+    IMUCalcData_.angvel_yaw = IMU_CALCDATA_.angvel_yaw;
+    IMUCalcData_.acc_x_calib = IMU_CALCDATA_.acc_x_calib;
+    IMUCalcData_.acc_y_calib = IMU_CALCDATA_.acc_y_calib;
+    IMUCalcData_.acc_z_calib = IMU_CALCDATA_.acc_z_calib;
+    IMUCalcData_.acc_x = IMU_CALCDATA_.acc_x;
+    IMUCalcData_.acc_y = IMU_CALCDATA_.acc_y;
+    IMUCalcData_.acc_z = IMU_CALCDATA_.acc_z;
+    IMUCalcData_.acc_angle_nick = IMU_CALCDATA_.acc_angle_nick;
+    IMUCalcData_.acc_angle_roll = IMU_CALCDATA_.acc_angle_roll;
+    IMUCalcData_.acc_absolute_value = IMU_CALCDATA_.acc_absolute_value;
+    IMUCalcData_.Hx = IMU_CALCDATA_.Hx;
+    IMUCalcData_.Hy = IMU_CALCDATA_.Hy;
+    IMUCalcData_.Hz = IMU_CALCDATA_.Hz;
+    IMUCalcData_.mag_heading = IMU_CALCDATA_.mag_heading;
+    IMUCalcData_.speed_x = IMU_CALCDATA_.speed_x;
+    IMUCalcData_.speed_y = IMU_CALCDATA_.speed_y;
+    IMUCalcData_.speed_z = IMU_CALCDATA_.speed_z;
+    IMUCalcData_.height = IMU_CALCDATA_.height;
+    IMUCalcData_.dheight = IMU_CALCDATA_.dheight;
+    IMUCalcData_.dheight_reference = IMU_CALCDATA_.dheight_reference;
+    IMUCalcData_.height_reference = IMU_CALCDATA_.height_reference;
   }
   void Telemetry::dumpRC_DATA() {
     ROS_INFO("RC_DATA");

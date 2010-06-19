@@ -61,10 +61,10 @@ namespace asctec
   void AutoPilot::spin (const ros::TimerEvent & e)
   {
     ROS_DEBUG("spin()");
-    tele_->requestPackets_ ^= tele_->requestPackets_;
     tele_->buildRequest ();
     tele_->requestCount_++;
     serialInterface_->getPackets(tele_);
+    tele_->publishPackets();
   }
 
 }
