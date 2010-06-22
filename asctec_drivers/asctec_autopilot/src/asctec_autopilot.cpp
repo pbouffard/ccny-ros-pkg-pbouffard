@@ -35,6 +35,8 @@
 #include "asctec_autopilot/autopilot.h"
 #include "asctec_autopilot/telemetry.h"
 #include "asctec_autopilot/serialinterface.h"
+#include "asctec_autopilot/IMUCalcData.h"
+#include "asctec_autopilot/LLStatus.h"
 
 namespace asctec
 {
@@ -59,10 +61,10 @@ namespace asctec
   void AutoPilot::spin (const ros::TimerEvent & e)
   {
     ROS_DEBUG("spin()");
-    tele_->requestPackets_ ^= tele_->requestPackets_;
     tele_->buildRequest ();
     tele_->requestCount_++;
     serialInterface_->getPackets(tele_);
+    tele_->publishPackets();
   }
 
 }
@@ -70,7 +72,7 @@ namespace asctec
 
 int main (int argc, char **argv)
 {
-  ros::init (argc, argv, "publisher");
+  ros::init (argc, argv, "autopilot");
   ros::NodeHandle n;
 //  ros::Publisher calcdataPublisher;
 //  calcdataPublisher = n.advertise <asctec_autopilot::IMUCalcdata >("PelicanIMUCalcdata", 100);
