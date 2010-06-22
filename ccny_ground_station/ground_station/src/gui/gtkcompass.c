@@ -104,14 +104,14 @@ static void gtk_compass_class_init (GtkCompassClass * klass)
 
   g_object_class_install_property (obj_class,
                                    PROP_INVERSED_COLOR,
-                                   g_param_spec_int ("inverse-color",
-                                                     "inverse or not the widget color",
-                                                     "inverse or not the widget color", 0, 1, 0, G_PARAM_WRITABLE));
+                                   g_param_spec_boolean ("inverse-color",
+                                                         "inverse or not the widget color",
+                                                         "inverse or not the widget color", FALSE, G_PARAM_WRITABLE));
   g_object_class_install_property (obj_class,
                                    PROP_RADIAL_COLOR,
-                                   g_param_spec_int ("radial_color",
-                                                     "the widget use radial color",
-                                                     "the widget use radial color", 0, 1, 1, G_PARAM_WRITABLE));
+                                   g_param_spec_boolean ("radial_color",
+                                                         "the widget use radial color",
+                                                         "the widget use radial color", TRUE, G_PARAM_WRITABLE));
   return;
 }
 
@@ -130,6 +130,8 @@ static void gtk_compass_init (GtkCompass * comp)
   gtk_widget_add_events (GTK_WIDGET (comp), GDK_BUTTON_PRESS_MASK |
                          GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK);
   priv->b_mouse_onoff = FALSE;
+  priv->color_mode_inv = FALSE;
+  priv->radial_color = TRUE;
 
   priv->bg_color_bounderie.red = 6553.5;        // 0.1 cairo
   priv->bg_color_bounderie.green = 6553.5;
@@ -320,7 +322,8 @@ static void gtk_compass_draw (GtkWidget * comp)
   cairo_arc (priv->cr, rec_x0 + rec_radius, rec_y0 + rec_radius, rec_radius, 180 * rec_degrees, 270 * rec_degrees);
   cairo_close_path (priv->cr);
 
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
+      || ((!priv->radial_color) && (!priv->color_mode_inv)))
   {
     if (!priv->color_mode_inv)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
@@ -364,7 +367,8 @@ static void gtk_compass_draw (GtkWidget * comp)
   radius = radius - 0.1 * radius;
   cairo_arc (priv->cr, x, y, radius, 0, 2 * M_PI);
 
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
+      || ((!priv->radial_color) && (!priv->color_mode_inv)))
   {
     if (!priv->color_mode_inv)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_compass.red / 65535,
@@ -414,7 +418,7 @@ static void gtk_compass_draw_svg_file (GtkWidget * comp)
   g_return_if_fail (IS_GTK_COMPASS (comp));
 
   priv = GTK_COMPASS_GET_PRIVATE (comp);
-  
+
   // next release
 }
 
@@ -878,16 +882,10 @@ static void gtk_compass_set_property (GObject * object, guint prop_id, const GVa
   switch (prop_id)
   {
     case PROP_INVERSED_COLOR:
-      if (g_value_get_int (value) == 0)
-        priv->color_mode_inv = FALSE;
-      else
-        priv->color_mode_inv = TRUE;
+      priv->color_mode_inv = g_value_get_boolean (value);
       break;
     case PROP_RADIAL_COLOR:
-      if (g_value_get_int (value) == 0)
-        priv->radial_color = FALSE;
-      else
-        priv->radial_color = TRUE;
+      priv->radial_color = g_value_get_boolean (value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);

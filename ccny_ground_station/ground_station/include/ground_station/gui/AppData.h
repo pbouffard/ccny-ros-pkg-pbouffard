@@ -42,6 +42,14 @@ public:
   GtkWidget *comp;
   gboolean compass_inv_color;
 
+  // **** battery gauge
+  GtkWidget *battery;
+  gboolean battery_gauge_inv_color;
+
+  // **** velocity gauge
+  GtkWidget *vel;
+  gboolean velocity_gauge_inv_color;
+
 };
 
 #endif

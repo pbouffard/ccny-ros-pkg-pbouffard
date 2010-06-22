@@ -106,15 +106,15 @@ static void gtk_altimeter_class_init (GtkAltimeterClass * klass)
 
   g_object_class_install_property (obj_class,
                                    PROP_INVERSED_COLOR,
-                                   g_param_spec_int ("inverse-color",
-                                                     "inverse or not the widget color",
-                                                     "inverse or not the widget color", 0, 1, 0, G_PARAM_WRITABLE));
+                                   g_param_spec_boolean ("inverse-color",
+                                                         "inverse or not the widget color",
+                                                         "inverse or not the widget color", FALSE, G_PARAM_WRITABLE));
   g_object_class_install_property (obj_class,
                                    PROP_UNIT_IS_FEET,
-                                   g_param_spec_int ("unit-is-feet",
-                                                     "set the altimeter unit to feet or meter",
-                                                     "set the altimeter unit to feet or meter",
-                                                     0, 1, 1, G_PARAM_WRITABLE));
+                                   g_param_spec_boolean ("unit-is-feet",
+                                                         "set the altimeter unit to feet or meter",
+                                                         "set the altimeter unit to feet or meter",
+                                                         TRUE, G_PARAM_WRITABLE));
   g_object_class_install_property (obj_class,
                                    PROP_UNIT_STEP_VALUE,
                                    g_param_spec_int ("unit-step-value",
@@ -123,9 +123,9 @@ static void gtk_altimeter_class_init (GtkAltimeterClass * klass)
                                                      1, 100, 100, G_PARAM_WRITABLE));
   g_object_class_install_property (obj_class,
                                    PROP_RADIAL_COLOR,
-                                   g_param_spec_int ("radial_color",
-                                                     "the widget use radial color",
-                                                     "the widget use radial color", 0, 1, 1, G_PARAM_WRITABLE));
+                                   g_param_spec_boolean ("radial_color",
+                                                         "the widget use radial color",
+                                                         "the widget use radial color", TRUE, G_PARAM_WRITABLE));
   return;
 }
 
@@ -144,6 +144,8 @@ static void gtk_altimeter_init (GtkAltimeter * alt)
   gtk_widget_add_events (GTK_WIDGET (alt), GDK_BUTTON_PRESS_MASK |
                          GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK);
   priv->b_mouse_onoff = FALSE;
+  priv->color_mode_inv = FALSE;
+  priv->radial_color = TRUE;
 
   priv->bg_color_bounderie.red = 6553.5;        // 0.1 cairo
   priv->bg_color_bounderie.green = 6553.5;
@@ -157,7 +159,7 @@ static void gtk_altimeter_init (GtkAltimeter * alt)
   priv->bg_radial_color_begin_bounderie.red = 13107;    // 0.2 cairo
   priv->bg_radial_color_begin_bounderie.green = 13107;
   priv->bg_radial_color_begin_bounderie.blue = 13107;
-  priv->bg_radial_color_begin_altimeter.red = 45874.5;    // 0.7 cairo
+  priv->bg_radial_color_begin_altimeter.red = 45874.5;  // 0.7 cairo
   priv->bg_radial_color_begin_altimeter.green = 45874.5;
   priv->bg_radial_color_begin_altimeter.blue = 45874.5;
   return;
@@ -335,7 +337,8 @@ static void gtk_altimeter_draw (GtkWidget * alt)
   cairo_arc (priv->cr, rec_x0 + rec_radius, rec_y0 + rec_radius, rec_radius, 180 * rec_degrees, 270 * rec_degrees);
   cairo_close_path (priv->cr);
 
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
+      || ((!priv->radial_color) && (!priv->color_mode_inv)))
   {
     if (!priv->color_mode_inv)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
@@ -378,7 +381,8 @@ static void gtk_altimeter_draw (GtkWidget * alt)
   cairo_set_line_width (priv->cr, 0.01 * radius);
   radius = radius - 0.1 * radius;
   cairo_arc (priv->cr, x, y, radius, 0, 2 * M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
+      || ((!priv->radial_color) && (!priv->color_mode_inv)))
   {
     if (!priv->color_mode_inv)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_altimeter.red / 65535,
@@ -412,7 +416,8 @@ static void gtk_altimeter_draw (GtkWidget * alt)
   cairo_stroke (priv->cr);
 
   cairo_arc (priv->cr, x, y, radius - 0.07 * radius, 0, 2 * M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
+      || ((!priv->radial_color) && (!priv->color_mode_inv)))
   {
     if (!priv->color_mode_inv)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_altimeter.red / 65535,
@@ -465,7 +470,8 @@ static void gtk_altimeter_draw (GtkWidget * alt)
   cairo_move_to (priv->cr, x - 0.1 * radius, y);
   cairo_line_to (priv->cr, x + 0.5 * radius, y + 0.6 * radius);
 
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
+      || ((!priv->radial_color) && (!priv->color_mode_inv)))
   {
     if (!priv->color_mode_inv)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_altimeter.red / 65535,
@@ -1121,25 +1127,16 @@ static void gtk_altimeter_set_property (GObject * object, guint prop_id, const G
   switch (prop_id)
   {
     case PROP_INVERSED_COLOR:
-      if (g_value_get_int (value) == 0)
-        priv->color_mode_inv = FALSE;
-      else
-        priv->color_mode_inv = TRUE;
+      priv->color_mode_inv = g_value_get_boolean (value);
       break;
     case PROP_UNIT_IS_FEET:
-      if (g_value_get_int (value) == 0)
-        priv->unit_is_feet = FALSE;
-      else
-        priv->unit_is_feet = TRUE;
+      priv->unit_is_feet = g_value_get_boolean (value);
       break;
     case PROP_UNIT_STEP_VALUE:
       priv->unit_value = g_value_get_int (value);
       break;
     case PROP_RADIAL_COLOR:
-      if (g_value_get_int (value) == 0)
-        priv->radial_color = FALSE;
-      else
-        priv->radial_color = TRUE;
+      priv->radial_color = g_value_get_boolean (value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
