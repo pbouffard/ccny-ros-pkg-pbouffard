@@ -138,7 +138,7 @@ static void gtk_gauge_class_init (GtkGaugeClass * klass)
                                                          "inverse or not the widget color", FALSE, G_PARAM_WRITABLE));
   g_object_class_install_property (obj_class,
                                    PROP_RADIAL_COLOR,
-                                   g_param_spec_boolean ("radial_color",
+                                   g_param_spec_boolean ("radial-color",
                                                          "the widget use radial color",
                                                          "the widget use radial color", TRUE, G_PARAM_WRITABLE));
   g_object_class_install_property (obj_class,
@@ -518,7 +518,7 @@ static void gtk_gauge_draw (GtkWidget * gauge)
   else if (!g_strcmp0 (priv->strip_color_order, "GYR"))
   {
     strip_c_order = 1;
-    if ((priv->yellow_strip_start == -1) || (priv->orange_strip_start == -1) || (priv->red_strip_start == -1))
+    if ((priv->yellow_strip_start == -1) || (priv->green_strip_start == -1) || (priv->red_strip_start == -1))
     {
       priv->green_strip_start = 0;
       priv->yellow_strip_start = priv->end_value / 3;
@@ -538,7 +538,7 @@ static void gtk_gauge_draw (GtkWidget * gauge)
   else if (!g_strcmp0 (priv->strip_color_order, "RYG"))
   {
     strip_c_order = 3;
-    if ((priv->yellow_strip_start == -1) || (priv->orange_strip_start == -1) || (priv->red_strip_start == -1))
+    if ((priv->yellow_strip_start == -1) || (priv->green_strip_start == -1) || (priv->red_strip_start == -1))
     {
       priv->red_strip_start = 0;
       priv->yellow_strip_start = priv->end_value / 3;

@@ -49,6 +49,10 @@ public:
   // **** velocity gauge
   GtkWidget *vel;
   gboolean velocity_gauge_inv_color;
+  
+  // **** bar gauge widget
+  GtkWidget * bg;
+  gboolean bg_inv_color;
 
 };
 

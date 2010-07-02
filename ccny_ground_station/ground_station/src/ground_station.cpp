@@ -21,8 +21,7 @@
 #include <ground_station/ground_station.h>
 
 AppData *data;
-double value_vel = 0, value_batt = 0;
-
+double value_vel = 0, value_batt = 0, val =100,val2=12;
 
 void updateAltimeterCallback (const geometry_msgs::PoseConstPtr & msg)
 {
@@ -46,21 +45,35 @@ void updateAltimeterCallback (const geometry_msgs::PoseConstPtr & msg)
     gtk_compass_redraw (GTK_COMPASS (data->comp));
   }
 
-  //~ if(IS_GTK_GAUGE(data->vel))         
-  //~ {
-  //~ if(value_vel/10 <74)        value_vel=value_vel+11;
-  //~ else if(value_vel/10>50) value_vel=value_vel-11;
-  //~ gtk_gauge_set_value(GTK_GAUGE(data->vel), value_vel/10);
-  //~ gtk_gauge_redraw(GTK_GAUGE(data->vel));
-  //~ }
-  //~ 
-  //~ if(IS_GTK_GAUGE(data->battery))             
-  //~ {
-  //~ if(value_batt/10 <9)        value_batt++;
-  //~ else if(value_vel/10>12) value_batt--;
-  //~ gtk_gauge_set_value(GTK_GAUGE(data->battery), value_batt/10);
-  //~ gtk_gauge_redraw(GTK_GAUGE(data->battery));
-  //~ }
+  // **** update gauge
+  if(IS_GTK_GAUGE(data->vel))         
+  {
+  if(value_vel/10 <74)        value_vel=value_vel+11;
+  else if(value_vel/10>50) value_vel=value_vel-11;
+  gtk_gauge_set_value(GTK_GAUGE(data->vel), value_vel/10);
+  gtk_gauge_redraw(GTK_GAUGE(data->vel));
+  }
+  
+  // **** update gauge
+  if(IS_GTK_GAUGE(data->battery))             
+  {
+  if(value_batt/10 <9)        value_batt++;
+  else if(value_vel/10>12) value_batt--;
+  gtk_gauge_set_value(GTK_GAUGE(data->battery), value_batt/10);
+  gtk_gauge_redraw(GTK_GAUGE(data->battery));
+  }
+    
+  // **** update bar gauge
+  if(IS_GTK_BAR_GAUGE(data->bg))             
+  {
+  val--;
+  if(val==0) val = 100;
+  val2=val2-0.01;
+  if(val2<=0) val2 = 12;
+  gtk_bar_gauge_set_value(GTK_BAR_GAUGE(data->bg),1, val2);
+  gtk_bar_gauge_set_value(GTK_BAR_GAUGE(data->bg),2, val);
+  gtk_bar_gauge_redraw(GTK_BAR_GAUGE(data->bg));
+  }
 
   // **** release GTK thread lock 
   gdk_threads_leave ();
@@ -169,47 +182,82 @@ int main (int argc, char **argv)
     ROS_DEBUG ("Waiting ROS params");
   }
 
-  // **** create widgets
+  // **** create altimeter widgets
   data->alt = gtk_altimeter_new ();
-  g_object_set (GTK_ALTIMETER (data->alt), "inverse-color", data->altimeter_inv_color,
+  g_object_set (GTK_ALTIMETER (data->alt), 
+					 "inverse-color", data->altimeter_inv_color,
                 "unit-is-feet", data->altimeter_unit_is_feet,
-                "unit-step-value", data->altimeter_step_value, "radial_color", true, NULL);
+                "unit-step-value", data->altimeter_step_value, 
+                "radial-color", true, NULL);
 
+  // **** create compass widgets
   data->comp = gtk_compass_new ();
-  g_object_set (GTK_COMPASS (data->comp), "inverse-color", false, "radial_color", true, NULL);
+  g_object_set (GTK_COMPASS (data->comp), 
+					 "inverse-color", false, 
+					 "radial-color", true, NULL);
 
+  // **** create gauge widgets
   data->vel = gtk_gauge_new ();
   g_object_set (GTK_GAUGE (data->vel), "name",
                 "<big>Gauge X</big>\n" "<span foreground=\"orange\"><i>(value)</i></span>", NULL);
-  g_object_set (GTK_GAUGE (data->vel), "color-strip-order", "YOR", NULL);
-  g_object_set (GTK_GAUGE (data->vel), "inverse-color", false,
-                "radial_color", true,
-                "start_value", 0,
-                "end_value", 1000, "initial-step", 200, "sub_step", (gdouble) 50.0, "drawing-step", 200,
-                //~ "yellow-strip-start", 0,                                                                                                    
-                //~ "orange-strip-start", 50,                                                                                                   
-                //~ "red-strip-start", 80,                                                                                                                                                                                                                                                                                                              
+  
+  g_object_set (GTK_GAUGE (data->vel), 
+					 "inverse-color", false,
+                "radial-color", true,
+                "start-value", 0,
+                "end-value", 1000, 
+                "initial-step", 200, 
+                "sub-step", (gdouble) 50.0, 
+                "drawing-step", 200,                                                                                                                                                                                                                                                                                                          
                 NULL);
 
+  // **** create gauge widgets
   data->battery = gtk_gauge_new ();
   g_object_set (GTK_GAUGE (data->battery), "name",
                 "<big>Battery voltage</big>\n" "<span foreground=\"orange\"><i>(V)</i></span>", NULL);
-  g_object_set (GTK_GAUGE (data->battery), "color-strip-order", "RYG", NULL);
-  g_object_set (GTK_GAUGE (data->battery), "inverse-color", false,
-                "radial_color", true,
-                "start_value", 0, "end_value", 12, "initial-step", 2, "sub_step", (gdouble) 0.2, "drawing-step", 2,
-                //~ "green-strip-start", 12,
-                //~ "yellow-strip-start", 6,                                                                                                 
-                //~ 
-                //~ //"yellow-strip-start", 8,                                                                                                       
-                //~ "orange-strip-start", 6,                                                                                                 
-                //~ "red-strip-start", 0,                                                                                                                                                                                                                    
+  g_object_set (GTK_GAUGE (data->battery),
+					 "inverse-color", false,
+                "radial-color", true,
+                "start-value", 0, 
+                "end-value", 12, 
+                "initial-step", 2, 
+                "sub-step", (gdouble) 0.2, 
+                "drawing-step", 2,
+                "color-strip-order", "RYG",
+                "green-strip-start", 10,
+                "yellow-strip-start", 8,
+                "red-strip-start", 0,                                                                                                                                                                                                                    
+                NULL);
+                
+  // **** create gauge widgets
+  data->bg = gtk_bar_gauge_new ();
+  g_object_set (GTK_BAR_GAUGE (data->bg), "name-bar-1",
+                "<big>Bat</big>\n" "<span foreground=\"orange\"><i>(V)</i></span>", NULL);
+  g_object_set (GTK_BAR_GAUGE (data->bg), "name-bar-2",
+                "<big>Aux</big>\n" "<span foreground=\"orange\"><i>(?)</i></span>", NULL);     
+  g_object_set (GTK_BAR_GAUGE (data->bg), "name-bar-3",
+                "<big>Aux2</big>\n" "<span foreground=\"orange\"><i>(?)</i></span>", NULL);  
+  g_object_set (GTK_BAR_GAUGE (data->bg),
+					 "bar-number", 2,
+					 "inverse-color", false,
+                "radial-color", true,
+                "start-value-bar-1", 0, 
+                "end-value-bar-1", 12, 
+                "green-strip-start-1", 10,
+                "yellow-strip-start-1", 8,
+                "start-value-bar-2", 0, 
+                "end-value-bar-2", 100,
+                "start-value-bar-3", 0, 
+                "end-value-bar-3", 100,      
+                "start-value-bar-4", 0, 
+                "end-value-bar-4", 100,                                                                                                                                                                                                                                         
                 NULL);
 
   gtk_box_pack_start (GTK_BOX (hbox_up), GTK_WIDGET (data->alt), TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (hbox_up), GTK_WIDGET (data->comp), TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox_down), GTK_WIDGET (data->vel), TRUE, TRUE, 0);
+  //~ gtk_box_pack_start (GTK_BOX (hbox_down), GTK_WIDGET (data->vel), TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (hbox_down), GTK_WIDGET (data->battery), TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox_down), GTK_WIDGET (data->bg), TRUE, TRUE, 0);
 
   gtk_widget_show_all (data->window);
 

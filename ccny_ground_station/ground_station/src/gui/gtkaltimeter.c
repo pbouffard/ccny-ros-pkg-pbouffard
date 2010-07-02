@@ -123,7 +123,7 @@ static void gtk_altimeter_class_init (GtkAltimeterClass * klass)
                                                      1, 100, 100, G_PARAM_WRITABLE));
   g_object_class_install_property (obj_class,
                                    PROP_RADIAL_COLOR,
-                                   g_param_spec_boolean ("radial_color",
+                                   g_param_spec_boolean ("radial-color",
                                                          "the widget use radial color",
                                                          "the widget use radial color", TRUE, G_PARAM_WRITABLE));
   return;
