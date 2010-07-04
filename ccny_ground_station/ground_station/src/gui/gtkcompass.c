@@ -71,6 +71,7 @@ static gboolean gtk_compass_button_press_event (GtkWidget * widget, GdkEventButt
 static gboolean gtk_compass_motion_notify_event (GtkWidget * widget, GdkEventMotion * ev);
 
 static void gtk_compass_draw (GtkWidget * comp);
+static void gtk_compass_draw_screws (GtkWidget * comp);
 static void gtk_compass_draw_plane (GtkWidget * comp);
 static void gtk_compass_draw_svg_file (GtkWidget * comp);
 static void gtk_compass_draw_tips_and_numbers (GtkWidget * comp);
@@ -398,6 +399,8 @@ static void gtk_compass_draw (GtkWidget * comp)
   priv->x = x;
   priv->y = y;
 
+  gtk_compass_draw_screws (comp);
+
   // draw plane
   gtk_compass_draw_plane (comp);
   //gtk_compass_draw_svg_file(comp);
@@ -405,6 +408,276 @@ static void gtk_compass_draw (GtkWidget * comp)
   // draw tips & numbers 
   gtk_compass_draw_tips_and_numbers (comp);
 
+  return;
+}
+
+static void gtk_compass_draw_screws (GtkWidget * comp)
+{
+  GtkCompassPrivate *priv;
+
+  if (gtk_compass_debug)
+  {
+    g_debug ("===> gtk_compass_draw()");
+  }
+  g_return_if_fail (IS_GTK_COMPASS (comp));
+
+  priv = GTK_COMPASS_GET_PRIVATE (comp);
+  
+  cairo_pattern_t *pat;
+  double x, y, radius;
+  radius=priv->radius;
+  x=priv->x;
+  y=priv->y;
+  radius = radius+0.12*radius;
+  
+  // **** top left screw
+  cairo_arc (priv->cr, x-0.82*radius, y-0.82*radius, 0.1 * radius, 0, 2*M_PI);
+  pat = cairo_pattern_create_radial (x-0.82*radius, y-0.82*radius, 0.07*radius,
+                                     x-0.82*radius, y-0.82*radius, 0.1*radius);
+  cairo_pattern_add_color_stop_rgba (pat,0, 0, 0, 0,0.7);
+  cairo_pattern_add_color_stop_rgba (pat,1, 0, 0, 0,0.1);
+  cairo_set_source (priv->cr, pat);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);
+    
+  cairo_arc (priv->cr, x-0.82*radius, y-0.82*radius, 0.07 * radius, 0, 2*M_PI);
+  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
+      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  {
+    if (!priv->color_mode_inv)
+      cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
+                            (gdouble) priv->bg_color_bounderie.green / 65535,
+                            (gdouble) priv->bg_color_bounderie.blue / 65535);
+    else
+      cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_inv.red / 65535,
+                            (gdouble) priv->bg_color_inv.green / 65535, (gdouble) priv->bg_color_inv.blue / 65535);
+  }
+  else
+  {
+    pat = cairo_pattern_create_radial (x - 0.392 * radius, y - 0.967 * radius, 0.167 * radius,
+                                       x - 0.477 * radius, y - 0.967 * radius, 0.836 * radius);
+    cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_bounderie.red / 65535,
+                                       (gdouble) priv->bg_radial_color_begin_bounderie.green / 65535,
+                                       (gdouble) priv->bg_radial_color_begin_bounderie.blue / 65535, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15,0.15,0.15, 1);
+    cairo_set_source (priv->cr, pat);
+  }
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);
+  
+  cairo_set_line_width (priv->cr, 0.02 * radius);
+  if (!priv->color_mode_inv)
+       cairo_set_source_rgb (priv->cr, 0., 0., 0.);
+  else
+       cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+  cairo_move_to (priv->cr, x-0.88*radius, y-0.82*radius);
+  cairo_line_to (priv->cr, x-0.76*radius, y-0.82*radius);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);  
+  cairo_move_to (priv->cr, x-0.82*radius, y-0.88*radius);
+  cairo_line_to (priv->cr, x-0.82*radius, y-0.76*radius);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);
+  cairo_set_line_width (priv->cr, 0.01 * radius);
+  if (!priv->color_mode_inv)
+		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
+  else
+      cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
+  cairo_move_to (priv->cr, x-0.88*radius, y-0.82*radius);
+  cairo_line_to (priv->cr, x-0.76*radius, y-0.82*radius);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);  
+  cairo_move_to (priv->cr, x-0.82*radius, y-0.88*radius);
+  cairo_line_to (priv->cr, x-0.82*radius, y-0.76*radius);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);      
+  
+   // **** top right screw
+  cairo_arc (priv->cr, x+0.82*radius, y-0.82*radius, 0.1 * radius, 0, 2*M_PI);
+  pat = cairo_pattern_create_radial (x+0.82*radius, y-0.82*radius, 0.07*radius,
+                                     x+0.82*radius, y-0.82*radius, 0.1*radius);
+  cairo_pattern_add_color_stop_rgba (pat,0, 0, 0, 0,0.7);
+  cairo_pattern_add_color_stop_rgba (pat,1, 0, 0, 0,0.1);
+  cairo_set_source (priv->cr, pat);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);
+    
+  cairo_arc (priv->cr, x+0.82*radius, y-0.82*radius, 0.07 * radius, 0, 2*M_PI);
+  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
+      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  {
+    if (!priv->color_mode_inv)
+      cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
+                            (gdouble) priv->bg_color_bounderie.green / 65535,
+                            (gdouble) priv->bg_color_bounderie.blue / 65535);
+    else
+      cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_inv.red / 65535,
+                            (gdouble) priv->bg_color_inv.green / 65535, (gdouble) priv->bg_color_inv.blue / 65535);
+  }
+  else
+  {
+    pat = cairo_pattern_create_radial (x - 0.392 * radius, y - 0.967 * radius, 0.167 * radius,
+                                       x - 0.477 * radius, y - 0.967 * radius, 0.836 * radius);
+    cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_bounderie.red / 65535,
+                                       (gdouble) priv->bg_radial_color_begin_bounderie.green / 65535,
+                                       (gdouble) priv->bg_radial_color_begin_bounderie.blue / 65535, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15,0.15,0.15, 1);
+    cairo_set_source (priv->cr, pat);
+  }
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);
+  
+  cairo_set_line_width (priv->cr, 0.02 * radius);
+  if (!priv->color_mode_inv)
+       cairo_set_source_rgb (priv->cr, 0., 0., 0.);
+  else
+       cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+  cairo_move_to (priv->cr, x+0.88*radius, y-0.82*radius);
+  cairo_line_to (priv->cr, x+0.76*radius, y-0.82*radius);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);  
+  cairo_move_to (priv->cr, x+0.82*radius, y-0.88*radius);
+  cairo_line_to (priv->cr, x+0.82*radius, y-0.76*radius);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);
+  cairo_set_line_width (priv->cr, 0.01 * radius);
+  if (!priv->color_mode_inv)
+		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
+  else
+      cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
+  cairo_move_to (priv->cr, x+0.88*radius, y-0.82*radius);
+  cairo_line_to (priv->cr, x+0.76*radius, y-0.82*radius);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);  
+  cairo_move_to (priv->cr, x+0.82*radius, y-0.88*radius);
+  cairo_line_to (priv->cr, x+0.82*radius, y-0.76*radius);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);     
+  
+   // **** bottom left screw
+  cairo_arc (priv->cr, x-0.82*radius, y+0.82*radius, 0.1 * radius, 0, 2*M_PI);
+  pat = cairo_pattern_create_radial (x-0.82*radius, y+0.82*radius, 0.07*radius,
+                                     x-0.82*radius, y+0.82*radius, 0.1*radius);
+  cairo_pattern_add_color_stop_rgba (pat,0, 0, 0, 0,0.7);
+  cairo_pattern_add_color_stop_rgba (pat,1, 0, 0, 0,0.1);
+  cairo_set_source (priv->cr, pat);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);
+    
+  cairo_arc (priv->cr, x-0.82*radius, y+0.82*radius, 0.07 * radius, 0, 2*M_PI);
+  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
+      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  {
+    if (!priv->color_mode_inv)
+      cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
+                            (gdouble) priv->bg_color_bounderie.green / 65535,
+                            (gdouble) priv->bg_color_bounderie.blue / 65535);
+    else
+      cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_inv.red / 65535,
+                            (gdouble) priv->bg_color_inv.green / 65535, (gdouble) priv->bg_color_inv.blue / 65535);
+  }
+  else
+  {
+    pat = cairo_pattern_create_radial (x - 0.392 * radius, y - 0.967 * radius, 0.167 * radius,
+                                       x - 0.477 * radius, y - 0.967 * radius, 0.836 * radius);
+    cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_bounderie.red / 65535,
+                                       (gdouble) priv->bg_radial_color_begin_bounderie.green / 65535,
+                                       (gdouble) priv->bg_radial_color_begin_bounderie.blue / 65535, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15,0.15,0.15, 1);
+    cairo_set_source (priv->cr, pat);
+  }
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);
+  
+  cairo_set_line_width (priv->cr, 0.02 * radius);
+  if (!priv->color_mode_inv)
+       cairo_set_source_rgb (priv->cr, 0., 0., 0.);
+  else
+       cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+  cairo_move_to (priv->cr, x-0.88*radius, y+0.82*radius);
+  cairo_line_to (priv->cr, x-0.76*radius, y+0.82*radius);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);  
+  cairo_move_to (priv->cr, x-0.82*radius, y+0.88*radius);
+  cairo_line_to (priv->cr, x-0.82*radius, y+0.76*radius);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);
+  cairo_set_line_width (priv->cr, 0.01 * radius);
+  if (!priv->color_mode_inv)
+		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
+  else
+      cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
+  cairo_move_to (priv->cr, x-0.88*radius, y+0.82*radius);
+  cairo_line_to (priv->cr, x-0.76*radius, y+0.82*radius);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);  
+  cairo_move_to (priv->cr, x-0.82*radius, y+0.88*radius);
+  cairo_line_to (priv->cr, x-0.82*radius, y+0.76*radius);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);     
+  
+   // **** bottom right screw
+  cairo_arc (priv->cr, x+0.82*radius, y+0.82*radius, 0.1 * radius, 0, 2*M_PI);
+  pat = cairo_pattern_create_radial (x+0.82*radius, y+0.82*radius, 0.07*radius,
+                                     x+0.82*radius, y+0.82*radius, 0.1*radius);
+  cairo_pattern_add_color_stop_rgba (pat,0, 0, 0, 0,0.7);
+  cairo_pattern_add_color_stop_rgba (pat,1, 0, 0, 0,0.1);
+  cairo_set_source (priv->cr, pat);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);
+    
+  cairo_arc (priv->cr, x+0.82*radius, y+0.82*radius, 0.07 * radius, 0, 2*M_PI);
+  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
+      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  {
+    if (!priv->color_mode_inv)
+      cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
+                            (gdouble) priv->bg_color_bounderie.green / 65535,
+                            (gdouble) priv->bg_color_bounderie.blue / 65535);
+    else
+      cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_inv.red / 65535,
+                            (gdouble) priv->bg_color_inv.green / 65535, (gdouble) priv->bg_color_inv.blue / 65535);
+  }
+  else
+  {
+    pat = cairo_pattern_create_radial (x - 0.392 * radius, y - 0.967 * radius, 0.167 * radius,
+                                       x - 0.477 * radius, y - 0.967 * radius, 0.836 * radius);
+    cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_bounderie.red / 65535,
+                                       (gdouble) priv->bg_radial_color_begin_bounderie.green / 65535,
+                                       (gdouble) priv->bg_radial_color_begin_bounderie.blue / 65535, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15,0.15,0.15, 1);
+    cairo_set_source (priv->cr, pat);
+  }
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);
+  
+  cairo_set_line_width (priv->cr, 0.02 * radius);
+  if (!priv->color_mode_inv)
+       cairo_set_source_rgb (priv->cr, 0., 0., 0.);
+  else
+       cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+  cairo_move_to (priv->cr, x+0.88*radius, y+0.82*radius);
+  cairo_line_to (priv->cr, x+0.76*radius, y+0.82*radius);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);  
+  cairo_move_to (priv->cr, x+0.82*radius, y+0.88*radius);
+  cairo_line_to (priv->cr, x+0.82*radius, y+0.76*radius);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);
+  cairo_set_line_width (priv->cr, 0.01 * radius);
+  if (!priv->color_mode_inv)
+		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
+  else
+      cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
+  cairo_move_to (priv->cr, x+0.88*radius, y+0.82*radius);
+  cairo_line_to (priv->cr, x+0.76*radius, y+0.82*radius);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);  
+  cairo_move_to (priv->cr, x+0.82*radius, y+0.88*radius);
+  cairo_line_to (priv->cr, x+0.82*radius, y+0.76*radius);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);     
+  cairo_pattern_destroy (pat);  
   return;
 }
 

@@ -34,7 +34,6 @@ void updateAltimeterCallback (const geometry_msgs::PoseConstPtr & msg)
   if (IS_GTK_ALTIMETER (data->alt))
   {
     gtk_altimeter_set_alti (GTK_ALTIMETER (data->alt), msg->position.z);
-    gtk_altimeter_redraw (GTK_ALTIMETER (data->alt));
   }
 
   // **** update compass
@@ -42,7 +41,6 @@ void updateAltimeterCallback (const geometry_msgs::PoseConstPtr & msg)
   {
     angle = (int) msg->position.z / 10 % 360;
     gtk_compass_set_angle (GTK_COMPASS (data->comp), angle);
-    gtk_compass_redraw (GTK_COMPASS (data->comp));
   }
 
   // **** update gauge
@@ -51,7 +49,6 @@ void updateAltimeterCallback (const geometry_msgs::PoseConstPtr & msg)
   if(value_vel/10 <74)        value_vel=value_vel+11;
   else if(value_vel/10>50) value_vel=value_vel-11;
   gtk_gauge_set_value(GTK_GAUGE(data->vel), value_vel/10);
-  gtk_gauge_redraw(GTK_GAUGE(data->vel));
   }
   
   // **** update gauge
@@ -60,7 +57,6 @@ void updateAltimeterCallback (const geometry_msgs::PoseConstPtr & msg)
   if(value_batt/10 <9)        value_batt++;
   else if(value_vel/10>12) value_batt--;
   gtk_gauge_set_value(GTK_GAUGE(data->battery), value_batt/10);
-  gtk_gauge_redraw(GTK_GAUGE(data->battery));
   }
     
   // **** update bar gauge
@@ -72,7 +68,6 @@ void updateAltimeterCallback (const geometry_msgs::PoseConstPtr & msg)
   if(val2<=0) val2 = 12;
   gtk_bar_gauge_set_value(GTK_BAR_GAUGE(data->bg),1, val2);
   gtk_bar_gauge_set_value(GTK_BAR_GAUGE(data->bg),2, val);
-  gtk_bar_gauge_redraw(GTK_BAR_GAUGE(data->bg));
   }
 
   // **** release GTK thread lock 
@@ -133,11 +128,37 @@ void *startROS (void *user)
   pthread_exit (NULL);
 }
 
+gboolean window_update(gpointer dat)
+{	
+  // **** update altimeter
+  if (IS_GTK_ALTIMETER (data->alt))
+		gtk_altimeter_redraw (GTK_ALTIMETER (data->alt));
+
+  // **** update compass
+  if (IS_GTK_COMPASS (data->comp))
+		gtk_compass_redraw (GTK_COMPASS (data->comp));
+
+  // **** update gauge
+  if(IS_GTK_GAUGE(data->vel))       
+		gtk_gauge_redraw(GTK_GAUGE(data->vel));
+  
+  // **** update gauge
+  if(IS_GTK_GAUGE(data->battery))             
+		gtk_gauge_redraw(GTK_GAUGE(data->battery));
+    
+  // **** update bar gauge
+  if(IS_GTK_BAR_GAUGE(data->bg))             
+		gtk_bar_gauge_redraw(GTK_BAR_GAUGE(data->bg));
+
+  return true;
+}
+
 int main (int argc, char **argv)
 {
   GtkWidget *vbox;
   GtkWidget *hbox_up;
   GtkWidget *hbox_down;
+  GdkColor bg_color;
 
   struct arg param;
   param.argc = argc;
@@ -160,7 +181,7 @@ int main (int argc, char **argv)
   data->window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_window_set_title (GTK_WINDOW (data->window), "CityFlyer Ground Station");
   gtk_window_set_position (GTK_WINDOW (data->window), GTK_WIN_POS_CENTER);
-  gtk_window_set_default_size (GTK_WINDOW (data->window), 600, 600);
+  gtk_window_set_default_size (GTK_WINDOW (data->window), 800, 500);
 
   g_signal_connect (G_OBJECT (data->window), "destroy", G_CALLBACK (gtk_main_quit), NULL);
 
@@ -238,7 +259,7 @@ int main (int argc, char **argv)
   g_object_set (GTK_BAR_GAUGE (data->bg), "name-bar-3",
                 "<big>Aux2</big>\n" "<span foreground=\"orange\"><i>(?)</i></span>", NULL);  
   g_object_set (GTK_BAR_GAUGE (data->bg),
-					 "bar-number", 2,
+					 "bar-number", 3,
 					 "inverse-color", false,
                 "radial-color", true,
                 "start-value-bar-1", 0, 
@@ -252,17 +273,39 @@ int main (int argc, char **argv)
                 "start-value-bar-4", 0, 
                 "end-value-bar-4", 100,                                                                                                                                                                                                                                         
                 NULL);
+                
+  // **** create artificial horizon widgets
+  data->arh = gtk_artificial_horizon_new ();
+  g_object_set (GTK_ARTIFICIAL_HORIZON (data->arh), 
+					 "inverse-color", false,
+                "radial-color", true, NULL);
 
   gtk_box_pack_start (GTK_BOX (hbox_up), GTK_WIDGET (data->alt), TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (hbox_up), GTK_WIDGET (data->comp), TRUE, TRUE, 0);
-  //~ gtk_box_pack_start (GTK_BOX (hbox_down), GTK_WIDGET (data->vel), TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox_up), GTK_WIDGET (data->arh), TRUE, TRUE, 0);
+    
+  gtk_box_pack_start (GTK_BOX (hbox_down), GTK_WIDGET (data->vel), TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (hbox_down), GTK_WIDGET (data->battery), TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (hbox_down), GTK_WIDGET (data->bg), TRUE, TRUE, 0);
 
+  bg_color.red=0*65535;
+  bg_color.green=0*65535;
+  bg_color.blue=0*65535;
+  gtk_widget_modify_bg (data->window, GTK_STATE_NORMAL, &bg_color);
+  gtk_widget_modify_bg (data->alt, GTK_STATE_NORMAL, &bg_color);
+  gtk_widget_modify_bg (data->comp, GTK_STATE_NORMAL, &bg_color);
+  gtk_widget_modify_bg (data->battery, GTK_STATE_NORMAL, &bg_color);
+  gtk_widget_modify_bg (data->vel, GTK_STATE_NORMAL, &bg_color);  
+  gtk_widget_modify_bg (data->arh, GTK_STATE_NORMAL, &bg_color);
+  gtk_widget_modify_bg (data->bg, GTK_STATE_NORMAL, &bg_color);
+  
   gtk_widget_show_all (data->window);
 
   // **** allow ROS spinning
   data->widget_created = true;
+  
+  // **** udpate all widget
+  //g_timeout_add (200, window_update, NULL);
 
   gtk_main ();
   gdk_threads_leave ();

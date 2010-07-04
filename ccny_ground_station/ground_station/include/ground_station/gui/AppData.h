@@ -53,6 +53,10 @@ public:
   // **** bar gauge widget
   GtkWidget * bg;
   gboolean bg_inv_color;
+  
+  // **** artificial horizon widget widget
+  GtkWidget * arh;
+  gboolean arh_inv_color;
 
 };
 
