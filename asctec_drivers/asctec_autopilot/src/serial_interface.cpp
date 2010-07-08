@@ -41,40 +41,42 @@ namespace asctec
   SerialInterface::SerialInterface (std::string port, uint32_t speed):serialport_name_ (port), serialport_speed_ (speed)
   {
     struct termios tio;
-      status = false;
-      serialport_baud_ = bitrate (serialport_speed_);
-      ROS_INFO ("Initializing serial port...");
+    status = false;
+    serialport_baud_ = bitrate (serialport_speed_);
+    ROS_INFO ("Initializing serial port...");
 
-      dev_ = fopen (serialport_name_.c_str (), "w+");
-      ROS_DEBUG ("dev: %d", (int)dev_);
-      ROS_ASSERT_MSG (dev_ != NULL, "Failed to open serial port: %s", serialport_name_.c_str ());
+    dev_ = fopen (serialport_name_.c_str (), "w+");
+    ROS_DEBUG ("dev: %d", (int)fileno(dev_));
+    ROS_ASSERT_MSG (dev_ != NULL, "Failed to open serial port: %s", serialport_name_.c_str ());
 
-      ROS_ASSERT_MSG (tcgetattr (fileno (dev_), &tio) == 0, "Unknown Error: %s", strerror (errno));
+    ROS_ASSERT_MSG (tcgetattr (fileno (dev_), &tio) == 0, "Unknown Error: %s", strerror (errno));
 
-      cfsetispeed (&tio, serialport_baud_);
-      cfsetospeed (&tio, serialport_baud_);
+    cfsetispeed (&tio, serialport_baud_);
+    cfsetospeed (&tio, serialport_baud_);
 
-      tio.c_iflag = 0;
-      tio.c_iflag &= ~(BRKINT | ICRNL | IMAXBEL);
-      tio.c_iflag |= IGNBRK;
+    tio.c_iflag = 0;
+    tio.c_iflag &= ~(BRKINT | ICRNL | IMAXBEL);
+    tio.c_iflag |= IGNBRK;
 
-      tio.c_oflag = 0;
-      tio.c_oflag &= ~(OPOST | ONLCR);
+    tio.c_oflag = 0;
+    tio.c_oflag &= ~(OPOST | ONLCR);
 
-      tio.c_cflag = (tio.c_cflag & ~CSIZE) | CS8;
-      tio.c_cflag &= ~(PARENB | CRTSCTS | CSTOPB);
+    tio.c_cflag = (tio.c_cflag & ~CSIZE) | CS8;
+    tio.c_cflag &= ~(PARENB | CRTSCTS | CSTOPB);
 
-      tio.c_lflag = 0;
-      tio.c_lflag |= NOFLSH;
-      tio.c_lflag &= ~(ISIG | IEXTEN | ICANON | ECHO | ECHOE);
+    tio.c_lflag = 0;
+    tio.c_lflag |= NOFLSH;
+    tio.c_lflag &= ~(ISIG | IEXTEN | ICANON | ECHO | ECHOE);
 
-      stall (true);
+    ROS_ASSERT_MSG (tcsetattr (fileno (dev_), TCSADRAIN, &tio) == 0, "Unknown Error: %s", strerror (errno));
 
-      fflush (dev_);
-      tcflush (fileno (dev_), TCIOFLUSH);
+    stall (true);
 
-      ROS_ASSERT_MSG (dev_ != NULL, "Could not open serial port %s", serialport_name_.c_str ());
-      ROS_INFO ("Successfully connected to %s, Baudrate %d\n", serialport_name_.c_str (), serialport_speed_);
+    fflush (dev_);
+    tcflush (fileno (dev_), TCIOFLUSH);
+
+    ROS_ASSERT_MSG (dev_ != NULL, "Could not open serial port %s", serialport_name_.c_str ());
+    ROS_INFO ("Successfully connected to %s, Baudrate %d\n", serialport_name_.c_str (), serialport_speed_);
   }
 
   SerialInterface::~SerialInterface ()
@@ -109,6 +111,7 @@ namespace asctec
       tio.c_cc[VMIN] = 0;
       tio.c_cc[VTIME] = 0;
     }
+
     ROS_ASSERT_MSG (tcsetattr (fileno (dev_), TCSADRAIN, &tio) == 0, "Unknown Error: %s", strerror (errno));
   }
 
