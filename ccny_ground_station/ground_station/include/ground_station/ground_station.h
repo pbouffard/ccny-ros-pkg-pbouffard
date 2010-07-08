@@ -40,6 +40,7 @@
 #include <ground_station/gui/gtkcompass.h>
 #include <ground_station/gui/gtkgauge.h>
 #include <ground_station/gui/gtkbargauge.h>
+#include <ground_station/gui/gtkturncoordinator.h>
 #include <ground_station/gui/gtkartificialhorizon.h>
 
 struct arg

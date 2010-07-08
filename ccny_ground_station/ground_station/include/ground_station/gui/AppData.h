@@ -29,14 +29,14 @@ public:
 
   // **** main window
   GtkWidget * window;
-  gboolean ros_param_read;
-  gboolean widget_created;
-  gboolean inv_color;
+  bool ros_param_read;
+  bool widget_created;
+  bool inv_color;
 
   // **** altimeter
   GtkWidget *alt;
-  gint altimeter_step_value;
-  gboolean altimeter_unit_is_feet;
+  int altimeter_step_value;
+  bool altimeter_unit_is_feet;
   
     // **** variometer
   GtkWidget * vario;
@@ -55,6 +55,9 @@ public:
   
   // **** artificial horizon 
   GtkWidget * arh;
+  
+  // **** turn coordinator
+  GtkWidget * tc;  
 
 };
 

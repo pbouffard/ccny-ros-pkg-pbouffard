@@ -95,17 +95,17 @@ void *startROS (void *user)
     ROS_INFO ("Starting CityFlyer Ground Station");
 
     // **** get parameters
+    if (!n_param.getParam ("window_inv_color", data->inv_color))
+      data->inv_color = false;
+    ROS_DEBUG ("\tWindow color inversed: %d", data->inv_color);    
+    
     if (!n_param.getParam ("altimeter_unit_is_feet", data->altimeter_unit_is_feet))
       data->altimeter_unit_is_feet = true;
-    ROS_INFO ("\tAltimeter unit is FEET: %d", data->altimeter_unit_is_feet);
+    ROS_DEBUG ("\tAltimeter unit is FEET: %d", data->altimeter_unit_is_feet);
 
     if (!n_param.getParam ("altimeter_step_value", data->altimeter_step_value))
       data->altimeter_step_value = 100;
-    ROS_INFO ("\tAltimeter step value: %d", data->altimeter_step_value);
-
-    if (!n_param.getParam ("window_inv_color", data->inv_color))
-      data->inv_color = true;
-    ROS_INFO ("\tWindow color inversed: %d", data->inv_color);
+    ROS_DEBUG ("\tAltimeter step value: %d", data->altimeter_step_value);
 
     // **** allow widget creation
     data->ros_param_read = true;
@@ -188,7 +188,7 @@ int main (int argc, char **argv)
   data->window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_window_set_title (GTK_WINDOW (data->window), "CityFlyer Ground Station");
   gtk_window_set_position (GTK_WINDOW (data->window), GTK_WIN_POS_CENTER);
-  gtk_window_set_default_size (GTK_WINDOW (data->window), 800, 500);
+  gtk_window_set_default_size (GTK_WINDOW (data->window), 1200, 700);
 
   g_signal_connect (G_OBJECT (data->window), "destroy", G_CALLBACK (gtk_main_quit), NULL);
 
@@ -291,22 +291,31 @@ int main (int argc, char **argv)
   data->vario = gtk_variometer_new ();
   g_object_set (GTK_VARIOMETER (data->vario), 
 					 "inverse-color", data->inv_color,
-                "unit-is-feet", true,
+                "unit-is-feet", data->altimeter_unit_is_feet,
                 "unit-step-value", 1000, 
                 "radial-color", true, NULL);
+         
+  // **** create variometer widgets
+  data->tc = gtk_turn_coordinator_new ();
+  g_object_set (GTK_TURN_COORDINATOR (data->tc), 
+					 "inverse-color", data->inv_color,
+                "unit-is-feet", data->altimeter_unit_is_feet,
+                "unit-step-value", 1000, 
+                "radial-color", true, NULL);                
 
+  gtk_box_pack_start (GTK_BOX (hbox_up), GTK_WIDGET (data->vel), TRUE, TRUE, 0);    
   gtk_box_pack_start (GTK_BOX (hbox_up), GTK_WIDGET (data->alt), TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (hbox_up), GTK_WIDGET (data->arh), TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (hbox_up), GTK_WIDGET (data->bg), TRUE, TRUE, 0);    
     
-  //gtk_box_pack_start (GTK_BOX (hbox_down), GTK_WIDGET (data->vel), TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox_down), GTK_WIDGET (data->tc), TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (hbox_down), GTK_WIDGET (data->battery), TRUE, TRUE, 0);  
   gtk_box_pack_start (GTK_BOX (hbox_down), GTK_WIDGET (data->comp), TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (hbox_down), GTK_WIDGET (data->vario), TRUE, TRUE, 0);
 
-  bg_color.red=0*65535;
-  bg_color.green=0*65535;
-  bg_color.blue=0*65535;
+  bg_color.red=0.4*65535;
+  bg_color.green=0.4*65535;
+  bg_color.blue=0.4*65535;
   gtk_widget_modify_bg (data->window, GTK_STATE_NORMAL, &bg_color);
   gtk_widget_modify_bg (data->alt, GTK_STATE_NORMAL, &bg_color);
   gtk_widget_modify_bg (data->comp, GTK_STATE_NORMAL, &bg_color);
@@ -315,6 +324,7 @@ int main (int argc, char **argv)
   gtk_widget_modify_bg (data->arh, GTK_STATE_NORMAL, &bg_color);
   gtk_widget_modify_bg (data->bg, GTK_STATE_NORMAL, &bg_color);
   gtk_widget_modify_bg (data->vario, GTK_STATE_NORMAL, &bg_color);
+  gtk_widget_modify_bg (data->tc, GTK_STATE_NORMAL, &bg_color);  
   
   gtk_widget_show_all (data->window);
 
@@ -322,7 +332,7 @@ int main (int argc, char **argv)
   data->widget_created = true;
   
   // **** udpate all widget
-  g_timeout_add (200, window_update, NULL);
+  //g_timeout_add (200, window_update, NULL);
 
   gtk_main ();
   gdk_threads_leave ();
