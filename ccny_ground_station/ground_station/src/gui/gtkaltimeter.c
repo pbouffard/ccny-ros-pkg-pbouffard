@@ -11,15 +11,51 @@
 *
 *  This program is distributed in the hope that it will be useful,
 *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 *  GNU General Public License for more details.
 *
 *  You should have received a copy of the GNU General Public License
-*  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*  along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
+
+/**
+ * @file gtkaltimeter.c
+ * @brief Gtk+ based Altimeter Widget
+ * @author Gautier Dumonteil <gautier.dumonteil@gmail.com>
+ * @version 0.1
+ * @date 06/06/2010
+ *
+ * Gtk Altimeter Widget <br>
+ * Copyright (C) 2010, CCNY Robotics Lab <br>
+ * http://robotics.ccny.cuny.edu <br>
+ * 
+ * \b Example: Add Altimeter widget to an gtkvbox and set some params <br>
+ * @code
+ * window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+ * vbox = gtk_vbox_new(TRUE, 1);
+ * gtk_container_add(GTK_CONTAINER (window), vbox);
+ * 
+ * alt = gtk_altimeter_new();
+ * g_object_set(GTK_ALTIMETER (alt),
+ *					"inverse-color", false,
+ *					"unit-is-feet", true,
+ *					"unit-step-value", 100,
+ *					"radial-color", true, NULL);
+ * 
+ * gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(alt), TRUE, TRUE, 0);
+ * gtk_widget_show_all(window);
+ * @endcode
+ */
 
 #include <ground_station/gui/gtkaltimeter.h>
 
+/**
+ * @typedef struct GtkAltimeterPrivate 
+ * @brief Special Gtk API strucure which contains the widget's data.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 typedef struct _GtkAltimeterPrivate
 {
   /* new cairo design */
@@ -50,15 +86,30 @@ typedef struct _GtkAltimeterPrivate
 
 } GtkAltimeterPrivate;
 
-enum _GLG_PROPERTY_ID
+/**
+ * @enum _GTK_ALTIMETER_PROPERTY_ID
+ * @brief Special Gtk API enum that allow to set widget's properties
+ *
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
+enum _GTK_ALTIMETER_PROPERTY_ID
 {
   PROP_0,
   PROP_INVERSED_COLOR,
   PROP_UNIT_IS_FEET,
   PROP_UNIT_STEP_VALUE,
   PROP_RADIAL_COLOR,
-} GLG_PROPERTY_ID;
+} GTK_ALTIMETER_PROPERTY_ID;
 
+/**
+ * @fn G_DEFINE_TYPE (GtkAltimeter, gtk_altimeter, GTK_TYPE_DRAWING_AREA);
+ * @brief Special Gtk API function that permit to define the current
+ * widget as an GTK_TYPE_DRAWING_AREA. 
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 G_DEFINE_TYPE (GtkAltimeter, gtk_altimeter, GTK_TYPE_DRAWING_AREA);
 
 #define GTK_ALTIMETER_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GTK_ALTIMETER_TYPE, GtkAltimeterPrivate))
@@ -80,6 +131,14 @@ static void gtk_altimeter_draw_hands (GtkWidget * alt);
 
 static gboolean gtk_altimeter_debug = FALSE;
 
+/**
+ * @fn static void gtk_altimeter_class_init (GtkAltimeterClass * klass)
+ * @brief Special Gtk API function that perform the initilization step of
+ * the widget's class. 
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */ 
 static void gtk_altimeter_class_init (GtkAltimeterClass * klass)
 {
   GObjectClass *obj_class = G_OBJECT_CLASS (klass);
@@ -130,6 +189,14 @@ static void gtk_altimeter_class_init (GtkAltimeterClass * klass)
   return;
 }
 
+/**
+ * @fn static void gtk_altimeter_init (GtkAltimeter * alt)
+ * @brief Special Gtk API function that initialize the widget and 
+ * widget's data. 
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */ 
 static void gtk_altimeter_init (GtkAltimeter * alt)
 {
   GtkAltimeterPrivate *priv = NULL;
@@ -166,6 +233,13 @@ static void gtk_altimeter_init (GtkAltimeter * alt)
   return;
 }
 
+/**
+ * @fn static gboolean gtk_altimeter_configure_event (GtkWidget * widget, GdkEventConfigure * event)
+ * @brief Special Gtk API function. 
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */ 
 static gboolean gtk_altimeter_configure_event (GtkWidget * widget, GdkEventConfigure * event)
 {
   GtkAltimeterPrivate *priv;
@@ -205,6 +279,13 @@ static gboolean gtk_altimeter_configure_event (GtkWidget * widget, GdkEventConfi
   return FALSE;
 }
 
+/**
+ * @fn static gboolean gtk_altimeter_expose (GtkWidget * alt, GdkEventExpose * event)
+ * @brief Special Gtk API function. 
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */ 
 static gboolean gtk_altimeter_expose (GtkWidget * alt, GdkEventExpose * event)
 {
   GtkAltimeterPrivate *priv;
@@ -248,6 +329,13 @@ static gboolean gtk_altimeter_expose (GtkWidget * alt, GdkEventExpose * event)
   return FALSE;
 }
 
+/**
+ * @fn extern void gtk_altimeter_redraw (GtkAltimeter * alt)
+ * @brief Special Gtk API function. Redraw the widget when called.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */ 
 extern void gtk_altimeter_redraw (GtkAltimeter * alt)
 {
   GtkWidget *widget;
@@ -272,6 +360,14 @@ extern void gtk_altimeter_redraw (GtkAltimeter * alt)
   gdk_region_destroy (region);
 }
 
+/**
+ * @fn extern void gtk_altimeter_set_alti (GtkAltimeter * alt, gdouble alti)
+ * @brief Gtk Altimeter function that permit to set the internal altitude 
+ * variable of the widget. 
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */ 
 extern void gtk_altimeter_set_alti (GtkAltimeter * alt, gdouble alti)
 {
   GtkAltimeterPrivate *priv;
@@ -286,6 +382,13 @@ extern void gtk_altimeter_set_alti (GtkAltimeter * alt, gdouble alti)
   priv->altitude = alti;
 }
 
+/**
+ * @fn extern GtkWidget *gtk_altimeter_new (void)
+ * @brief Special Gtk API function. 
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */ 
 extern GtkWidget *gtk_altimeter_new (void)
 {
   if (gtk_altimeter_debug)
@@ -295,6 +398,13 @@ extern GtkWidget *gtk_altimeter_new (void)
   return GTK_WIDGET (gtk_type_new (gtk_altimeter_get_type ()));
 }
 
+/**
+ * @fn static void gtk_altimeter_draw (GtkWidget * alt)
+ * @brief Special Gtk API function that draw the widget by using cairo.
+ * 
+ * See GObject,Cairo and GTK+ references for more informations: 
+ * http://library.gnome.org/devel/references.html.en
+ */ 
 static void gtk_altimeter_draw (GtkWidget * alt)
 {
   GtkAltimeterPrivate *priv;
@@ -315,7 +425,7 @@ static void gtk_altimeter_draw (GtkWidget * alt)
   x = alt->allocation.width / 2;
   y = alt->allocation.height / 2;
   radius = MIN (alt->allocation.width / 2, alt->allocation.height / 2) - 5;
-  cairo_pattern_t *pat;
+  cairo_pattern_t *pat=NULL;
 
   rec_x0 = x - radius;
   rec_y0 = y - radius;
@@ -327,7 +437,7 @@ static void gtk_altimeter_draw (GtkWidget * alt)
   rec_radius = rec_corner_radius / rec_aspect;
   rec_degrees = M_PI / 180.0;
 
-  // Altimeter base
+  // **** Altimeter base
   cairo_new_sub_path (priv->cr);
   cairo_arc (priv->cr, rec_x0 + rec_width - rec_radius, rec_y0 + rec_radius,
              rec_radius, -90 * rec_degrees, 0 * rec_degrees);
@@ -577,6 +687,7 @@ static void gtk_altimeter_draw (GtkWidget * alt)
       factor = 10;
       break;
     case 100:
+    default:
       cairo_save (priv->cr);
       cairo_set_font_size (priv->cr, 0.07 * radius);
       cairo_move_to (priv->cr, x - 0.33 * radius, y - 0.78 * radius);
@@ -613,10 +724,17 @@ static void gtk_altimeter_draw (GtkWidget * alt)
 
   // draw hands
   gtk_altimeter_draw_hands (alt);
+  cairo_pattern_destroy (pat);  
   return;
 }
 
-
+/**
+ * @fn static void gtk_altimeter_draw_screws (GtkWidget * alt)
+ * @brief Widget function that draw the widget screws using cairo.
+ * 
+ * See GObject,Cairo and GTK+ references for more informations: 
+ * http://library.gnome.org/devel/references.html.en
+ */ 
 static void gtk_altimeter_draw_screws (GtkWidget * alt)
 {
   GtkAltimeterPrivate *priv;
@@ -887,6 +1005,14 @@ static void gtk_altimeter_draw_screws (GtkWidget * alt)
   return;
 }
 
+/**
+ * @fn static void gtk_altimeter_draw_digital (GtkWidget * alt)
+ * @brief Widget function that draw the digital afficher of the widget
+ * using cairo. 
+ * 
+ * See GObject,Cairo and GTK+ references for more informations: 
+ * http://library.gnome.org/devel/references.html.en
+ */ 
 static void gtk_altimeter_draw_digital (GtkWidget * alt)
 {
   GtkAltimeterPrivate *priv;
@@ -940,7 +1066,13 @@ static void gtk_altimeter_draw_digital (GtkWidget * alt)
   return;
 }
 
-
+/**
+ * @fn static void gtk_altimeter_draw_hands (GtkWidget * alt)
+ * @brief Widget function that draw the altimeter hands using cairo.
+ * 
+ * See GObject,Cairo and GTK+ references for more informations: 
+ * http://library.gnome.org/devel/references.html.en
+ */
 static void gtk_altimeter_draw_hands (GtkWidget * alt)
 {
   GtkAltimeterPrivate *priv;
@@ -1272,6 +1404,13 @@ static void gtk_altimeter_draw_hands (GtkWidget * alt)
   return;
 }
 
+/**
+ * @fn static gboolean gtk_altimeter_button_press_event (GtkWidget * widget, GdkEventButton * ev)
+ * @brief Special Gtk API function. Perform mouse button press events. 
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static gboolean gtk_altimeter_button_press_event (GtkWidget * widget, GdkEventButton * ev)
 {
   GtkAltimeterPrivate *priv;
@@ -1306,6 +1445,13 @@ static gboolean gtk_altimeter_button_press_event (GtkWidget * widget, GdkEventBu
   return FALSE;
 }
 
+/**
+ * @fn static gboolean gtk_altimeter_motion_notify_event (GtkWidget * widget, GdkEventMotion * ev)
+ * @brief Special Gtk API function. Perform mouse motion events. 
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static gboolean gtk_altimeter_motion_notify_event (GtkWidget * widget, GdkEventMotion * ev)
 {
   GtkAltimeterPrivate *priv;
@@ -1344,6 +1490,13 @@ static gboolean gtk_altimeter_motion_notify_event (GtkWidget * widget, GdkEventM
   return TRUE;
 }
 
+/**
+ * @fn static void gtk_altimeter_destroy (GtkObject * object)
+ * @brief Special Gtk API function. 
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static void gtk_altimeter_destroy (GtkObject * object)
 {
   GtkAltimeterPrivate *priv = NULL;
@@ -1380,6 +1533,13 @@ static void gtk_altimeter_destroy (GtkObject * object)
   return;
 }
 
+/**
+ * @fn static void gtk_altimeter_set_property (GObject * object, guint prop_id, const GValue * value, GParamSpec * pspec)
+ * @brief Special Gtk API function. 
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static void gtk_altimeter_set_property (GObject * object, guint prop_id, const GValue * value, GParamSpec * pspec)
 {
   GtkAltimeterPrivate *priv = NULL;

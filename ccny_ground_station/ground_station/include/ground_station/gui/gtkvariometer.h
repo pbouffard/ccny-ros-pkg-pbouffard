@@ -1,5 +1,5 @@
 /*
-*  Gtk Altimeter Widget
+*  Gtk Variometer Widget
 *  Copyright (C) 2010, CCNY Robotics Lab
 *  Gautier Dumonteil <gautier.dumonteil@gmail.com>
 *  http://robotics.ccny.cuny.edu
@@ -19,88 +19,86 @@
 */
 
 /**
- * @file gtkaltimeter.h
- * @brief Gtk+ based Altimeter Widget
+ * @file gtkvariometer.h
+ * @brief Gtk+ based Variometer Widget
  * @author Gautier Dumonteil <gautier.dumonteil@gmail.com>
  * @version 0.1
  * @date 06/06/2010
  *
- * Gtk Altimeter Widget <br>
+ * Gtk Variometer Widget <br>
  * Copyright (C) 2010, CCNY Robotics Lab <br>
  * http://robotics.ccny.cuny.edu <br>
  * 
- * \b Example: Add Altimeter widget to an gtkvbox and set some params <br>
+ * \b Example: Add Variometer widget to an gtkvbox and set some params <br>
  * @code
  * window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
  * vbox = gtk_vbox_new(TRUE, 1);
  * gtk_container_add(GTK_CONTAINER (window), vbox);
  * 
- * alt = gtk_altimeter_new();
- * g_object_set(GTK_ALTIMETER (alt),
+ * vario = gtk_variometer_new();
+ * g_object_set(GTK_VARIOMETER (vario),
  *					"inverse-color", false,
  *					"unit-is-feet", true,
- *					"unit-step-value", 100,
+ *					"unit-step-value", 1000,
  *					"radial-color", true, NULL);
  * 
- * gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(alt), TRUE, TRUE, 0);
+ * gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(vario), TRUE, TRUE, 0);
  * gtk_widget_show_all(window);
  * @endcode
  */
 
-#ifndef __GTK_ALTIMETER_H__
-#define __GTK_ALTIMETER_H__
+#ifndef __GTK_VARIOMETER_H__
+#define __GTK_VARIOMETER_H__
 
 #include <gtk/gtk.h>
 #include <glib-object.h>
 #include <math.h>
 #include <time.h>
+#include <sys/time.h>
 
-#define GTK_ALTIMETER_MAX_STRING  256   /* Size of a text string */
-#define GTK_ALTIMETER_MODEL_X 300
-#define GTK_ALTIMETER_MODEL_Y 300
+#define GTK_VARIOMETER_MAX_STRING  256   /* Size of a text string */
+#define GTK_VARIOMETER_MODEL_X 300
+#define GTK_VARIOMETER_MODEL_Y 300
 
 G_BEGIN_DECLS 
 
-
 /**
- * @typedef struct GtkAltimeterClass 
+ * @typedef struct GtkVariometerClass 
  * @brief Special Gtk API strucure.
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
  */
-typedef struct _GtkAltimeterClass
+typedef struct _GtkVariometerClass
 {
   GtkDrawingAreaClass parent_class;
 
-} GtkAltimeterClass;
-
+} GtkVariometerClass;
 
 /**
- * @typedef struct GtkAltimeter 
+ * @typedef struct GtkVariometer 
  * @brief Special Gtk API strucure.
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
  */
-typedef struct _GtkAltimeter
+typedef struct _GtkVariometer
 {
   GtkDrawingArea parent;
   
-} GtkAltimeter;
+} GtkVariometer;
 
-#define GTK_ALTIMETER_TYPE			(gtk_altimeter_get_type ())
-#define GTK_ALTIMETER(obj)			(G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_ALTIMETER_TYPE, GtkAltimeter))
-#define GTK_ALTIMETER_CLASS(obj)	(G_TYPE_CHECK_CLASS_CAST ((obj), GTK_ALTIMETER, GtkAltimeterClass))
-#define IS_GTK_ALTIMETER(obj)		(G_TYPE_CHECK_INSTANCE_TYPE ((obj), GTK_ALTIMETER_TYPE))
-#define IS_GTK_ALTIMETER_CLASS(obj)	(G_TYPE_CHECK_CLASS_TYPE ((obj), GTK_ALTIMETER_TYPE))
-#define GTK_ALTIMETER_GET_CLASS	(G_TYPE_INSTANCE_GET_CLASS ((obj), GTK_ALTIMETER_TYPE, GtkAltimeterClass))
+#define GTK_VARIOMETER_TYPE			(gtk_variometer_get_type ())
+#define GTK_VARIOMETER(obj)			(G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_VARIOMETER_TYPE, GtkVariometer))
+#define GTK_VARIOMETER_CLASS(obj)	(G_TYPE_CHECK_CLASS_CAST ((obj), GTK_VARIOMETER, GtkVariometerClass))
+#define IS_GTK_VARIOMETER(obj)		(G_TYPE_CHECK_INSTANCE_TYPE ((obj), GTK_VARIOMETER_TYPE))
+#define IS_GTK_VARIOMETER_CLASS(obj)	(G_TYPE_CHECK_CLASS_TYPE ((obj), GTK_VARIOMETER_TYPE))
+#define GTK_VARIOMETER_GET_CLASS	(G_TYPE_INSTANCE_GET_CLASS ((obj), GTK_VARIOMETER_TYPE, GtkVariometerClass))
 
-
-extern GType gtk_altimeter_get_type (void) G_GNUC_CONST;
-extern GtkWidget *gtk_altimeter_new (void);
-extern void gtk_altimeter_set_alti (GtkAltimeter * alt, gdouble alti);
-extern void gtk_altimeter_redraw (GtkAltimeter * alt);
+extern GType gtk_variometer_get_type (void) G_GNUC_CONST;
+extern GtkWidget *gtk_variometer_new (void);
+extern void gtk_variometer_set_value (GtkVariometer * vario, gdouble val);
+extern void gtk_variometer_redraw (GtkVariometer * vario);
 
 G_END_DECLS
 #endif

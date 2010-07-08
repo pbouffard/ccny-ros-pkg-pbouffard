@@ -31,32 +31,30 @@ public:
   GtkWidget * window;
   gboolean ros_param_read;
   gboolean widget_created;
+  gboolean inv_color;
 
   // **** altimeter
   GtkWidget *alt;
   gint altimeter_step_value;
   gboolean altimeter_unit_is_feet;
-  gboolean altimeter_inv_color;
+  
+    // **** variometer
+  GtkWidget * vario;
 
   // **** compass
   GtkWidget *comp;
-  gboolean compass_inv_color;
 
   // **** battery gauge
   GtkWidget *battery;
-  gboolean battery_gauge_inv_color;
 
   // **** velocity gauge
   GtkWidget *vel;
-  gboolean velocity_gauge_inv_color;
   
   // **** bar gauge widget
   GtkWidget * bg;
-  gboolean bg_inv_color;
   
-  // **** artificial horizon widget widget
+  // **** artificial horizon 
   GtkWidget * arh;
-  gboolean arh_inv_color;
 
 };
 

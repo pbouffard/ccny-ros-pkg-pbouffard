@@ -1,22 +1,49 @@
 /*
-*  Gtk Artificial Horizon Widget
-*  Copyright (C) 2010, CCNY Robotics Lab
-*  Gautier Dumonteil <gautier.dumonteil@gmail.com>
-*  http://robotics.ccny.cuny.edu
-*
-*  This program is free software: you can redistribute it and/or modify
-*  it under the terms of the GNU General Public License as published by
-*  the Free Software Foundation, either version 3 of the License, or
-*  (at your option) any later version.
-*
-*  This program is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU General Public License for more details.
-*
-*  You should have received a copy of the GNU General Public License
-*  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Gtk Artificial Horizon Widget
+ * Copyright (C) 2010, CCNY Robotics Lab
+ * Gautier Dumonteil <gautier.dumonteil@gmail.com>
+ * http://robotics.ccny.cuny.edu
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @file gtkartificialhorizon.c
+ * @brief Gtk+ based Artificial Horizon Widget
+ * @author Gautier Dumonteil <gautier.dumonteil@gmail.com>
+ * @version 0.1
+ * @date 06/06/2010
+ *
+ * Gtk Artificial Horizon Widget <br>
+ * Copyright (C) 2010, CCNY Robotics Lab <br>
+ * http://robotics.ccny.cuny.edu <br>
+ * 
+ * \b Example: Add Artificial Horizon widget to an gtkvbox and set some params <br>
+ * @code
+ * window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+ * vbox = gtk_vbox_new(TRUE, 1);
+ * gtk_container_add(GTK_CONTAINER (window), vbox);
+ * 
+ * art_hor = gtk_artificial_horizon_new(); 
+ * g_object_set(GTK_ARTIFICIAL_HORIZON (art_hor),
+ * 				"inverse-color", false,
+ * 				"radial-color", true, NULL);
+ * 
+ * gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(art_hor), TRUE, TRUE, 0);
+ * gtk_widget_show_all(window);
+ * @endcode
+ */
 
 #include <ground_station/gui/gtkartificialhorizon.h>
 
@@ -50,14 +77,14 @@ typedef struct _GtkArtificialHorizonPrivate
 
 } GtkArtificialHorizonPrivate;
 
-enum _GLG_PROPERTY_ID
+enum _GTK_ARTIFICIAL_HORIZON_PROPERTY_ID
 {
   PROP_0,
   PROP_INVERSED_COLOR,
   PROP_UNIT_IS_FEET,
   PROP_UNIT_STEP_VALUE,
   PROP_RADIAL_COLOR,
-} GLG_PROPERTY_ID;
+} GTK_ARTIFICIAL_HORIZON_PROPERTY_ID;
 
 G_DEFINE_TYPE (GtkArtificialHorizon, gtk_artificial_horizon, GTK_TYPE_DRAWING_AREA);
 
@@ -309,8 +336,6 @@ static void gtk_artificial_horizon_draw (GtkWidget * arh)
 
   double x, y, rec_x0, rec_y0, rec_width, rec_height, rec_degrees;
   double rec_aspect, rec_corner_radius, rec_radius, radius;
-  char str[GTK_ARTIFICIAL_HORIZON_MAX_STRING];
-  int i, factor;
   cairo_pattern_t *pat=NULL;
 
   x = arh->allocation.width / 2;
@@ -551,7 +576,7 @@ static void gtk_artificial_horizon_draw_screws (GtkWidget * arh)
 
   priv = GTK_ARTIFICIAL_HORIZON_GET_PRIVATE (arh);
   
-  cairo_pattern_t *pat;
+  cairo_pattern_t *pat=NULL;
   double x, y, radius;
   radius=priv->radius;
   x=priv->x;
@@ -851,14 +876,9 @@ static void gtk_artificial_horizon_draw_internal_sphere (GtkWidget * arh)
 
   
   cairo_arc (priv->cr, x, y, radius - 0.15 * radius, 0, M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  if(!priv->radial_color)
   {
-    if (!priv->color_mode_inv)
           cairo_set_source_rgb (priv->cr, 0.651, 0.435, 0.098);
-    else
-      cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_inv.red / 65535,
-                            (gdouble) priv->bg_color_inv.green / 65535, (gdouble) priv->bg_color_inv.blue / 65535);
   }
   else
   {

@@ -409,7 +409,7 @@ static void gtk_gauge_draw (GtkWidget * gauge)
   double alpha = 0, alpha_inv = 1, alpha_step = 0;
   char str[GTK_GAUGE_MAX_STRING];
   int i, strip_c_order = 0;
-  cairo_pattern_t *pat;
+  cairo_pattern_t *pat =NULL;
 
   x = gauge->allocation.width / 2;
   y = gauge->allocation.height / 2;
@@ -839,7 +839,7 @@ static void gtk_gauge_draw (GtkWidget * gauge)
 
   // **** draw hand
   gtk_gauge_draw_hand (gauge);
-
+  cairo_pattern_destroy (pat);
   return;
 }
 
@@ -856,7 +856,7 @@ static void gtk_gauge_draw_screws (GtkWidget * gauge)
 
   priv = GTK_GAUGE_GET_PRIVATE (gauge);
   
-  cairo_pattern_t *pat;
+  cairo_pattern_t *pat=NULL;
   double x, y, radius;
   radius=priv->radius;
   x=priv->x;
@@ -1110,6 +1110,7 @@ static void gtk_gauge_draw_screws (GtkWidget * gauge)
   cairo_line_to (priv->cr, x+0.82*radius, y+0.76*radius);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);     
+  cairo_pattern_destroy (pat);  
   return;
 }
 

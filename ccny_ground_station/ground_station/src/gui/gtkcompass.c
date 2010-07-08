@@ -394,7 +394,6 @@ static void gtk_compass_draw (GtkWidget * comp)
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
 
-  cairo_pattern_destroy (pat);
   priv->radius = radius;
   priv->x = x;
   priv->y = y;
@@ -407,7 +406,7 @@ static void gtk_compass_draw (GtkWidget * comp)
 
   // draw tips & numbers 
   gtk_compass_draw_tips_and_numbers (comp);
-
+  cairo_pattern_destroy (pat);
   return;
 }
 
@@ -423,7 +422,7 @@ static void gtk_compass_draw_screws (GtkWidget * comp)
 
   priv = GTK_COMPASS_GET_PRIVATE (comp);
   
-  cairo_pattern_t *pat;
+  cairo_pattern_t *pat=NULL;
   double x, y, radius;
   radius=priv->radius;
   x=priv->x;

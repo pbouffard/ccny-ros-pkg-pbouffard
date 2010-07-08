@@ -35,6 +35,10 @@ void updateAltimeterCallback (const geometry_msgs::PoseConstPtr & msg)
   {
     gtk_altimeter_set_alti (GTK_ALTIMETER (data->alt), msg->position.z);
   }
+  
+    // **** update variometer
+  if (IS_GTK_VARIOMETER (data->vario))
+		gtk_variometer_set_value (GTK_VARIOMETER (data->vario), msg->position.z);		
 
   // **** update compass
   if (IS_GTK_COMPASS (data->comp))
@@ -91,7 +95,6 @@ void *startROS (void *user)
     ROS_INFO ("Starting CityFlyer Ground Station");
 
     // **** get parameters
-
     if (!n_param.getParam ("altimeter_unit_is_feet", data->altimeter_unit_is_feet))
       data->altimeter_unit_is_feet = true;
     ROS_INFO ("\tAltimeter unit is FEET: %d", data->altimeter_unit_is_feet);
@@ -100,9 +103,9 @@ void *startROS (void *user)
       data->altimeter_step_value = 100;
     ROS_INFO ("\tAltimeter step value: %d", data->altimeter_step_value);
 
-    if (!n_param.getParam ("altimeter_inv_color", data->altimeter_inv_color))
-      data->altimeter_inv_color = false;
-    ROS_INFO ("\tAltimeter color inversed: %d", data->altimeter_inv_color);
+    if (!n_param.getParam ("window_inv_color", data->inv_color))
+      data->inv_color = true;
+    ROS_INFO ("\tWindow color inversed: %d", data->inv_color);
 
     // **** allow widget creation
     data->ros_param_read = true;
@@ -133,6 +136,10 @@ gboolean window_update(gpointer dat)
   // **** update altimeter
   if (IS_GTK_ALTIMETER (data->alt))
 		gtk_altimeter_redraw (GTK_ALTIMETER (data->alt));
+		
+  // **** update variometer
+  if (IS_GTK_VARIOMETER (data->vario))
+		gtk_variometer_redraw (GTK_VARIOMETER (data->vario));		
 
   // **** update compass
   if (IS_GTK_COMPASS (data->comp))
@@ -206,7 +213,7 @@ int main (int argc, char **argv)
   // **** create altimeter widgets
   data->alt = gtk_altimeter_new ();
   g_object_set (GTK_ALTIMETER (data->alt), 
-					 "inverse-color", data->altimeter_inv_color,
+					 "inverse-color", data->inv_color,
                 "unit-is-feet", data->altimeter_unit_is_feet,
                 "unit-step-value", data->altimeter_step_value, 
                 "radial-color", true, NULL);
@@ -214,7 +221,7 @@ int main (int argc, char **argv)
   // **** create compass widgets
   data->comp = gtk_compass_new ();
   g_object_set (GTK_COMPASS (data->comp), 
-					 "inverse-color", false, 
+					 "inverse-color", data->inv_color, 
 					 "radial-color", true, NULL);
 
   // **** create gauge widgets
@@ -223,7 +230,7 @@ int main (int argc, char **argv)
                 "<big>Gauge X</big>\n" "<span foreground=\"orange\"><i>(value)</i></span>", NULL);
   
   g_object_set (GTK_GAUGE (data->vel), 
-					 "inverse-color", false,
+					 "inverse-color", data->inv_color,
                 "radial-color", true,
                 "start-value", 0,
                 "end-value", 1000, 
@@ -237,7 +244,7 @@ int main (int argc, char **argv)
   g_object_set (GTK_GAUGE (data->battery), "name",
                 "<big>Battery voltage</big>\n" "<span foreground=\"orange\"><i>(V)</i></span>", NULL);
   g_object_set (GTK_GAUGE (data->battery),
-					 "inverse-color", false,
+					 "inverse-color", data->inv_color,
                 "radial-color", true,
                 "start-value", 0, 
                 "end-value", 12, 
@@ -260,7 +267,7 @@ int main (int argc, char **argv)
                 "<big>Aux2</big>\n" "<span foreground=\"orange\"><i>(?)</i></span>", NULL);  
   g_object_set (GTK_BAR_GAUGE (data->bg),
 					 "bar-number", 3,
-					 "inverse-color", false,
+					 "inverse-color", data->inv_color,
                 "radial-color", true,
                 "start-value-bar-1", 0, 
                 "end-value-bar-1", 12, 
@@ -277,16 +284,25 @@ int main (int argc, char **argv)
   // **** create artificial horizon widgets
   data->arh = gtk_artificial_horizon_new ();
   g_object_set (GTK_ARTIFICIAL_HORIZON (data->arh), 
-					 "inverse-color", false,
+					 "inverse-color", data->inv_color,
+                "radial-color", true, NULL);
+                
+  // **** create variometer widgets
+  data->vario = gtk_variometer_new ();
+  g_object_set (GTK_VARIOMETER (data->vario), 
+					 "inverse-color", data->inv_color,
+                "unit-is-feet", true,
+                "unit-step-value", 1000, 
                 "radial-color", true, NULL);
 
   gtk_box_pack_start (GTK_BOX (hbox_up), GTK_WIDGET (data->alt), TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox_up), GTK_WIDGET (data->comp), TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (hbox_up), GTK_WIDGET (data->arh), TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox_up), GTK_WIDGET (data->bg), TRUE, TRUE, 0);    
     
-  gtk_box_pack_start (GTK_BOX (hbox_down), GTK_WIDGET (data->vel), TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox_down), GTK_WIDGET (data->battery), TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox_down), GTK_WIDGET (data->bg), TRUE, TRUE, 0);
+  //gtk_box_pack_start (GTK_BOX (hbox_down), GTK_WIDGET (data->vel), TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox_down), GTK_WIDGET (data->battery), TRUE, TRUE, 0);  
+  gtk_box_pack_start (GTK_BOX (hbox_down), GTK_WIDGET (data->comp), TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox_down), GTK_WIDGET (data->vario), TRUE, TRUE, 0);
 
   bg_color.red=0*65535;
   bg_color.green=0*65535;
@@ -298,6 +314,7 @@ int main (int argc, char **argv)
   gtk_widget_modify_bg (data->vel, GTK_STATE_NORMAL, &bg_color);  
   gtk_widget_modify_bg (data->arh, GTK_STATE_NORMAL, &bg_color);
   gtk_widget_modify_bg (data->bg, GTK_STATE_NORMAL, &bg_color);
+  gtk_widget_modify_bg (data->vario, GTK_STATE_NORMAL, &bg_color);
   
   gtk_widget_show_all (data->window);
 
@@ -305,7 +322,7 @@ int main (int argc, char **argv)
   data->widget_created = true;
   
   // **** udpate all widget
-  //g_timeout_add (200, window_update, NULL);
+  g_timeout_add (200, window_update, NULL);
 
   gtk_main ();
   gdk_threads_leave ();

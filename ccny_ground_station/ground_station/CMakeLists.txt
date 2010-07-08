@@ -35,6 +35,7 @@ include($ENV{ROS_ROOT}/core/rosbuild/FindPkgConfig.cmake)
 set(GROUNDSTATION groundstation)
 
 set(GROUNDSTATION_SRC   src/gui/gtkaltimeter.c
+								src/gui/gtkvariometer.c
 								src/gui/gtkcompass.c
 								src/gui/gtkgauge.c	
 								src/gui/gtkbargauge.c	

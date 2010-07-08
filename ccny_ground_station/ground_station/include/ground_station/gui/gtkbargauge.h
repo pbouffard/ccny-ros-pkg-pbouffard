@@ -18,6 +18,48 @@
 *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/**
+ * @file gtkbargauge.h
+ * @brief Gtk+ based Bar Gauge Widget
+ * @author Gautier Dumonteil <gautier.dumonteil@gmail.com>
+ * @version 0.1
+ * @date 06/06/2010
+ *
+ * Gtk Bar Gauge Widget <br>
+ * Copyright (C) 2010, CCNY Robotics Lab <br>
+ * http://robotics.ccny.cuny.edu <br>
+ * 
+ * \b Example: Add Bar Gauge widget to an gtkvbox and set some params <br>
+ * @code
+ * window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+ * vbox = gtk_vbox_new(TRUE, 1);
+ * gtk_container_add(GTK_CONTAINER (window), vbox);
+ * 
+ * bg = gtk_bar_gauge_new ();
+ * g_object_set (GTK_BAR_GAUGE (bg), "name-bar-1",
+ *					"<big>Bat</big>\n" "<span foreground=\"orange\"><i>(V)</i></span>", NULL);
+ * g_object_set (GTK_BAR_GAUGE (bg), "name-bar-2",
+ * 				"<big>Aux</big>\n" "<span foreground=\"orange\"><i>(?)</i></span>", NULL);     
+ * g_object_set (GTK_BAR_GAUGE (bg), "name-bar-3",
+ *             "<big>Aux2</big>\n" "<span foreground=\"orange\"><i>(?)</i></span>", NULL);  
+ * g_object_set (GTK_BAR_GAUGE (bg),
+ * 				"bar-number", 3,
+ * 				"inverse-color", false,
+ *					"radial-color", true,
+ * 				"start-value-bar-1", 0, 
+ * 				"end-value-bar-1", 12, 
+ *					"green-strip-start-1", 10,
+ * 				"yellow-strip-start-1", 8,
+ * 				"start-value-bar-2", 0, 
+ *					"end-value-bar-2", 100,
+ * 				"start-value-bar-3", 0, 
+ * 				"end-value-bar-3", 100, NULL);
+ * 
+ * gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(bg), TRUE, TRUE, 0);
+ * gtk_widget_show_all(window);
+ * @endcode
+ */
+
 #ifndef __GTK_BAR_GAUGE_H__
 #define __GTK_BAR_GAUGE_H__
 
@@ -30,17 +72,33 @@
 #define GTK_BAR_GAUGE_MODEL_X 300
 #define GTK_BAR_GAUGE_MODEL_Y 300
 
-G_BEGIN_DECLS typedef struct _GtkBarGaugeClass
+G_BEGIN_DECLS 
+
+
+/**
+ * @typedef struct GtkBarGaugeClass 
+ * @brief Special Gtk API strucure.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
+typedef struct _GtkBarGaugeClass
 {
   GtkDrawingAreaClass parent_class;
 
 } GtkBarGaugeClass;
 
+/**
+ * @typedef struct GtkBarGauge 
+ * @brief Special Gtk API strucure.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 typedef struct _GtkBarGauge
 {
   GtkDrawingArea parent;
 
-  /* < private > */
 } GtkBarGauge;
 
 #define GTK_BAR_GAUGE_TYPE			(gtk_bar_gauge_get_type ())

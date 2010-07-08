@@ -18,6 +18,33 @@
 *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/**
+ * @file gtkcompass.h
+ * @brief Gtk+ based Compass Widget
+ * @author Gautier Dumonteil <gautier.dumonteil@gmail.com>
+ * @version 0.1
+ * @date 06/06/2010
+ *
+ * Gtk Compass Widget <br>
+ * Copyright (C) 2010, CCNY Robotics Lab <br>
+ * http://robotics.ccny.cuny.edu <br>
+ * 
+ * \b Example: Add Compass widget to an gtkvbox and set some params <br>
+ * @code
+ * window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+ * vbox = gtk_vbox_new(TRUE, 1);
+ * gtk_container_add(GTK_CONTAINER (window), vbox);
+ * 
+ * comp = gtk_compass_new();
+ * g_object_set(GTK_COMPASS (comp),
+ *					"inverse-color", false,
+ *					"radial-color", true, NULL);
+ * 
+ * gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(comp), TRUE, TRUE, 0);
+ * gtk_widget_show_all(window);
+ * @endcode
+ */
+
 #ifndef __GTK_COMPASS_H
 #define __GTK_COMPASS_H
 
@@ -32,12 +59,26 @@
 #define GTK_COMPASS_MODEL_Y 300
 #define DEG2RAD(DEG) ((DEG)*((M_PI)/(180.0)))
 
+/**
+ * @typedef struct GtkCompassClass 
+ * @brief Special Gtk API strucure.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 G_BEGIN_DECLS typedef struct _GtkCompassClass
 {
   GtkDrawingAreaClass parent_class;
 
 } GtkCompassClass;
 
+/**
+ * @typedef struct GtkCompass 
+ * @brief Special Gtk API strucure.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 typedef struct _GtkCompass
 {
   GtkDrawingArea parent;
@@ -52,12 +93,10 @@ typedef struct _GtkCompass
 #define IS_GTK_COMPASS_CLASS(obj)	(G_TYPE_CHECK_CLASS_TYPE ((obj), GTK_COMPASS_TYPE))
 #define GTK_COMPASS_GET_CLASS	(G_TYPE_INSTANCE_GET_CLASS ((obj), GTK_COMPASS_TYPE, GtkCompassClass))
 
-
 extern GType gtk_compass_get_type (void) G_GNUC_CONST;
-     extern GtkWidget *gtk_compass_new (void);
-     extern void gtk_compass_redraw (GtkCompass * comp);
-     extern void gtk_compass_set_angle (GtkCompass * comp, gdouble ang);
-
+extern GtkWidget *gtk_compass_new (void);
+extern void gtk_compass_redraw (GtkCompass * comp);
+extern void gtk_compass_set_angle (GtkCompass * comp, gdouble ang);
 
 G_END_DECLS
 #endif

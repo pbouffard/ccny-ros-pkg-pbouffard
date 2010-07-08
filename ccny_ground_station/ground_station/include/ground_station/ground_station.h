@@ -36,6 +36,7 @@
 
 #include <ground_station/gui/AppData.h>
 #include <ground_station/gui/gtkaltimeter.h>
+#include <ground_station/gui/gtkvariometer.h>
 #include <ground_station/gui/gtkcompass.h>
 #include <ground_station/gui/gtkgauge.h>
 #include <ground_station/gui/gtkbargauge.h>

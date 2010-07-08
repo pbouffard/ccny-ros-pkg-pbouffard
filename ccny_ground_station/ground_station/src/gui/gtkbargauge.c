@@ -606,7 +606,7 @@ static void gtk_bar_gauge_draw (GtkWidget * bg)
   
   double x, y, rec_x0, rec_y0, rec_width, rec_height, rec_degrees;
   double rec_aspect, rec_corner_radius, rec_radius, radius;
-  cairo_pattern_t *pat;
+  cairo_pattern_t *pat=NULL;
 
   x = bg->allocation.width / 2;
   y = bg->allocation.height / 2;
@@ -684,6 +684,7 @@ static void gtk_bar_gauge_draw (GtkWidget * bg)
 	   break;
   }
   
+  cairo_pattern_destroy (pat);  
   return;
 }
 
@@ -705,7 +706,7 @@ static void gtk_bar_gauge_draw_extend (GtkBarGauge * bg, gint index, gdouble x_b
   char * name = NULL;
   double value_bar=0, bar_y=0, bar_height=0;
   int start_value_bar=0,end_value_bar=0,green_strip_start=0,yellow_strip_start=0;
-  cairo_pattern_t *pat;
+  cairo_pattern_t *pat=NULL;
   GdkRectangle bar_box,name_box;
  
   x=priv->x;
@@ -947,6 +948,7 @@ static void gtk_bar_gauge_draw_extend (GtkBarGauge * bg, gint index, gdouble x_b
   name_box.width = bar_box.width+0.5*radius;
   name_box.height = 0.26 * radius;
   gtk_bar_gauge_draw_name (GTK_BAR_GAUGE (bg), (gchar *)name, &name_box);
+  cairo_pattern_destroy (pat);    
   return;
 }
 
@@ -967,7 +969,7 @@ static void gtk_bar_gauge_draw_simple (GtkBarGauge * bg, gint index, gdouble x_b
   char * name =NULL;
   double value_bar=0, bar_y=0, bar_height=0;
   int start_value_bar=0,end_value_bar=0,green_strip_start=0,yellow_strip_start=0;
-  cairo_pattern_t *pat;
+  cairo_pattern_t *pat=NULL;
   GdkRectangle bar_box,name_box;
  
   x=priv->x;
@@ -1142,6 +1144,7 @@ static void gtk_bar_gauge_draw_simple (GtkBarGauge * bg, gint index, gdouble x_b
   name_box.width = bar_box.width+0.06*radius;
   name_box.height = 0.26 * radius;
   gtk_bar_gauge_draw_name (GTK_BAR_GAUGE (bg), name, &name_box);
+  cairo_pattern_destroy (pat);    
   return;
 }
 
@@ -1158,7 +1161,7 @@ static void gtk_bar_gauge_draw_screws (GtkWidget * bg)
 
   priv = GTK_BAR_GAUGE_GET_PRIVATE (bg);
   
-  cairo_pattern_t *pat;
+  cairo_pattern_t *pat=NULL;
   double x, y, radius;
   radius=priv->radius;
   x=priv->x;
