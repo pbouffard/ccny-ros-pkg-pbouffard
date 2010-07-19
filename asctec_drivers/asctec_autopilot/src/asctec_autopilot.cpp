@@ -66,7 +66,7 @@ namespace asctec
 
     ROS_INFO("Frequency is %f Hz", freq_);
 
-    timer_ = nh.createTimer (ros::Duration (1.0/freq_), &AutoPilot::spin, this);
+    timer_ = nh_private.createTimer (ros::Duration(1.0 / freq_), &AutoPilot::spin, this);
 
   }
 
