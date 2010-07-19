@@ -14,4 +14,5 @@ This driver is not yet complete and the interfaces are not yet finalized. Full f
   <depend package="geometry_msgs"/>
   <depend package="sensor_msgs"/>
   <depend package="nav_msgs"/>
+  <depend package="asctec_msgs"/>
 </package>

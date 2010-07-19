@@ -97,11 +97,11 @@ namespace asctec
     switch (msg)
     {
       case RequestTypes::LL_STATUS:
-        requestPublisher_[msg] = n.advertise<asctec_autopilot::LLStatus>(requestToString(msg).c_str(), 10);
+        requestPublisher_[msg] = n.advertise<asctec_msgs::LLStatus>(requestToString(msg).c_str(), 10);
         break;
 //      case RequestTypes::IMU_RAWDATA: {
       case RequestTypes::IMU_CALCDATA:
-        requestPublisher_[msg] = n.advertise<asctec_autopilot::IMUCalcData>(requestToString(msg).c_str(), 10);
+        requestPublisher_[msg] = n.advertise<asctec_msgs::IMUCalcData>(requestToString(msg).c_str(), 10);
         break;
 //      case RequestTypes::RC_DATA:    {
     }

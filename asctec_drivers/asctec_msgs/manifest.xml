@@ -1,0 +1,16 @@
+<package>
+  <description brief="asctec_msgs">
+
+     asctec_msgs
+
+  </description>
+  <author>Ivan Dryanovski</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/asctec_msgs</url>
+
+  <depend package="roscpp"/>
+
+</package>
+
+

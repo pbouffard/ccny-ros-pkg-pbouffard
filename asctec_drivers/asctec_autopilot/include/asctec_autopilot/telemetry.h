@@ -22,8 +22,8 @@
 #ifndef ASCTEC_AUTOPILOT_TELEMETRY_H
 #define ASCTEC_AUTOPILOT_TELEMETRY_H
 
-#include "asctec_autopilot/IMUCalcData.h"
-#include "asctec_autopilot/LLStatus.h"
+#include "asctec_msgs/IMUCalcData.h"
+#include "asctec_msgs/LLStatus.h"
 
 namespace asctec
 {
@@ -375,8 +375,8 @@ You will receive an acknowledge if a command or a waypoint was received correctl
     struct GPS_DATA GPS_DATA_;
     struct WAYPOINT WAYPOINT_;
     struct GPS_DATA_ADVANCED GPS_DATA_ADVANCED_;
-    asctec_autopilot::LLStatus LLStatus_;
-    asctec_autopilot::IMUCalcData IMUCalcData_;
+    asctec_msgs::LLStatus LLStatus_;
+    asctec_msgs::IMUCalcData IMUCalcData_;
     
   };                            // end class Telemetry
 }                               //end namespace asctec

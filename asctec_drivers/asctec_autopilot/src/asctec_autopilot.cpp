@@ -19,24 +19,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
-#include <sys/termios.h>
-#include <sys/ioctl.h>
-#include <cstring>
-#include <unistd.h>
-#include <cstdlib>
-#include <time.h>
-#include <errno.h>
-#include <bitset>
-
-#include <ros/ros.h>
-
-#include "asctec_autopilot/crc16.h"
 #include "asctec_autopilot/autopilot.h"
-#include "asctec_autopilot/telemetry.h"
-#include "asctec_autopilot/serialinterface.h"
-#include "asctec_autopilot/IMUCalcData.h"
-#include "asctec_autopilot/LLStatus.h"
 
 namespace asctec
 {
