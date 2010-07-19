@@ -59,16 +59,16 @@ int main (int argc, char **argv)
   ros::NodeHandle n;
 //  ros::Publisher calcdataPublisher;
 //  calcdataPublisher = n.advertise <asctec_autopilot::IMUCalcdata >("PelicanIMUCalcdata", 100);
-  ros::Rate loop_rate (10);
+  ros::Rate loop_rate (50);
 
   asctec::AutoPilot::AutoPilot autopilot;
   asctec::SerialInterface::SerialInterface serial;
   asctec::Telemetry::Telemetry tele;
   autopilot.tele_ = &tele;
-  autopilot.tele_->enablePolling(asctec::RequestTypes::IMU_CALCDATA,1);
-  autopilot.tele_->enablePolling(asctec::RequestTypes::IMU_RAWDATA,2,0);
-  autopilot.tele_->enablePolling(asctec::RequestTypes::LL_STATUS,2,1);
-  autopilot.tele_->enablePolling(asctec::RequestTypes::RC_DATA,5);
+  autopilot.tele_->enablePolling(asctec::RequestTypes::IMU_CALCDATA, 1);
+  //autopilot.tele_->enablePolling(asctec::RequestTypes::IMU_RAWDATA,  2, 0);
+  //autopilot.tele_->enablePolling(asctec::RequestTypes::LL_STATUS,    2, 1);
+  //autopilot.tele_->enablePolling(asctec::RequestTypes::RC_DATA,      5);
   autopilot.serialInterface_ = &serial;
   while (ros::ok ())
   {

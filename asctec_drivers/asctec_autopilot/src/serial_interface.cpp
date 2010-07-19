@@ -257,7 +257,7 @@ namespace asctec
             result = true;
             ROS_DEBUG ("Valid CRC!!");
           }
-          telemetry->dumpLL_STATUS();
+          //telemetry->dumpLL_STATUS();
         }
         else if (packet_type == Telemetry::PD_IMURAWDATA)
         {
@@ -267,7 +267,7 @@ namespace asctec
             result = true;
             ROS_DEBUG ("Valid CRC!!");
           }
-          telemetry->dumpIMU_RAWDATA();
+          //telemetry->dumpIMU_RAWDATA();
         }
         else if (packet_type == Telemetry::PD_IMUCALCDATA)
         {
@@ -277,7 +277,7 @@ namespace asctec
             result = true;
             ROS_DEBUG ("Valid CRC!!");
           }
-          telemetry->dumpIMU_CALCDATA();
+          //telemetry->dumpIMU_CALCDATA();
         }
         else if (packet_type == Telemetry::PD_RCDATA)
         {
@@ -287,7 +287,7 @@ namespace asctec
             result = true;
             ROS_DEBUG ("Valid CRC!!");
           }
-          telemetry->dumpRC_DATA();
+          //telemetry->dumpRC_DATA();
         }
         else
         {
