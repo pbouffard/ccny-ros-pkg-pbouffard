@@ -24,29 +24,8 @@
 int main (int argc, char **argv)
 {
   ros::init (argc, argv, "autopilot");
-
   asctec::AutoPilot::AutoPilot autopilot;
-  asctec::SerialInterface::SerialInterface serial;
-  asctec::Telemetry::Telemetry tele;
-  autopilot.tele_ = &tele;
-
-  // enable polling
-
-  autopilot.tele_->enablePolling(asctec::RequestTypes::IMU_CALCDATA, 1);
-  //autopilot.tele_->enablePolling(asctec::RequestTypes::IMU_RAWDATA,  2, 0);
-  //autopilot.tele_->enablePolling(asctec::RequestTypes::LL_STATUS,    2, 1);
-  //autopilot.tele_->enablePolling(asctec::RequestTypes::RC_DATA,      5);
-
-  autopilot.serialInterface_ = &serial;
-
   ros::spin();
-/*
-  while (ros::ok ())
-  {
-    // sleep
-    ros::spinOnce ();
-    loop_rate.sleep ();
-  }*/
   return 0;
 }
 
@@ -59,14 +38,32 @@ namespace asctec
     ros::NodeHandle nh;
     ros::NodeHandle nh_private("~");
 
-    // **** parameters
+    // **** get parameters
     
     if (!nh_private.getParam ("freq", freq_))
       freq_ = 50.0;
 
+    if (!nh_private.getParam ("port", port_))
+      port_ = "/dev/ttyUSB0";
+
+    if (!nh_private.getParam ("speed", speed_))
+      speed_ = 57600;
+
     ros::Duration d(1.0/freq_);
 
     ROS_INFO("Frequency is %f Hz, Period is %f s", freq_, d.toSec());
+
+    // **** set up intefaces
+
+    serialInterface_ = new asctec::SerialInterface::SerialInterface(port_, speed_);
+    telemetry_ = new asctec::Telemetry::Telemetry();
+
+    // **** enable polling
+
+    telemetry_->enablePolling(asctec::RequestTypes::IMU_CALCDATA, 1);
+    //telemetry_->enablePolling(asctec::RequestTypes::IMU_RAWDATA,  2, 0);
+    //telemetry_->enablePolling(asctec::RequestTypes::LL_STATUS,    2, 1);
+    //telemetry_->enablePolling(asctec::RequestTypes::RC_DATA,      5);
 
     timer_ = nh_private.createTimer (d, &AutoPilot::spin, this);
   }
@@ -80,10 +77,10 @@ namespace asctec
   {
     ROS_INFO("spin()");
 
-    tele_->buildRequest ();
-    tele_->requestCount_++;
-    serialInterface_->getPackets(tele_);
-    tele_->publishPackets();
+    telemetry_->buildRequest ();
+    telemetry_->requestCount_++;
+    serialInterface_->getPackets(telemetry_);
+    telemetry_->publishPackets();
   }
 }
 

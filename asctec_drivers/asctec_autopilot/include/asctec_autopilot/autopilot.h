@@ -45,25 +45,22 @@ namespace asctec
     private:
 
       ros::Timer timer_;
+    
       double freq_;
+      std::string port_;
+      int speed_;
+
+      SerialInterface* serialInterface_;
+      Telemetry* telemetry_;
 
     public:
 
       AutoPilot ();
-     ~AutoPilot ();
-
-      SerialInterface *serialInterface_;
-      Telemetry *tele_;
+      virtual ~AutoPilot();
 
       void enablePolling (uint16_t request, uint16_t interval);
       void spin (const ros::TimerEvent & e);
+  }; // end class AutoPilot
+} //end namespace asctec_autopilot
 
-      // CONVERSION FACTORS
-      static const double PEL_TO_ROS_ANGLE = (1.0 / 1000.0) * 3.14159265 / 180.0; // converts to rad
-      static const double PEL_TO_ROS_ANGVEL = (1.0 / 64.8) * 3.14159265 / 180.0;  // convetts to rad/s
-      static const double PEL_TO_ROS_ACC = (1.0 / 10000.0) * 9.81;        // converts to m/s^s
-      static const double PEL_TO_ROS_HEIGHT = (1.0 / 1000.0);     // converts to m
-
-  };                            // end class AutoPilot
-}                               //end namespace asctec_autopilot
 #endif

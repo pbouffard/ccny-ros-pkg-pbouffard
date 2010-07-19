@@ -42,7 +42,7 @@ namespace asctec
   class SerialInterface
   {
   public:
-    SerialInterface (std::string port = "/dev/ttyUSB0", uint32_t speed = 57600);
+    SerialInterface (std::string port, uint32_t speed);
     ~SerialInterface ();
 
     void write (char *output, int len);
