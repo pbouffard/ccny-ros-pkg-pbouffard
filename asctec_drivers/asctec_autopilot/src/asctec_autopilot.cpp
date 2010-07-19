@@ -64,10 +64,11 @@ namespace asctec
     if (!nh_private.getParam ("freq", freq_))
       freq_ = 50.0;
 
-    ROS_INFO("Frequency is %f Hz", freq_);
+    ros::Duration d(1.0/freq_);
 
-    timer_ = nh_private.createTimer (ros::Duration(1.0 / freq_), &AutoPilot::spin, this);
+    ROS_INFO("Frequency is %f Hz, Period is %f s", freq_, d.toSec());
 
+    timer_ = nh_private.createTimer (d, &AutoPilot::spin, this);
   }
 
   AutoPilot::~AutoPilot ()
@@ -78,6 +79,7 @@ namespace asctec
   void AutoPilot::spin (const ros::TimerEvent& e)
   {
     ROS_INFO("spin()");
+
     tele_->buildRequest ();
     tele_->requestCount_++;
     serialInterface_->getPackets(tele_);
