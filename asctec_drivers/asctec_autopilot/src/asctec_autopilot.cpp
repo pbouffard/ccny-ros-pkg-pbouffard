@@ -49,9 +49,9 @@ namespace asctec
     if (!nh_private.getParam ("speed", speed_))
       speed_ = 57600;
 
-    ros::Duration d(1.0/freq_);
+    if(freq_ <= 0.0) ROS_FATAL("Invalid frequency param");
 
-    ROS_INFO("Frequency is %f Hz, Period is %f s", freq_, d.toSec());
+    ros::Duration d(1.0/freq_);
 
     // **** set up intefaces
 
