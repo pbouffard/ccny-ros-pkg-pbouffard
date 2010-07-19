@@ -42,57 +42,27 @@ namespace asctec
 {
   class AutoPilot
   {
-  public:
-      SerialInterface *serialInterface_;
-      Telemetry *tele_;
+    private:
+
+      ros::Timer timer_;
+      double freq_;
+
+    public:
+
       AutoPilot ();
      ~AutoPilot ();
-    void enablePolling (uint16_t request, uint16_t interval);
-    void spin (const ros::TimerEvent & e);
-    // CONVERSION FACTORS
-    static const double PEL_TO_ROS_ANGLE = (1.0 / 1000.0) * 3.14159265 / 180.0; // converts to rad
-    static const double PEL_TO_ROS_ANGVEL = (1.0 / 64.8) * 3.14159265 / 180.0;  // convetts to rad/s
-    static const double PEL_TO_ROS_ACC = (1.0 / 10000.0) * 9.81;        // converts to m/s^s
-    static const double PEL_TO_ROS_HEIGHT = (1.0 / 1000.0);     // converts to m
 
+      SerialInterface *serialInterface_;
+      Telemetry *tele_;
 
-  private:
-      ros::Timer timer_;
-      ros::NodeHandle nh_;
-    double freq;
-/*
-  inline
-  void updateCtrlChecksum()
-  {
-  // CTRL_Input.chksum = CTRL_Input.pitch + CTRL_Input.roll + CTRL_Input.yaw + CTRL_Input.thrust + CTRL_Input.ctrl + 0xAAAA;
-  // startstring: >*>di
-  } 
-*/
-    // Data Request
-    // >*>p[unsigned short packets]
+      void enablePolling (uint16_t request, uint16_t interval);
+      void spin (const ros::TimerEvent & e);
 
-
-//    struct CTRL_INPUT
-//    {                           //serial commands (= Scientific Interface)
-//      short pitch;              //Pitch input: -2047..+2047 (0=neutral)
-//      short roll;               //Roll input: -2047..+2047 (0=neutral)
-//      short yaw;                //(=R/C Stick input) -2047..+2047 (0=neutral)
-//      short thrust;             //Collective: 0..4095 = 0..100%
-//      short ctrl;               /*control byte:
-//                                   bit 0: pitch control enabled
-//                                   bit 1: roll control enabled
-//                                   bit 2: yaw control enabled
-//                                   bit 3: thrust control enabled
-//                                   These bits can be used to only enable one axis at a time and thus to control the other axes manually.
-//                                   This usually helps a lot to set up and finetune controllers for each axis seperately. 
-/*      short chksum;
-    };
-
-    struct CMD
-    {
-      struct CTRL_INPUT CTRL_INPUT_;
-    };
-*/
+      // CONVERSION FACTORS
+      static const double PEL_TO_ROS_ANGLE = (1.0 / 1000.0) * 3.14159265 / 180.0; // converts to rad
+      static const double PEL_TO_ROS_ANGVEL = (1.0 / 64.8) * 3.14159265 / 180.0;  // convetts to rad/s
+      static const double PEL_TO_ROS_ACC = (1.0 / 10000.0) * 9.81;        // converts to m/s^s
+      static const double PEL_TO_ROS_HEIGHT = (1.0 / 1000.0);     // converts to m
 
   };                            // end class AutoPilot
 }                               //end namespace asctec_autopilot

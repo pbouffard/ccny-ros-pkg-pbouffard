@@ -21,25 +21,56 @@
 
 #include "asctec_autopilot/autopilot.h"
 
+int main (int argc, char **argv)
+{
+  ros::init (argc, argv, "autopilot");
+
+  asctec::AutoPilot::AutoPilot autopilot;
+  asctec::SerialInterface::SerialInterface serial;
+  asctec::Telemetry::Telemetry tele;
+  autopilot.tele_ = &tele;
+
+  // enable polling
+
+  autopilot.tele_->enablePolling(asctec::RequestTypes::IMU_CALCDATA, 1);
+  //autopilot.tele_->enablePolling(asctec::RequestTypes::IMU_RAWDATA,  2, 0);
+  //autopilot.tele_->enablePolling(asctec::RequestTypes::LL_STATUS,    2, 1);
+  //autopilot.tele_->enablePolling(asctec::RequestTypes::RC_DATA,      5);
+
+  autopilot.serialInterface_ = &serial;
+
+  ros::spin();
+/*
+  while (ros::ok ())
+  {
+    // sleep
+    ros::spinOnce ();
+    loop_rate.sleep ();
+  }*/
+  return 0;
+}
+
 namespace asctec
 {
   AutoPilot::AutoPilot ()
   {
-//      std::string port;
-//      int speed;
-//      nh_.param<std::string>("serial_port",    port,    "/dev/ttyUSB0");
-//      nh_.param<int>("serial_speed",    speed,    57600);
-//      SerialInterface serialInterface = SerialInterface(port,speed);
-      timer_ = nh_.createTimer (ros::Duration (1.0 / std::max (freq, 1.0)), &AutoPilot::spin, this);
+    ROS_INFO ("Creating AutoPilot Interface");
+
+    ros::NodeHandle nh;
+    ros::NodeHandle nh_private("~");
+
+    // **** parameters
+    
+    if (!nh_private.getParam ("freq", freq_))
+      freq_ = 50.0;
+
+    timer_ = nh.createTimer (ros::Duration (1.0 / std::max (freq_, 100.0)), &AutoPilot::spin, this);
+
   }
   AutoPilot::~AutoPilot ()
   {
-    ROS_DEBUG ("Destroying AutoPilot Interface");
+    ROS_INFO ("Destroying AutoPilot Interface");
   }
-
-  // enablePolling(REQ_LL_STATUS,1);
-
-
 
   void AutoPilot::spin (const ros::TimerEvent & e)
   {
@@ -49,32 +80,5 @@ namespace asctec
     serialInterface_->getPackets(tele_);
     tele_->publishPackets();
   }
-
 }
 
-
-int main (int argc, char **argv)
-{
-  ros::init (argc, argv, "autopilot");
-  ros::NodeHandle n;
-//  ros::Publisher calcdataPublisher;
-//  calcdataPublisher = n.advertise <asctec_autopilot::IMUCalcdata >("PelicanIMUCalcdata", 100);
-  ros::Rate loop_rate (50);
-
-  asctec::AutoPilot::AutoPilot autopilot;
-  asctec::SerialInterface::SerialInterface serial;
-  asctec::Telemetry::Telemetry tele;
-  autopilot.tele_ = &tele;
-  autopilot.tele_->enablePolling(asctec::RequestTypes::IMU_CALCDATA, 1);
-  //autopilot.tele_->enablePolling(asctec::RequestTypes::IMU_RAWDATA,  2, 0);
-  //autopilot.tele_->enablePolling(asctec::RequestTypes::LL_STATUS,    2, 1);
-  //autopilot.tele_->enablePolling(asctec::RequestTypes::RC_DATA,      5);
-  autopilot.serialInterface_ = &serial;
-  while (ros::ok ())
-  {
-    // sleep
-    ros::spinOnce ();
-    loop_rate.sleep ();
-  }
-  return 0;
-}
