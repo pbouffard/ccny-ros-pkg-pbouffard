@@ -1,0 +1,17 @@
+<package>
+  <description brief="ncd_parser">
+
+     ncd_parser
+
+  </description>
+  <author>Ivan Dryanovski</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ncd_parser</url>
+  <depend package="tf"/>
+  <depend package="geometry_msgs"/> 
+  <depend package="sensor_msgs"/> 
+
+</package>
+
+
