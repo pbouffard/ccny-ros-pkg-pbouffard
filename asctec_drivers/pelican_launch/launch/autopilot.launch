@@ -1,5 +1,5 @@
 <launch>
-  <include file="$(pelican_launch)/network145.launch" />
+  <include file="$(find pelican_launch)/network145.launch" />
 
   <node name="autopilot" pkg="asctec_autopilot" type="autopilot" respawn="false" required="true" output="screen">
     <param name="serial_port" type="string" value="/dev/ttyUSB0"/>
