@@ -93,15 +93,15 @@ namespace asctec
 
   void Telemetry::enablePolling (RequestType msg, uint8_t interval, uint8_t offset)
   {
-    ros::NodeHandle nh_private("~");
+    ros::NodeHandle n;
     switch (msg)
     {
       case RequestTypes::LL_STATUS:
-        requestPublisher_[msg] = nh_private.advertise<asctec_msgs::LLStatus>(requestToString(msg).c_str(), 10);
+        requestPublisher_[msg] = n.advertise<asctec_msgs::LLStatus>(requestToString(msg).c_str(), 10);
         break;
 //      case RequestTypes::IMU_RAWDATA: {
       case RequestTypes::IMU_CALCDATA:
-        requestPublisher_[msg] = nh_private.advertise<asctec_msgs::IMUCalcData>(requestToString(msg).c_str(), 10);
+        requestPublisher_[msg] = n.advertise<asctec_msgs::IMUCalcData>(requestToString(msg).c_str(), 10);
         break;
 //      case RequestTypes::RC_DATA:    {
     }
