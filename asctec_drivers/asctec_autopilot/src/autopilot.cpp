@@ -75,8 +75,6 @@ namespace asctec
 
   void AutoPilot::spin (const ros::TimerEvent& e)
   {
-    ROS_INFO("spin()");
-
     telemetry_->buildRequest ();
     telemetry_->requestCount_++;
     serialInterface_->getPackets(telemetry_);

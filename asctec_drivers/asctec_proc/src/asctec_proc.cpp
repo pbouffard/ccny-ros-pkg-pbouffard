@@ -34,8 +34,7 @@ AsctecProc::~AsctecProc()
 
 void AsctecProc::imuCalcDataCallback(const asctec_msgs::IMUCalcDataConstPtr& imuCalcDataMsg)
 {
-  ROS_INFO("imuCalcDataCallback");
-
+  // publish im message
   sensor_msgs::Imu imuMsg;
   createImuMsg (imuCalcDataMsg, imuMsg);
   imuPublisher_.publish(imuMsg);
