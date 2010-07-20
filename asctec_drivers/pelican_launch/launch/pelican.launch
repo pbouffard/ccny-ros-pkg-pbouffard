@@ -1,0 +1,8 @@
+<launch>
+
+  <include file="$(find pelican_launch)/launch/autopilot.launch"/>
+
+  <include file="$(find pelican_launch)/launch/laser_height.launch"/>
+
+</launch>
+
