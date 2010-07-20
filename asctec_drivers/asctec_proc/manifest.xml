@@ -1,0 +1,17 @@
+<package>
+  <description brief="asctec_proc">
+
+     asctec_proc
+
+  </description>
+  <author>Ivan Dryanovski</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/asctec_proc</url>
+  <depend package="roscpp"/>
+  <depend package="asctec_msgs"/>
+  <depend package="sensor_msgs"/>
+
+</package>
+
+
