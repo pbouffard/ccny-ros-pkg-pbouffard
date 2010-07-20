@@ -5,6 +5,7 @@
 #include <asctec_msgs/IMUCalcData.h>
 #include <sensor_msgs/Imu.h>
 #include <tf/transform_datatypes.h>
+#include <tf/transform_broadcaster.h>
 
 const std::string imuCalcDataTopic_ = "IMU_CALCDATA";
 const std::string imuTopic_         = "imu";
@@ -22,6 +23,7 @@ class AsctecProc
 
     ros::Subscriber imuCalcDataSubscriber_;
     ros::Publisher  imuPublisher_;
+    tf::TransformBroadcaster tfBroadcaster_;
 
     void imuCalcDataCallback(const asctec_msgs::IMUCalcDataConstPtr& imuCalcDataMsg);
 

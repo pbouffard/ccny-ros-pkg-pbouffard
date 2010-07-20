@@ -39,6 +39,21 @@ void AsctecProc::imuCalcDataCallback(const asctec_msgs::IMUCalcDataConstPtr& imu
   createImuMsg (imuCalcDataMsg, imuMsg);
   imuPublisher_.publish(imuMsg);
 
+  // publish tf for testing
+
+  btTransform t;
+
+  btQuaternion orientation;
+  orientation.setRPY(imuCalcDataMsg->angle_roll * ASC_TO_ROS_ANGLE,
+                     imuCalcDataMsg->angle_nick * ASC_TO_ROS_ANGLE,
+                     imuCalcDataMsg->angle_yaw  * ASC_TO_ROS_ANGLE);
+
+  t.setRotation (orientation);
+  t.setOrigin (btVector3(0,0,0));
+
+  tf::StampedTransform worldToLaserOrtho (t, ros::Time::now(), "world", "odom");
+  tfBroadcaster_.sendTransform (worldToLaserOrtho);
+
 }
 
 void AsctecProc::createImuMsg(const asctec_msgs::IMUCalcDataConstPtr& imuCalcDataMsg,
