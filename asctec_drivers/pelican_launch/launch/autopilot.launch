@@ -1,0 +1,9 @@
+<launch>
+  <include file="$(pelican_launch)/network145.launch" />
+
+  <node name="autopilot" pkg="asctec_autopilot" type="autopilot" respawn="false" required="true" output="screen">
+    <param name="serial_port" type="string" value="/dev/ttyUSB0"/>
+    <param name="serial_speed" type="int" value="57600"/>
+    <param name="freq" value="40.0"/>
+  </node>
+</launch>
