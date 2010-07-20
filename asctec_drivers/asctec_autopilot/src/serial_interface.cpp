@@ -232,8 +232,7 @@ namespace asctec
     unsigned short packet_size;
     unsigned int i;
 
-
-    ROS_INFO ("Packet Request: %04x %d packets", (short) telemetry->requestPackets_.to_ulong (),
+    ROS_DEBUG ("Packet Request: %04x %d packets", (short) telemetry->requestPackets_.to_ulong (),
               telemetry->requestPackets_.count ());
     sprintf (cmd, ">*>p%c", (short) telemetry->requestPackets_.to_ulong ());
     write (cmd, 6);
