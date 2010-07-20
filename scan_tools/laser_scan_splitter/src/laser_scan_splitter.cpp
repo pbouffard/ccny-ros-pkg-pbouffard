@@ -77,6 +77,7 @@ LaserScanSplitter::LaserScanSplitter ()
   // **** advertise topics
   for (unsigned int i = 0; i < publishedScanTopics_.size (); i++)
   {
+    ROS_INFO("advertising on topic: %s", publishedScanTopics_[i].c_str());
     scanPublishers_.push_back (ros::Publisher ());
     scanPublishers_[i] = nh_private.advertise < sensor_msgs::LaserScan > (publishedScanTopics_[i], 10);
   }
