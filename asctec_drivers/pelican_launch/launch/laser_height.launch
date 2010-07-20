@@ -1,0 +1,33 @@
+<launch>
+
+  <node pkg="tf" type="static_transform_publisher" name="base_link_to_laser_link" 
+   args="0.0 0.0 0.1 0 0 0 base_link laser_link 100" />
+
+  <node pkg="tf" type="static_transform_publisher" name="laser_link_to_laser" 
+   args="0.0 0.0 0.0 0 0 0 laser_link laser 100" />
+
+  <node pkg="tf" type="static_transform_publisher" name="laser_link_to_virtual_laser_up" 
+   args="0.0 -0.5 -0.5 -1.57 0 -1.57 laser_link virtual_laser_up 100" />
+
+  <node pkg="tf" type="static_transform_publisher" name="laser_link_to_virtual_laser_down" 
+   args="0.0 +0.5 +0.5 +1.57 0 -1.57 laser_link virtual_laser_down 100" />
+
+  <node pkg="hokuyo_node" type="hokuyo_node" name="hokuyo_node" output="screen">
+    <param name="frame_id" value="/laser"/>
+    <param name="port" value="/dev/ttyACM0"/>
+  </node>
+
+  <node pkg="laser_scan_splitter" type="laser_scan_splitter" name="splitter" output="screen">
+    <param name="sizes" value="20 472 21"/>
+    <param name="topics" value="virtual_scan_up scan virtual_scan_down"/>
+    <param name="frames" value="virtual_laser_up laser virtual_laser_down"/>
+  </node>
+
+  <node pkg="laser_height_estimation" type="laser_height_estimation" name="floor_height_estimation" output="screen">
+    <param name="world_frame" value="/odom"/>
+    <remap from="scan"   to="splitter/virtual_scan_down"/>
+    <remap from="height" to="floor_height"/>
+    <remap from="imu"    to="asctec_proc/imu"/>
+  </node>
+
+</launch>
