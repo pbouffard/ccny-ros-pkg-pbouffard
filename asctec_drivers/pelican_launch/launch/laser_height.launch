@@ -19,15 +19,15 @@
 
   <node pkg="laser_scan_splitter" type="laser_scan_splitter" name="splitter" output="screen">
     <param name="sizes" value="20 472 21"/>
-    <param name="topics" value="virtual_scan_up virtual_scan_mid virtual_scan_down"/>
-    <param name="frames" value="virtual_laser_up laser virtual_laser_down"/>
+    <param name="topics" value="/virtual_scan_up /virtual_scan_mid /virtual_scan_down"/>
+    <param name="frames" value="/virtual_laser_up /laser /virtual_laser_down"/>
   </node>
 
   <node pkg="laser_height_estimation" type="laser_height_estimation" name="floor_height_estimation" output="screen">
     <param name="world_frame" value="/odom"/>
-    <remap from="scan"   to="splitter/virtual_scan_down"/>
-    <remap from="height" to="floor_height"/>
-    <remap from="imu"    to="asctec_proc/imu"/>
+    <remap from="/scan"   to="/splitter/virtual_scan_down"/>
+    <remap from="/height" to="/floor_height"/>
+    <remap from="/imu"    to="/asctec_proc/imu"/>
   </node>
 
 </launch>
