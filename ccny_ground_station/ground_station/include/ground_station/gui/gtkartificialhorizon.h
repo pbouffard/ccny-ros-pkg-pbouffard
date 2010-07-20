@@ -29,7 +29,18 @@
  * Copyright (C) 2010, CCNY Robotics Lab <br>
  * http://robotics.ccny.cuny.edu <br>
  * 
- * \b Example: Add Artificial Horizon widget to an gtkvbox and set some params <br>
+ * This widget provide an easy to read artificial horizon instrument. <br>
+ * The design is volontary based on a real artificial horizon flight instrument <br>
+ * in order to be familiar to aircraft and helicopter pilots.<br>
+ * 
+ * @b Pictures:<br>
+ * <table><tr>
+ * <th><IMG SRC="file:///home/gaitt/Bureau/gtkartificialhorizon.png"></th>
+ * <th><IMG SRC="file:///home/gaitt/Bureau/gtkartificialhorizon_g.png"></th>
+ * </tr></table>
+ * 
+ * @b Example: <br>
+ * Add Artificial Horizon widget to an gtkvbox and set some params <br>
  * @code
  * window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
  * vbox = gtk_vbox_new(TRUE, 1);
@@ -37,12 +48,31 @@
  * 
  * art_hor = gtk_artificial_horizon_new(); 
  * g_object_set(GTK_ARTIFICIAL_HORIZON (art_hor),
- * 				"inverse-color", false,
- * 				"radial-color", true, NULL);
+ *		"grayscale-color", false,
+ *		"radial-color", true, NULL);
  * 
  * gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(art_hor), TRUE, TRUE, 0);
  * gtk_widget_show_all(window);
  * @endcode
+ * 
+ * The following code show how to change widget's values and redraw it:<br>
+ * Note that here tc's type is "GtkWidget *".<br>
+ * @code
+ * if (IS_GTK_ARTIFICIAL_HORIZON (art_hor))
+ * {
+ *	gtk_turn_coordinator_set_value (GTK_ARTIFICIAL_HORIZON (art_hor), rotation_angle,trans_y);
+ *	gtk_turn_coordinator_redraw(GTK_ARTIFICIAL_HORIZON(art_hor));
+ * }		
+ * @endcode
+ * 
+  @b Widget @b Parameters:<br>
+ * - "grayscale-colors": boolean, if TRUE, draw the widget with grayscale colors (outdoor use)<br>
+ * - "radial-color": boolean, if TRUE, draw a fake light reflexion<br>
+ * 
+ * @b Widget @b values:<br>
+ * - "rotation_angle": double, provide rotation of the widget sphere<br>
+ * and external arc - the value is from 0 to 360.<br>
+ * - "trans_y": double, provide sphere translation - the value is from -30 to 30
  */
 
 #ifndef __GTK_ARTIFICIAL_HORIZON_H__
@@ -53,20 +83,20 @@
 #include <math.h>
 #include <time.h>
 
-#define GTK_ARTIFICIAL_HORIZON_MAX_STRING  256   // **** Size of a text string 
+#define GTK_ARTIFICIAL_HORIZON_MAX_STRING  256  // **** Size of a text string
 #define GTK_ARTIFICIAL_HORIZON_MODEL_X 300
 #define GTK_ARTIFICIAL_HORIZON_MODEL_Y 300
+#define DEG2RAD(DEG) ((DEG)*((M_PI)/(180.0)))
 
 G_BEGIN_DECLS
-
 /**
  * @typedef struct GtkArtificialHorizonClass 
- * @brief Special Gtk API strucure.
+ * @brief Special Gtk API strucure. Define an instance the widget class
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
  */
-typedef struct _GtkArtificialHorizonClass
+  typedef struct _GtkArtificialHorizonClass
 {
   GtkDrawingAreaClass parent_class;
 
@@ -74,7 +104,7 @@ typedef struct _GtkArtificialHorizonClass
 
 /**
  * @typedef struct GtkArtificialHorizon 
- * @brief Special Gtk API strucure.
+ * @brief Special Gtk API strucure. Define widget's class
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
@@ -82,7 +112,7 @@ typedef struct _GtkArtificialHorizonClass
 typedef struct _GtkArtificialHorizon
 {
   GtkDrawingArea parent;
-  
+
 } GtkArtificialHorizon;
 
 #define GTK_ARTIFICIAL_HORIZON_TYPE			(gtk_artificial_horizon_get_type ())
@@ -94,7 +124,7 @@ typedef struct _GtkArtificialHorizon
 
 extern GType gtk_artificial_horizon_get_type (void) G_GNUC_CONST;
 extern GtkWidget *gtk_artificial_horizon_new (void);
-// extern void gtk_artificial_horizon_set_alti (GtkArtificialHorizon * arh, gdouble alti);
+extern void gtk_artificial_horizon_set_value (GtkArtificialHorizon * arh, gdouble, gdouble);
 extern void gtk_artificial_horizon_redraw (GtkArtificialHorizon * arh);
 
 G_END_DECLS

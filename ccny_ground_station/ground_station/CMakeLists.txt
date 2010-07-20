@@ -32,7 +32,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 include($ENV{ROS_ROOT}/core/rosbuild/FindPkgConfig.cmake)
 
-set(GROUNDSTATION groundstation)
+set(GROUNDSTATION groundstation_without_gps)
 
 set(GROUNDSTATION_SRC   src/gui/gtkaltimeter.c
 								src/gui/gtkvariometer.c
@@ -41,8 +41,8 @@ set(GROUNDSTATION_SRC   src/gui/gtkaltimeter.c
 								src/gui/gtkbargauge.c	
 								src/gui/gtkartificialhorizon.c	
 								src/gui/gtkturncoordinator.c																							
-								src/gui/AppData.cpp
-								src/ground_station.cpp)
+								src/gui/gauges_ground_station_appdata.cpp
+								src/gauges_ground_station.cpp)
 
 rosbuild_add_executable(${GROUNDSTATION}  ${GROUNDSTATION_SRC})
 

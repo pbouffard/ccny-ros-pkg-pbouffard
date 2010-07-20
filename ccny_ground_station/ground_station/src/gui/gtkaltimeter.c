@@ -29,7 +29,18 @@
  * Copyright (C) 2010, CCNY Robotics Lab <br>
  * http://robotics.ccny.cuny.edu <br>
  * 
- * \b Example: Add Altimeter widget to an gtkvbox and set some params <br>
+ * This widget provide an easy to read altimeter instrument. <br>
+ * The design is volontary based on a real altimeter flight instrument <br>
+ * in order to be familiar to aircraft and helicopter pilots.<br>
+ * 
+ * @b Pictures:<br>
+ * <table><tr>
+ * <th><IMG SRC="file:///home/gaitt/Bureau/gtkaltimeter.png"></th>
+ * <th><IMG SRC="file:///home/gaitt/Bureau/gtkaltimeter_g.png"></th>
+ * </tr></table>
+ * 
+ * @b Example: <br>
+ * Add Altimeter widget to an gtkvbox and set some params <br>
  * @code
  * window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
  * vbox = gtk_vbox_new(TRUE, 1);
@@ -37,21 +48,42 @@
  * 
  * alt = gtk_altimeter_new();
  * g_object_set(GTK_ALTIMETER (alt),
- *					"inverse-color", false,
- *					"unit-is-feet", true,
- *					"unit-step-value", 100,
- *					"radial-color", true, NULL);
+ *		"grayscale-colors", false,
+ *		"unit-is-feet", true,
+ *		"unit-step-value", 100,
+ *		"radial-color", true, NULL);
  * 
  * gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(alt), TRUE, TRUE, 0);
  * gtk_widget_show_all(window);
  * @endcode
+ * 
+ * The following code show how to change widget's values and redraw it:<br>
+ * Note that here tc's type is "GtkWidget *".<br>
+ * @code
+ * if (IS_GTK_ALTIMETER (alt))
+ * {
+ *	gtk_altimeter_set_alti (GTK_ALTIMETER (alt), altitude);
+ *	gtk_altimeter_redraw(GTK_ALTIMETER(alt));
+ * }		
+ * @endcode
+ * 
+  @b Widget @b Parameters:<br>
+ * - "grayscale-colors": boolean, if TRUE, draw the widget with grayscale colors (outdoor use)<br>
+ * - "unit-is-feet": boolean, if TRUE, the widget display FEET values else display METER<br>
+ * - "unit-step-value", int, define the step value of the altimeter can be 1,10,100<br>
+ * - "radial-color": boolean, if TRUE, draw a fake light reflexion<br>
+ * 
+ * @b Widget @b values:<br>
+ * - "altitude": double, define the altitude you want to display by the widget - the value is<br>
+ * from 0 to 999999.
  */
 
 #include <ground_station/gui/gtkaltimeter.h>
 
 /**
  * @typedef struct GtkAltimeterPrivate 
- * @brief Special Gtk API strucure which contains the widget's data.
+ * @brief Special Gtk API strucure. Allow to add a private data<br>
+ * for the widget. Defined in the C file in order to be private.
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
@@ -65,7 +97,7 @@ typedef struct _GtkAltimeterPrivate
   /* widget data */
   gint unit_value;
   gboolean unit_is_feet;
-  gboolean color_mode_inv;
+  gboolean grayscale_color;
   gboolean radial_color;
   gdouble altitude;
 
@@ -88,7 +120,7 @@ typedef struct _GtkAltimeterPrivate
 
 /**
  * @enum _GTK_ALTIMETER_PROPERTY_ID
- * @brief Special Gtk API enum that allow to set widget's properties
+ * @brief Special Gtk API enum. Allow to identify widget's properties.
  *
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
@@ -96,7 +128,7 @@ typedef struct _GtkAltimeterPrivate
 enum _GTK_ALTIMETER_PROPERTY_ID
 {
   PROP_0,
-  PROP_INVERSED_COLOR,
+  PROP_GRAYSCALE_COLOR,
   PROP_UNIT_IS_FEET,
   PROP_UNIT_STEP_VALUE,
   PROP_RADIAL_COLOR,
@@ -104,14 +136,24 @@ enum _GTK_ALTIMETER_PROPERTY_ID
 
 /**
  * @fn G_DEFINE_TYPE (GtkAltimeter, gtk_altimeter, GTK_TYPE_DRAWING_AREA);
- * @brief Special Gtk API function that permit to define the current
- * widget as an GTK_TYPE_DRAWING_AREA. 
+ * @brief Special Gtk API function. Define a new object type named GtkAltimeter <br>
+ * and all preface of the widget's functions calls with gtk_altimeter.<br>
+ * We are inheriting the type of GtkDrawingArea.<br>
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
  */
 G_DEFINE_TYPE (GtkAltimeter, gtk_altimeter, GTK_TYPE_DRAWING_AREA);
 
+
+/**
+ * @def GTK_ALTIMETER_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GTK_ALTIMETER_TYPE, GtkAltimeterPrivate))
+ * @brief Special Gtk API define. Add a macro for easy access to the private<br>
+ * data struct.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 #define GTK_ALTIMETER_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GTK_ALTIMETER_TYPE, GtkAltimeterPrivate))
 
 static void gtk_altimeter_class_init (GtkAltimeterClass * klass);
@@ -133,12 +175,22 @@ static gboolean gtk_altimeter_debug = FALSE;
 
 /**
  * @fn static void gtk_altimeter_class_init (GtkAltimeterClass * klass)
- * @brief Special Gtk API function that perform the initilization step of
- * the widget's class. 
+ * @brief Special Gtk API function. Function called when the class is<br>
+ * initialised. Allow to set certain class wide functions and<br>
+ * properties<br>.
+ * Allow to override some parent’s expose handler like :<br>
+ * - set_property handler<br>
+ * - destroy handler<br>
+ * - configure_event handler<br>
+ * - motion_notify_event handler (not use in this widget)
+ * - button_press_event handler (not use in this widget)
+ * 
+ * Also register the private struct GtkAltimeterPrivate with<br>
+ * the class and install widget properties.
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
- */ 
+ */
 static void gtk_altimeter_class_init (GtkAltimeterClass * klass)
 {
   GObjectClass *obj_class = G_OBJECT_CLASS (klass);
@@ -165,10 +217,11 @@ static void gtk_altimeter_class_init (GtkAltimeterClass * klass)
   g_type_class_add_private (obj_class, sizeof (GtkAltimeterPrivate));
 
   g_object_class_install_property (obj_class,
-                                   PROP_INVERSED_COLOR,
-                                   g_param_spec_boolean ("inverse-color",
-                                                         "inverse or not the widget color",
-                                                         "inverse or not the widget color", FALSE, G_PARAM_WRITABLE));
+                                   PROP_GRAYSCALE_COLOR,
+                                   g_param_spec_boolean ("grayscale-color",
+                                                         "use grayscale for the widget color",
+                                                         "use grayscale for the widget color", FALSE,
+                                                         G_PARAM_WRITABLE));
   g_object_class_install_property (obj_class,
                                    PROP_UNIT_IS_FEET,
                                    g_param_spec_boolean ("unit-is-feet",
@@ -191,12 +244,13 @@ static void gtk_altimeter_class_init (GtkAltimeterClass * klass)
 
 /**
  * @fn static void gtk_altimeter_init (GtkAltimeter * alt)
- * @brief Special Gtk API function that initialize the widget and 
- * widget's data. 
+ * @brief Special Gtk API function. Function called when the creating a<br>
+ * new GtkAltimeter. Allow to initialize some private variables of<br>
+ * widget.
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
- */ 
+ */
 static void gtk_altimeter_init (GtkAltimeter * alt)
 {
   GtkAltimeterPrivate *priv = NULL;
@@ -212,8 +266,11 @@ static void gtk_altimeter_init (GtkAltimeter * alt)
   gtk_widget_add_events (GTK_WIDGET (alt), GDK_BUTTON_PRESS_MASK |
                          GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK);
   priv->b_mouse_onoff = FALSE;
-  priv->color_mode_inv = FALSE;
+  priv->grayscale_color = FALSE;
   priv->radial_color = TRUE;
+  priv->unit_is_feet = TRUE;
+  priv->altitude = 0;
+  priv->unit_value = 100;
 
   priv->bg_color_bounderie.red = 6553.5;        // 0.1 cairo
   priv->bg_color_bounderie.green = 6553.5;
@@ -235,11 +292,12 @@ static void gtk_altimeter_init (GtkAltimeter * alt)
 
 /**
  * @fn static gboolean gtk_altimeter_configure_event (GtkWidget * widget, GdkEventConfigure * event)
- * @brief Special Gtk API function. 
+ * @brief Special Gtk API function. Override the _configure_event handler<br>
+ * in order to resize the widget when the main window is resized.
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
- */ 
+ */
 static gboolean gtk_altimeter_configure_event (GtkWidget * widget, GdkEventConfigure * event)
 {
   GtkAltimeterPrivate *priv;
@@ -281,11 +339,13 @@ static gboolean gtk_altimeter_configure_event (GtkWidget * widget, GdkEventConfi
 
 /**
  * @fn static gboolean gtk_altimeter_expose (GtkWidget * alt, GdkEventExpose * event)
- * @brief Special Gtk API function. 
+ * @brief Special Gtk API function. Override of the _expose handler.<br>
+ * An “expose-event” signal is emitted when the widget need to be drawn.<br>
+ * A Cairo context is created for the parent's GdkWindow.
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
- */ 
+ */
 static gboolean gtk_altimeter_expose (GtkWidget * alt, GdkEventExpose * event)
 {
   GtkAltimeterPrivate *priv;
@@ -333,9 +393,15 @@ static gboolean gtk_altimeter_expose (GtkWidget * alt, GdkEventExpose * event)
  * @fn extern void gtk_altimeter_redraw (GtkAltimeter * alt)
  * @brief Special Gtk API function. Redraw the widget when called.
  * 
+ * This function will redraw the widget canvas. In order to reexpose the canvas<br>
+ * (and cause it to redraw) of our parent class(GtkDrawingArea), it is needed to<br>
+ * use gdk_window_invalidate_rect(). The function gdk_window_invalidate_region()<br>
+ * need to be called as well. And finaly, in order to make all events happen, it<br>
+ * is needed to call gdk_window_process_all_updates().
+ * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
- */ 
+ */
 extern void gtk_altimeter_redraw (GtkAltimeter * alt)
 {
   GtkWidget *widget;
@@ -362,12 +428,12 @@ extern void gtk_altimeter_redraw (GtkAltimeter * alt)
 
 /**
  * @fn extern void gtk_altimeter_set_alti (GtkAltimeter * alt, gdouble alti)
- * @brief Gtk Altimeter function that permit to set the internal altitude 
- * variable of the widget. 
+ * @brief Public widget's function that allow the main program/user to<br>
+ * set the internal altitude variable of the widget. 
  * 
- * See GObject and GTK+ references for
- * more informations: http://library.gnome.org/devel/references.html.en
- */ 
+ * "altitude": double, define the altitude you want to display by the widget - the value is<br>
+ * from 0 to 999999.
+ */
 extern void gtk_altimeter_set_alti (GtkAltimeter * alt, gdouble alti)
 {
   GtkAltimeterPrivate *priv;
@@ -379,16 +445,24 @@ extern void gtk_altimeter_set_alti (GtkAltimeter * alt, gdouble alti)
   g_return_if_fail (IS_GTK_ALTIMETER (alt));
 
   priv = GTK_ALTIMETER_GET_PRIVATE (alt);
-  priv->altitude = alti;
+
+  if ((alti >= 0) && (alti <= 999999))
+  {
+    priv->altitude = alti;
+  }
+  else
+    g_warning ("GtkAltimeter : gtk_altimeter_set_alti : value out of range");
+
 }
 
 /**
  * @fn extern GtkWidget *gtk_altimeter_new (void)
- * @brief Special Gtk API function. 
+ * @brief Special Gtk API function. This function is simply a wrapper<br>
+ * for convienience.
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
- */ 
+ */
 extern GtkWidget *gtk_altimeter_new (void)
 {
   if (gtk_altimeter_debug)
@@ -400,11 +474,13 @@ extern GtkWidget *gtk_altimeter_new (void)
 
 /**
  * @fn static void gtk_altimeter_draw (GtkWidget * alt)
- * @brief Special Gtk API function that draw the widget by using cairo.
+ * @brief Special Gtk API function. Override the _draw handler of the<br>
+ * parent class GtkDrawingArea. This function use the cairo context<br>
+ * created before in order to draw scalable graphics. 
  * 
  * See GObject,Cairo and GTK+ references for more informations: 
  * http://library.gnome.org/devel/references.html.en
- */ 
+ */
 static void gtk_altimeter_draw (GtkWidget * alt)
 {
   GtkAltimeterPrivate *priv;
@@ -425,7 +501,7 @@ static void gtk_altimeter_draw (GtkWidget * alt)
   x = alt->allocation.width / 2;
   y = alt->allocation.height / 2;
   radius = MIN (alt->allocation.width / 2, alt->allocation.height / 2) - 5;
-  cairo_pattern_t *pat=NULL;
+  cairo_pattern_t *pat = NULL;
 
   rec_x0 = x - radius;
   rec_y0 = y - radius;
@@ -448,10 +524,10 @@ static void gtk_altimeter_draw (GtkWidget * alt)
   cairo_arc (priv->cr, rec_x0 + rec_radius, rec_y0 + rec_radius, rec_radius, 180 * rec_degrees, 270 * rec_degrees);
   cairo_close_path (priv->cr);
 
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -475,7 +551,7 @@ static void gtk_altimeter_draw (GtkWidget * alt)
   cairo_stroke (priv->cr);
 
   cairo_arc (priv->cr, x, y, radius, 0, 2 * M_PI);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
     cairo_set_source_rgb (priv->cr, 1., 1., 1.);
@@ -483,7 +559,7 @@ static void gtk_altimeter_draw (GtkWidget * alt)
   cairo_stroke (priv->cr);
 
   cairo_arc (priv->cr, x, y, radius - 0.04 * radius, 0, 2 * M_PI);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 0.6, 0.5, 0.5);
   else
     cairo_set_source_rgb (priv->cr, 1 - 0.6, 1 - 0.5, 1 - 0.5);
@@ -492,10 +568,10 @@ static void gtk_altimeter_draw (GtkWidget * alt)
   cairo_set_line_width (priv->cr, 0.01 * radius);
   radius = radius - 0.1 * radius;
   cairo_arc (priv->cr, x, y, radius, 0, 2 * M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_altimeter.red / 65535,
                             (gdouble) priv->bg_color_altimeter.green / 65535,
                             (gdouble) priv->bg_color_altimeter.blue / 65535);
@@ -519,7 +595,7 @@ static void gtk_altimeter_draw (GtkWidget * alt)
   cairo_stroke (priv->cr);
 
   cairo_arc (priv->cr, x, y, radius, 0, 2 * M_PI);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 0.6, 0.6, 0.6);
   else
     cairo_set_source_rgb (priv->cr, 1 - 0.6, 1 - 0.6, 1 - 0.6);
@@ -527,10 +603,10 @@ static void gtk_altimeter_draw (GtkWidget * alt)
   cairo_stroke (priv->cr);
 
   cairo_arc (priv->cr, x, y, radius - 0.07 * radius, 0, 2 * M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_altimeter.red / 65535,
                             (gdouble) priv->bg_color_altimeter.green / 65535,
                             (gdouble) priv->bg_color_altimeter.blue / 65535);
@@ -558,7 +634,7 @@ static void gtk_altimeter_draw (GtkWidget * alt)
   cairo_move_to (priv->cr, x + 0.27 * radius, y + 0.4764 * radius);
   cairo_arc (priv->cr, x, y, radius - 0.8 * radius, M_PI / 3, 2 * M_PI / 3);
   cairo_line_to (priv->cr, x - 0.27 * radius, y + 0.4764 * radius);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);
   else
     cairo_set_source_rgb (priv->cr, 1 - 0.9, 1 - 0.9, 1 - 0.9);
@@ -581,10 +657,10 @@ static void gtk_altimeter_draw (GtkWidget * alt)
   cairo_move_to (priv->cr, x - 0.1 * radius, y);
   cairo_line_to (priv->cr, x + 0.5 * radius, y + 0.6 * radius);
 
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_altimeter.red / 65535,
                             (gdouble) priv->bg_color_altimeter.green / 65535,
                             (gdouble) priv->bg_color_altimeter.blue / 65535);
@@ -607,7 +683,7 @@ static void gtk_altimeter_draw (GtkWidget * alt)
   cairo_stroke (priv->cr);
 
   // Altimeter ticks 
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 1, 1, 1);
   else
     cairo_set_source_rgb (priv->cr, 0., 0., 0.);
@@ -717,24 +793,21 @@ static void gtk_altimeter_draw (GtkWidget * alt)
   priv->radius = radius;
   priv->x = x;
   priv->y = y;
-  gtk_altimeter_draw_screws(alt);
+  gtk_altimeter_draw_screws (alt);
 
   // draw digital 
   gtk_altimeter_draw_digital (alt);
 
   // draw hands
   gtk_altimeter_draw_hands (alt);
-  cairo_pattern_destroy (pat);  
+  cairo_pattern_destroy (pat);
   return;
 }
 
 /**
  * @fn static void gtk_altimeter_draw_screws (GtkWidget * alt)
- * @brief Widget function that draw the widget screws using cairo.
- * 
- * See GObject,Cairo and GTK+ references for more informations: 
- * http://library.gnome.org/devel/references.html.en
- */ 
+ * @brief Private widget's function that draw the widget's screws using cairo.
+ */
 static void gtk_altimeter_draw_screws (GtkWidget * alt)
 {
   GtkAltimeterPrivate *priv;
@@ -746,29 +819,29 @@ static void gtk_altimeter_draw_screws (GtkWidget * alt)
   g_return_if_fail (IS_GTK_ALTIMETER (alt));
 
   priv = GTK_ALTIMETER_GET_PRIVATE (alt);
-  
-  cairo_pattern_t *pat=NULL;
+
+  cairo_pattern_t *pat = NULL;
   double x, y, radius;
-  radius=priv->radius;
-  x=priv->x;
-  y=priv->y;
-  radius = radius+0.12*radius;
-  
+  radius = priv->radius;
+  x = priv->x;
+  y = priv->y;
+  radius = radius + 0.12 * radius;
+
   // **** top left screw
-  cairo_arc (priv->cr, x-0.82*radius, y-0.82*radius, 0.1 * radius, 0, 2*M_PI);
-  pat = cairo_pattern_create_radial (x-0.82*radius, y-0.82*radius, 0.07*radius,
-                                     x-0.82*radius, y-0.82*radius, 0.1*radius);
-  cairo_pattern_add_color_stop_rgba (pat,0, 0, 0, 0,0.7);
-  cairo_pattern_add_color_stop_rgba (pat,1, 0, 0, 0,0.1);
+  cairo_arc (priv->cr, x - 0.82 * radius, y - 0.82 * radius, 0.1 * radius, 0, 2 * M_PI);
+  pat = cairo_pattern_create_radial (x - 0.82 * radius, y - 0.82 * radius, 0.07 * radius,
+                                     x - 0.82 * radius, y - 0.82 * radius, 0.1 * radius);
+  cairo_pattern_add_color_stop_rgba (pat, 0, 0, 0, 0, 0.7);
+  cairo_pattern_add_color_stop_rgba (pat, 1, 0, 0, 0, 0.1);
   cairo_set_source (priv->cr, pat);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-    
-  cairo_arc (priv->cr, x-0.82*radius, y-0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+
+  cairo_arc (priv->cr, x - 0.82 * radius, y - 0.82 * radius, 0.07 * radius, 0, 2 * M_PI);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -783,54 +856,54 @@ static void gtk_altimeter_draw_screws (GtkWidget * alt)
     cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_bounderie.red / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.green / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.blue / 65535, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15,0.15,0.15, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15, 0.15, 0.15, 1);
     cairo_set_source (priv->cr, pat);
   }
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-  
+
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
-       cairo_set_source_rgb (priv->cr, 0., 0., 0.);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
-       cairo_set_source_rgb (priv->cr, 1., 1., 1.);
-  cairo_move_to (priv->cr, x-0.88*radius, y-0.82*radius);
-  cairo_line_to (priv->cr, x-0.76*radius, y-0.82*radius);
+    cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+  cairo_move_to (priv->cr, x - 0.88 * radius, y - 0.82 * radius);
+  cairo_line_to (priv->cr, x - 0.76 * radius, y - 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x-0.82*radius, y-0.88*radius);
-  cairo_line_to (priv->cr, x-0.82*radius, y-0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x - 0.82 * radius, y - 0.88 * radius);
+  cairo_line_to (priv->cr, x - 0.82 * radius, y - 0.76 * radius);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
-		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
-      cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
-  cairo_move_to (priv->cr, x-0.88*radius, y-0.82*radius);
-  cairo_line_to (priv->cr, x-0.76*radius, y-0.82*radius);
+    cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);
+  cairo_move_to (priv->cr, x - 0.88 * radius, y - 0.82 * radius);
+  cairo_line_to (priv->cr, x - 0.76 * radius, y - 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x-0.82*radius, y-0.88*radius);
-  cairo_line_to (priv->cr, x-0.82*radius, y-0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x - 0.82 * radius, y - 0.88 * radius);
+  cairo_line_to (priv->cr, x - 0.82 * radius, y - 0.76 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);      
-  
-   // **** top right screw
-  cairo_arc (priv->cr, x+0.82*radius, y-0.82*radius, 0.1 * radius, 0, 2*M_PI);
-  pat = cairo_pattern_create_radial (x+0.82*radius, y-0.82*radius, 0.07*radius,
-                                     x+0.82*radius, y-0.82*radius, 0.1*radius);
-  cairo_pattern_add_color_stop_rgba (pat,0, 0, 0, 0,0.7);
-  cairo_pattern_add_color_stop_rgba (pat,1, 0, 0, 0,0.1);
+  cairo_stroke (priv->cr);
+
+  // **** top right screw
+  cairo_arc (priv->cr, x + 0.82 * radius, y - 0.82 * radius, 0.1 * radius, 0, 2 * M_PI);
+  pat = cairo_pattern_create_radial (x + 0.82 * radius, y - 0.82 * radius, 0.07 * radius,
+                                     x + 0.82 * radius, y - 0.82 * radius, 0.1 * radius);
+  cairo_pattern_add_color_stop_rgba (pat, 0, 0, 0, 0, 0.7);
+  cairo_pattern_add_color_stop_rgba (pat, 1, 0, 0, 0, 0.1);
   cairo_set_source (priv->cr, pat);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-    
-  cairo_arc (priv->cr, x+0.82*radius, y-0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+
+  cairo_arc (priv->cr, x + 0.82 * radius, y - 0.82 * radius, 0.07 * radius, 0, 2 * M_PI);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -845,54 +918,54 @@ static void gtk_altimeter_draw_screws (GtkWidget * alt)
     cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_bounderie.red / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.green / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.blue / 65535, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15,0.15,0.15, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15, 0.15, 0.15, 1);
     cairo_set_source (priv->cr, pat);
   }
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-  
+
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
-       cairo_set_source_rgb (priv->cr, 0., 0., 0.);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
-       cairo_set_source_rgb (priv->cr, 1., 1., 1.);
-  cairo_move_to (priv->cr, x+0.88*radius, y-0.82*radius);
-  cairo_line_to (priv->cr, x+0.76*radius, y-0.82*radius);
+    cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+  cairo_move_to (priv->cr, x + 0.88 * radius, y - 0.82 * radius);
+  cairo_line_to (priv->cr, x + 0.76 * radius, y - 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x+0.82*radius, y-0.88*radius);
-  cairo_line_to (priv->cr, x+0.82*radius, y-0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x + 0.82 * radius, y - 0.88 * radius);
+  cairo_line_to (priv->cr, x + 0.82 * radius, y - 0.76 * radius);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
-		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
-      cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
-  cairo_move_to (priv->cr, x+0.88*radius, y-0.82*radius);
-  cairo_line_to (priv->cr, x+0.76*radius, y-0.82*radius);
+    cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);
+  cairo_move_to (priv->cr, x + 0.88 * radius, y - 0.82 * radius);
+  cairo_line_to (priv->cr, x + 0.76 * radius, y - 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x+0.82*radius, y-0.88*radius);
-  cairo_line_to (priv->cr, x+0.82*radius, y-0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x + 0.82 * radius, y - 0.88 * radius);
+  cairo_line_to (priv->cr, x + 0.82 * radius, y - 0.76 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);     
-  
-   // **** bottom left screw
-  cairo_arc (priv->cr, x-0.82*radius, y+0.82*radius, 0.1 * radius, 0, 2*M_PI);
-  pat = cairo_pattern_create_radial (x-0.82*radius, y+0.82*radius, 0.07*radius,
-                                     x-0.82*radius, y+0.82*radius, 0.1*radius);
-  cairo_pattern_add_color_stop_rgba (pat,0, 0, 0, 0,0.7);
-  cairo_pattern_add_color_stop_rgba (pat,1, 0, 0, 0,0.1);
+  cairo_stroke (priv->cr);
+
+  // **** bottom left screw
+  cairo_arc (priv->cr, x - 0.82 * radius, y + 0.82 * radius, 0.1 * radius, 0, 2 * M_PI);
+  pat = cairo_pattern_create_radial (x - 0.82 * radius, y + 0.82 * radius, 0.07 * radius,
+                                     x - 0.82 * radius, y + 0.82 * radius, 0.1 * radius);
+  cairo_pattern_add_color_stop_rgba (pat, 0, 0, 0, 0, 0.7);
+  cairo_pattern_add_color_stop_rgba (pat, 1, 0, 0, 0, 0.1);
   cairo_set_source (priv->cr, pat);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-    
-  cairo_arc (priv->cr, x-0.82*radius, y+0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+
+  cairo_arc (priv->cr, x - 0.82 * radius, y + 0.82 * radius, 0.07 * radius, 0, 2 * M_PI);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -907,54 +980,54 @@ static void gtk_altimeter_draw_screws (GtkWidget * alt)
     cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_bounderie.red / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.green / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.blue / 65535, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15,0.15,0.15, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15, 0.15, 0.15, 1);
     cairo_set_source (priv->cr, pat);
   }
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-  
+
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
-       cairo_set_source_rgb (priv->cr, 0., 0., 0.);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
-       cairo_set_source_rgb (priv->cr, 1., 1., 1.);
-  cairo_move_to (priv->cr, x-0.88*radius, y+0.82*radius);
-  cairo_line_to (priv->cr, x-0.76*radius, y+0.82*radius);
+    cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+  cairo_move_to (priv->cr, x - 0.88 * radius, y + 0.82 * radius);
+  cairo_line_to (priv->cr, x - 0.76 * radius, y + 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x-0.82*radius, y+0.88*radius);
-  cairo_line_to (priv->cr, x-0.82*radius, y+0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x - 0.82 * radius, y + 0.88 * radius);
+  cairo_line_to (priv->cr, x - 0.82 * radius, y + 0.76 * radius);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
-		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
-      cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
-  cairo_move_to (priv->cr, x-0.88*radius, y+0.82*radius);
-  cairo_line_to (priv->cr, x-0.76*radius, y+0.82*radius);
+    cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);
+  cairo_move_to (priv->cr, x - 0.88 * radius, y + 0.82 * radius);
+  cairo_line_to (priv->cr, x - 0.76 * radius, y + 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x-0.82*radius, y+0.88*radius);
-  cairo_line_to (priv->cr, x-0.82*radius, y+0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x - 0.82 * radius, y + 0.88 * radius);
+  cairo_line_to (priv->cr, x - 0.82 * radius, y + 0.76 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);     
-  
-   // **** bottom right screw
-  cairo_arc (priv->cr, x+0.82*radius, y+0.82*radius, 0.1 * radius, 0, 2*M_PI);
-  pat = cairo_pattern_create_radial (x+0.82*radius, y+0.82*radius, 0.07*radius,
-                                     x+0.82*radius, y+0.82*radius, 0.1*radius);
-  cairo_pattern_add_color_stop_rgba (pat,0, 0, 0, 0,0.7);
-  cairo_pattern_add_color_stop_rgba (pat,1, 0, 0, 0,0.1);
+  cairo_stroke (priv->cr);
+
+  // **** bottom right screw
+  cairo_arc (priv->cr, x + 0.82 * radius, y + 0.82 * radius, 0.1 * radius, 0, 2 * M_PI);
+  pat = cairo_pattern_create_radial (x + 0.82 * radius, y + 0.82 * radius, 0.07 * radius,
+                                     x + 0.82 * radius, y + 0.82 * radius, 0.1 * radius);
+  cairo_pattern_add_color_stop_rgba (pat, 0, 0, 0, 0, 0.7);
+  cairo_pattern_add_color_stop_rgba (pat, 1, 0, 0, 0, 0.1);
   cairo_set_source (priv->cr, pat);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-    
-  cairo_arc (priv->cr, x+0.82*radius, y+0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+
+  cairo_arc (priv->cr, x + 0.82 * radius, y + 0.82 * radius, 0.07 * radius, 0, 2 * M_PI);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -969,38 +1042,38 @@ static void gtk_altimeter_draw_screws (GtkWidget * alt)
     cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_bounderie.red / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.green / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.blue / 65535, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15,0.15,0.15, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15, 0.15, 0.15, 1);
     cairo_set_source (priv->cr, pat);
   }
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-  
+
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
-       cairo_set_source_rgb (priv->cr, 0., 0., 0.);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
-       cairo_set_source_rgb (priv->cr, 1., 1., 1.);
-  cairo_move_to (priv->cr, x+0.88*radius, y+0.82*radius);
-  cairo_line_to (priv->cr, x+0.76*radius, y+0.82*radius);
+    cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+  cairo_move_to (priv->cr, x + 0.88 * radius, y + 0.82 * radius);
+  cairo_line_to (priv->cr, x + 0.76 * radius, y + 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x+0.82*radius, y+0.88*radius);
-  cairo_line_to (priv->cr, x+0.82*radius, y+0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x + 0.82 * radius, y + 0.88 * radius);
+  cairo_line_to (priv->cr, x + 0.82 * radius, y + 0.76 * radius);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
-		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
-      cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
-  cairo_move_to (priv->cr, x+0.88*radius, y+0.82*radius);
-  cairo_line_to (priv->cr, x+0.76*radius, y+0.82*radius);
+    cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);
+  cairo_move_to (priv->cr, x + 0.88 * radius, y + 0.82 * radius);
+  cairo_line_to (priv->cr, x + 0.76 * radius, y + 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x+0.82*radius, y+0.88*radius);
-  cairo_line_to (priv->cr, x+0.82*radius, y+0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x + 0.82 * radius, y + 0.88 * radius);
+  cairo_line_to (priv->cr, x + 0.82 * radius, y + 0.76 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr); 
+  cairo_stroke (priv->cr);
   cairo_pattern_destroy (pat);
   return;
 }
@@ -1012,7 +1085,7 @@ static void gtk_altimeter_draw_screws (GtkWidget * alt)
  * 
  * See GObject,Cairo and GTK+ references for more informations: 
  * http://library.gnome.org/devel/references.html.en
- */ 
+ */
 static void gtk_altimeter_draw_digital (GtkWidget * alt)
 {
   GtkAltimeterPrivate *priv;
@@ -1038,7 +1111,7 @@ static void gtk_altimeter_draw_digital (GtkWidget * alt)
   cairo_rectangle (priv->cr, x + 0 * radius, y - 0.29 * radius - 0.165 * radius, 0.145 * radius, 0.18 * radius);
   cairo_rectangle (priv->cr, x + 0.145 * radius, y - 0.29 * radius - 0.165 * radius, 0.145 * radius, 0.18 * radius);
   cairo_rectangle (priv->cr, x + 0.29 * radius, y - 0.29 * radius - 0.165 * radius, 0.145 * radius, 0.18 * radius);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 0.8, 0.8, 0.8);
   else
     cairo_set_source_rgb (priv->cr, 1 - 0.8, 1 - 0.8, 1 - 0.8);
@@ -1066,12 +1139,9 @@ static void gtk_altimeter_draw_digital (GtkWidget * alt)
   return;
 }
 
-/**
+ /**
  * @fn static void gtk_altimeter_draw_hands (GtkWidget * alt)
- * @brief Widget function that draw the altimeter hands using cairo.
- * 
- * See GObject,Cairo and GTK+ references for more informations: 
- * http://library.gnome.org/devel/references.html.en
+ * @brief Private widget's function that draw the altimeter hands using cairo.
  */
 static void gtk_altimeter_draw_hands (GtkWidget * alt)
 {
@@ -1092,7 +1162,7 @@ static void gtk_altimeter_draw_hands (GtkWidget * alt)
 
   // 10 thousand hand
   cairo_save (priv->cr);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 1, 1, 1);
   else
     cairo_set_source_rgb (priv->cr, 0, 0, 0);
@@ -1165,7 +1235,7 @@ static void gtk_altimeter_draw_hands (GtkWidget * alt)
 
   // thousand hand
   cairo_save (priv->cr);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 1, 1, 1);
   else
     cairo_set_source_rgb (priv->cr, 0, 0, 0);
@@ -1188,7 +1258,7 @@ static void gtk_altimeter_draw_hands (GtkWidget * alt)
   cairo_restore (priv->cr);
 
   cairo_save (priv->cr);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 1, 1, 1);
   else
     cairo_set_source_rgb (priv->cr, 0, 0, 0);
@@ -1236,7 +1306,7 @@ static void gtk_altimeter_draw_hands (GtkWidget * alt)
   cairo_restore (priv->cr);
 
   cairo_save (priv->cr);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 0, 0, 0);
   else
     cairo_set_source_rgb (priv->cr, 1, 1, 1);
@@ -1260,7 +1330,7 @@ static void gtk_altimeter_draw_hands (GtkWidget * alt)
   if (factor == 100)
   {
     cairo_save (priv->cr);
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, 1, 1, 1);
     else
       cairo_set_source_rgb (priv->cr, 0, 0, 0);
@@ -1280,7 +1350,7 @@ static void gtk_altimeter_draw_hands (GtkWidget * alt)
     cairo_restore (priv->cr);
 
     cairo_save (priv->cr);
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, 0, 0, 0);
     else
       cairo_set_source_rgb (priv->cr, 1, 1, 1);
@@ -1323,7 +1393,7 @@ static void gtk_altimeter_draw_hands (GtkWidget * alt)
   else
   {
     cairo_save (priv->cr);
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, 1, 1, 1);
     else
       cairo_set_source_rgb (priv->cr, 0, 0, 0);
@@ -1345,7 +1415,7 @@ static void gtk_altimeter_draw_hands (GtkWidget * alt)
     cairo_restore (priv->cr);
 
     cairo_save (priv->cr);
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, 0, 0, 0);
     else
       cairo_set_source_rgb (priv->cr, 1, 1, 1);
@@ -1393,7 +1463,7 @@ static void gtk_altimeter_draw_hands (GtkWidget * alt)
   }
 
   // centre cercle 
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 1, 1, 1);
   else
     cairo_set_source_rgb (priv->cr, 0, 0, 0);
@@ -1406,7 +1476,12 @@ static void gtk_altimeter_draw_hands (GtkWidget * alt)
 
 /**
  * @fn static gboolean gtk_altimeter_button_press_event (GtkWidget * widget, GdkEventButton * ev)
- * @brief Special Gtk API function. Perform mouse button press events. 
+ * @brief Special Gtk API function. Override the _button_press_event<br>
+ * handler. Perform mouse button press events. 
+ * 
+ * Here, the mouse events are not used for the widget (maybe<br>
+ * in future released) but to allow the user to enable/disable<br>
+ * the debug messages.
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
@@ -1447,7 +1522,10 @@ static gboolean gtk_altimeter_button_press_event (GtkWidget * widget, GdkEventBu
 
 /**
  * @fn static gboolean gtk_altimeter_motion_notify_event (GtkWidget * widget, GdkEventMotion * ev)
- * @brief Special Gtk API function. Perform mouse motion events. 
+ * @brief Special Gtk API function. Override the _motion_notify_event<br>
+ * handler. Perform mouse motion events. 
+ * 
+ * Here, the mouse events are not used (maybe in future released).
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
@@ -1492,7 +1570,8 @@ static gboolean gtk_altimeter_motion_notify_event (GtkWidget * widget, GdkEventM
 
 /**
  * @fn static void gtk_altimeter_destroy (GtkObject * object)
- * @brief Special Gtk API function. 
+ * @brief Special Gtk API function. Override the _destroy handler.<br>
+ * Allow the destruction of all widget's pointer.
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
@@ -1535,7 +1614,8 @@ static void gtk_altimeter_destroy (GtkObject * object)
 
 /**
  * @fn static void gtk_altimeter_set_property (GObject * object, guint prop_id, const GValue * value, GParamSpec * pspec)
- * @brief Special Gtk API function. 
+ * @brief Special Gtk API function. Override the _set_property handler <br>
+ * in order to set the object parameters.
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
@@ -1559,14 +1639,19 @@ static void gtk_altimeter_set_property (GObject * object, guint prop_id, const G
 
   switch (prop_id)
   {
-    case PROP_INVERSED_COLOR:
-      priv->color_mode_inv = g_value_get_boolean (value);
+    case PROP_GRAYSCALE_COLOR:
+      priv->grayscale_color = g_value_get_boolean (value);
       break;
     case PROP_UNIT_IS_FEET:
       priv->unit_is_feet = g_value_get_boolean (value);
       break;
     case PROP_UNIT_STEP_VALUE:
       priv->unit_value = g_value_get_int (value);
+      if ((priv->unit_value != 100) && (priv->unit_value != 10) && (priv->unit_value != 1))
+      {
+        priv->unit_value = 100;
+        g_warning ("GtkAltimeter: gtk_altimeter_set_property: unit-step-value out of range");
+      }
       break;
     case PROP_RADIAL_COLOR:
       priv->radial_color = g_value_get_boolean (value);

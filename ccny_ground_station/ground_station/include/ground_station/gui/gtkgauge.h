@@ -29,7 +29,21 @@
  * Copyright (C) 2010, CCNY Robotics Lab <br>
  * http://robotics.ccny.cuny.edu <br>
  * 
- * \b Example: Add Gauge widget to an gtkvbox and set some params <br>
+ * This widget provide an easy to read gauge instrument. <br>
+ * The design is volontary made to look like to a real gauge<br>
+ * flight instrument in order to be familiar to aircraft and<br>
+ * helicopter pilots. This widget is fully comfigurable and<br>
+ * useable for several gauge type (Battery Voltage, Current,<br> 
+ * Velocity, ...).
+ * 
+ * @b Pictures:<br>
+ * <table><tr>
+ * <th><IMG SRC="file:///home/gaitt/Bureau/gtkgauge.png"></th>
+ * <th><IMG SRC="file:///home/gaitt/Bureau/gtkgauge_g.png"></th>
+ * </tr></table>
+ * 
+ * \b Example:<br>
+ * Add Gauge widget to an gtkvbox and set some params <br>
  * @code
  * window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
  * vbox = gtk_vbox_new(TRUE, 1);
@@ -37,23 +51,57 @@
  * 
  * batt = gtk_gauge_new();
  * g_object_set (GTK_GAUGE (batt), "name",
- *						"<big>Battery voltage</big>\n" "<span foreground=\"orange\"><i>(V)</i></span>", NULL);
+ *		"<big>Battery voltage</big>\n" "<span foreground=\"orange\"><i>(V)</i></span>", NULL);
  * g_object_set (GTK_GAUGE (batt),
- *					"inverse-color", false,
- *					"radial-color", true,
- *					"start-value", 0, 
- *					"end-value", 12, 
- *					"initial-step", 2, 
- *					"sub-step", (gdouble) 0.2, 
- *					"drawing-step", 2,
- *					"color-strip-order", "RYG",
- *					"green-strip-start", 10,
- *					"yellow-strip-start", 8,
- *					"red-strip-start", 0, NULL);
+ *		"grayscale-color", false,
+ *		"radial-color", true,
+ *		"start-value", 0, 
+ *		"end-value", 12, 
+ *		"initial-step", 2, 
+ *		"sub-step", (gdouble) 0.2, 
+ *		"drawing-step", 2,
+ *		"color-strip-order", "RYG",
+ *		"green-strip-start", 10,
+ *		"yellow-strip-start", 8,
+ *		"red-strip-start", 0, NULL);
  * 
  * gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(batt), TRUE, TRUE, 0);
  * gtk_widget_show_all(window);
  * @endcode
+ * 
+ * The following code show how to change widget's values and redraw it:<br>
+ * Note that here tc's type is "GtkWidget *".<br>
+ * @code
+ * if (IS_GTK_GAUGE (batt))
+ * {
+ *	gtk_turn_coordinator_set_value (GTK_GAUGE (batt), value);
+ *	gtk_turn_coordinator_redraw(GTK_GAUGE(batt));
+ * }		
+ * @endcode
+ *
+ * @b Widget @b Parameters:<br>
+ * - "grayscale-color": boolean, if TRUE, draw the widget with grayscale colors (outdoor use)<br>
+ * - "radial-color": boolean, if TRUE, draw a fake light reflexion<br>
+ * - "start-value": int, indicates the start value of the gauge<br>
+ * - "end-value": int, indicates the end value of the gauge<br>
+ * - "initial-step": int, fisrt step, divide the gauge range into step<br>
+ * - "sub-step": double, sub step, divide the gauge range into sub step<br>
+ * WARNING: you need to cast in 'gdouble' when set.<br>
+ * - "drawing-step": int, indicates the step where numbers will be drawn<br>
+ * - "name": char, provide the gauge's name (support pango text attribute)<br>
+ * - OPTIONAL - "color-strip-order": char, allow to reverse the color strip.<br>
+ * By default it's YOR (Yellow Orange Red) - possible: GYR,RYG,ROY<br>
+ * - OPTIONAL - "green-strip-start": int, indicates the start of the green strip<br>
+ * - OPTIONAL - "yellow-strip-start": int, indicates the start of the yellow strip<br>
+ * - OPTIONAL - "orange-strip-start": int, indicates the start of the orange strip<br>
+ * - OPTIONAL - "red-strip-start": int, indicates the start of the red strip<br>
+ * - OPTIONAL - "grayscale-color-strip-order": char, allow to reverse <br>
+ * grayscale strip. By default it's WB (White to Black) - possible: BW<br>
+ * 
+ * @b Widget @b values:<br>
+ * - "value": double, provide the hand rotation according to the start-value<br>
+ * and the end-value.
+ * 
  */
 
 #ifndef __GTK_GAUGE_H__
@@ -62,7 +110,6 @@
 #include <gtk/gtk.h>
 #include <glib-object.h>
 #include <math.h>
-#include <time.h>
 
 #define GTK_GAUGE_MAX_STRING  256       /* Size of a text string */
 #define GTK_GAUGE_MODEL_X 300
@@ -72,7 +119,7 @@ G_BEGIN_DECLS
 
 /**
  * @typedef struct GtkGaugeClass 
- * @brief Special Gtk API strucure.
+ * @brief Special Gtk API strucure. Define an instance the widget class
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
@@ -85,7 +132,7 @@ typedef struct _GtkGaugeClass
 
 /**
  * @typedef struct GtkGauge 
- * @brief Special Gtk API strucure.
+ * @brief Special Gtk API strucure. Define widget's class
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en

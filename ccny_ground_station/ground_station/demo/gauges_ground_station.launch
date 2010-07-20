@@ -1,0 +1,58 @@
+<launch>
+	<node name="ground_station" pkg="ground_station" type="groundstation_without_gps" respawn="false" output="screen">
+	
+		<!-- General window parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+		<param name="window_grayscale_color" value="false"/>
+		<param name="window_radial_color" value="true"/>
+		
+		<!-- Altimeter parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+		<param name="altimeter_unit_is_feet" value="false"/>	
+		<param name="altimeter_step_value" value="100"/>
+		
+		<!-- Variometer parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+		<param name="variometer_step_value" value="100"/>
+		
+		<!-- Gauge1 parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+		<param name="gauge1_name" value="Battery Voltage"/>	
+		<param name="gauge1_unit" value="V"/>	
+		<param name="gauge1_start_value" value="0"/>
+		<param name="gauge1_end_value" value="12"/>
+		<param name="gauge1_initial_step" value="2"/>
+		<param name="gauge1_sub_step" value="0_5"/>
+		<param name="gauge1_drawing_step" value="2"/>
+		<param name="gauge1_color_strip_order" value="RYG"/>	
+		<param name="gauge1_green_strip_start" value="10"/>
+		<param name="gauge1_yellow_strip_start" value="8"/>
+		<param name="gauge1_red_strip_start" value="0"/>
+		
+		<!-- Gauge2 parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+		<param name="gauge2_name" value="Velocity"/>	
+		<param name="gauge2_unit" value="mph"/>	
+		<param name="gauge2_start_value" value="0"/>
+		<param name="gauge2_end_value" value="30"/>
+		<param name="gauge2_initial_step" value="5"/>
+		<param name="gauge2_sub_step" value="0_5"/>
+		<param name="gauge2_drawing_step" value="5"/>
+		
+	   <!-- Bar Gauge parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+		<param name="widget_name" value="Random Bar Gauges"/>	
+		<param name="bar_number" value="3"/>
+		<param name="name_bar_gauge1" value="Batt"/>	
+		<param name="unit_bar_gauge1" value="V"/>	
+		<param name="name_bar_gauge2" value="Aux"/>	
+		<param name="unit_bar_gauge2" value="X"/>	
+	   <param name="name_bar_gauge3" value="Aux2"/>	
+		<param name="unit_bar_gauge3" value="X"/>	
+		<param name="start_value_bar_1" value="0"/>
+		<param name="end_value_bar_1" value="12"/>
+		<param name="start_value_bar_2" value="0"/>
+		<param name="end_value_bar_2" value="100"/>
+		<param name="start_value_bar_3" value="0"/>
+		<param name="end_value_bar_3" value="100"/>
+		<param name="green_strip_start_1" value="10"/>
+		<param name="yellow_strip_start_1" value="8"/>
+
+	</node>
+	
+	<node name="fakepose" pkg="ground_station" type="fakepose" respawn="false" output="screen"/>
+</launch>

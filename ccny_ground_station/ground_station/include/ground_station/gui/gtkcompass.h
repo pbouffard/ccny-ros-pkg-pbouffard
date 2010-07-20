@@ -29,7 +29,18 @@
  * Copyright (C) 2010, CCNY Robotics Lab <br>
  * http://robotics.ccny.cuny.edu <br>
  * 
- * \b Example: Add Compass widget to an gtkvbox and set some params <br>
+ * This widget provide an easy to read compass instrument. <br>
+ * The design is volontary based on a real compass flight instrument <br>
+ * in order to be familiar to aircraft and helicopter pilots.<br>
+ * 
+ * @b Pictures:<br>
+ * <table><tr>
+ * <th><IMG SRC="file:///home/gaitt/Bureau/gtkcompass.png"></th>
+ * <th><IMG SRC="file:///home/gaitt/Bureau/gtkcompass_g.png"></th>
+ * </tr></table>
+ * 
+ * @b Example: <br>
+ * Add Compass widget to an gtkvbox and set some params <br>
  * @code
  * window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
  * vbox = gtk_vbox_new(TRUE, 1);
@@ -37,12 +48,30 @@
  * 
  * comp = gtk_compass_new();
  * g_object_set(GTK_COMPASS (comp),
- *					"inverse-color", false,
- *					"radial-color", true, NULL);
+ *		"grayscale-color", false,
+ *		"radial-color", true, NULL);
  * 
  * gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(comp), TRUE, TRUE, 0);
  * gtk_widget_show_all(window);
  * @endcode
+ * 
+ * The following code show how to change widget's values and redraw it:<br>
+ * Note that here tc's type is "GtkWidget *".<br>
+ * @code
+ * if (IS_GTK_COMPASS (comp))
+ * {
+ *	gtk_compass_set_angle (GTK_COMPASS (comp), angle);
+ *	gtk_compass_redraw(GTK_COMPASS(comp));
+ * }		
+ * @endcode
+ * 
+  @b Widget @b Parameters:<br>
+ * - "grayscale-color": boolean, if TRUE, draw the widget with grayscale colors (outdoor use)<br>
+ * - "radial-color": boolean, if TRUE, draw a fake light reflexion<br>
+ * 
+ * @b Widget @b values:<br>
+ * - "angle": double, provide the compass's rotation - the value is from 0 to 360.<br>
+ * 
  */
 
 #ifndef __GTK_COMPASS_H
@@ -59,14 +88,16 @@
 #define GTK_COMPASS_MODEL_Y 300
 #define DEG2RAD(DEG) ((DEG)*((M_PI)/(180.0)))
 
+G_BEGIN_DECLS
+
 /**
  * @typedef struct GtkCompassClass 
- * @brief Special Gtk API strucure.
+ * @brief Special Gtk API strucure. Define an instance the widget class
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
  */
-G_BEGIN_DECLS typedef struct _GtkCompassClass
+typedef struct _GtkCompassClass
 {
   GtkDrawingAreaClass parent_class;
 
@@ -74,7 +105,7 @@ G_BEGIN_DECLS typedef struct _GtkCompassClass
 
 /**
  * @typedef struct GtkCompass 
- * @brief Special Gtk API strucure.
+ * @brief Special Gtk API strucure. Define widget's class
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
@@ -83,7 +114,6 @@ typedef struct _GtkCompass
 {
   GtkDrawingArea parent;
 
-  /* < private > */
 } GtkCompass;
 
 #define GTK_COMPASS_TYPE			(gtk_compass_get_type ())

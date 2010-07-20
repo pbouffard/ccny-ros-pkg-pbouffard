@@ -19,7 +19,7 @@
 */
 
 /**
- * @file gtkturncoordinator.h
+ * @file gtkturncoordinator.h 
  * @brief Gtk+ based Turn Coordinator Widget
  * @author Gautier Dumonteil <gautier.dumonteil@gmail.com>
  * @version 0.1
@@ -29,7 +29,18 @@
  * Copyright (C) 2010, CCNY Robotics Lab <br>
  * http://robotics.ccny.cuny.edu <br>
  * 
- * \b Example: Add Turn Coordinator widget to an gtkvbox and set some params <br>
+ * This widget provide an easy to read turn coordinator instrument. <br>
+ * The design is volontary based on a real turn coordinator flight instrument <br>
+ * in order to be familiar to aircraft and helicopter pilots.<br>
+ * 
+ * @b Pictures:<br>
+ * <table><tr>
+ * <th><IMG SRC="file:///home/gaitt/Bureau/gtkturncoordinator.png"></th>
+ * <th><IMG SRC="file:///home/gaitt/Bureau/gtkturncoordinator_g.png"></th>
+ * </tr></table>
+ * 
+ * @b Example: <br>
+ * Add Turn Coordinator widget to an gtkvbox and set some params <br>
  * @code
  * window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
  * vbox = gtk_vbox_new(TRUE, 1);
@@ -37,14 +48,31 @@
  * 
  * tc = gtk_turn_coordinator_new();
  * g_object_set(GTK_TURN_COORDINATOR (tc),
- *					"inverse-color", false,
- *					"unit-is-feet", true,
- *					"unit-step-value", 1000,
- *					"radial-color", true, NULL);
+ *		"grayscale-colors", false,
+ *		"radial-color", true, NULL);
  * 
  * gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(tc), TRUE, TRUE, 0);
  * gtk_widget_show_all(window);
  * @endcode
+ * 
+ * The following code show how to change widget's values and redraw it:<br>
+ * Note that here tc's type is "GtkWidget *".<br>
+ * @code
+ * if (IS_GTK_TURN_COORDINATOR (tc))
+ * {
+ *	gtk_turn_coordinator_set_value (GTK_TURN_COORDINATOR (tc), plane_angle,ball_tr);
+ *	gtk_turn_coordinator_redraw(GTK_TURN_COORDINATOR(tc));
+ * }		
+ * @endcode
+ * 
+  @b Widget @b Parameters:<br>
+ * - "grayscale-colors": boolean, if TRUE, draw the widget with grayscale colors (outdoor use)<br>
+ * - "radial-color": boolean, if TRUE, draw a fake light reflexion<br>
+ * 
+ * @b Widget @b values:<br>
+ * - "plane_angle": double, provide the plane rotation - the value is from 0 to 360.<br>
+ * - "ball_tr": double, provide the ball translation - the value is from -100 to 100
+ * 
  */
 
 #ifndef __GTK_TURN_COORDINATOR_H__
@@ -53,23 +81,22 @@
 #include <gtk/gtk.h>
 #include <glib-object.h>
 #include <math.h>
-#include <time.h>
-#include <sys/time.h>
 
-#define GTK_TURN_COORDINATOR_MAX_STRING  256   /* Size of a text string */
+#define GTK_TURN_COORDINATOR_MAX_STRING  256    /* Size of a text string */
 #define GTK_TURN_COORDINATOR_MODEL_X 300
 #define GTK_TURN_COORDINATOR_MODEL_Y 300
+#define DEG2RAD(DEG) ((DEG)*((M_PI)/(180.0)))
 
-G_BEGIN_DECLS 
+G_BEGIN_DECLS
 
 /**
  * @typedef struct GtkTurnCoordinatorClass 
- * @brief Special Gtk API strucure.
+ * @brief Special Gtk API strucure. Define an instance the widget class
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
  */
-typedef struct _GtkTurnCoordinatorClass
+  typedef struct _GtkTurnCoordinatorClass
 {
   GtkDrawingAreaClass parent_class;
 
@@ -77,7 +104,7 @@ typedef struct _GtkTurnCoordinatorClass
 
 /**
  * @typedef struct GtkTurnCoordinator 
- * @brief Special Gtk API strucure.
+ * @brief Special Gtk API strucure. Define widget's class
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
@@ -85,7 +112,7 @@ typedef struct _GtkTurnCoordinatorClass
 typedef struct _GtkTurnCoordinator
 {
   GtkDrawingArea parent;
-  
+
 } GtkTurnCoordinator;
 
 #define GTK_TURN_COORDINATOR_TYPE			(gtk_turn_coordinator_get_type ())
@@ -97,7 +124,7 @@ typedef struct _GtkTurnCoordinator
 
 extern GType gtk_turn_coordinator_get_type (void) G_GNUC_CONST;
 extern GtkWidget *gtk_turn_coordinator_new (void);
-extern void gtk_turn_coordinator_set_value (GtkTurnCoordinator * vario, gdouble val);
+extern void gtk_turn_coordinator_set_value (GtkTurnCoordinator * vario, gdouble, gdouble);
 extern void gtk_turn_coordinator_redraw (GtkTurnCoordinator * vario);
 
 G_END_DECLS

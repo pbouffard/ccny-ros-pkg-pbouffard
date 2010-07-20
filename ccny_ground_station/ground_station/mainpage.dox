@@ -5,23 +5,6 @@
 \b ground_station is a package for ROS that typicaly subscribe to several topics and update an Gtk+ based GUI. <br>
 The GUI contains several widgets made to look like to real flight instruments in order to allow easy feedbacks for the user/pilot.
 
-<!-- 
-Provide an overview of your package.
--->
-
-
-\section codeapi Code API
-
-<!--
-Provide links to specific auto-generated API documentation within your
-package that is of particular interest to a reader. Doxygen will
-document pretty much every part of your code, so do your best here to
-point the reader to the actual API.
-
-If your codebase is fairly large or has different sets of APIs, you
-should use the doxygen 'group' tag to keep these APIs together. For
-example, the roscpp documentation has 'libros' group.
--->
-
-
+For more informations on this package, take a look at the wiki page : http://www.ros.org/wiki/ground_station<br>
+For more informations on the Gtk widgets, take a look at the API code.
 */

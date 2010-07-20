@@ -18,8 +18,72 @@
 *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/**
+ * @file gtkcompass.c
+ * @brief Gtk+ based Compass Widget
+ * @author Gautier Dumonteil <gautier.dumonteil@gmail.com>
+ * @version 0.1
+ * @date 06/06/2010
+ *
+ * Gtk Compass Widget <br>
+ * Copyright (C) 2010, CCNY Robotics Lab <br>
+ * http://robotics.ccny.cuny.edu <br>
+ * 
+ * This widget provide an easy to read compass instrument. <br>
+ * The design is volontary based on a real compass flight instrument <br>
+ * in order to be familiar to aircraft and helicopter pilots.<br>
+ * 
+ * @b Pictures:<br>
+ * <table><tr>
+ * <th><IMG SRC="file:///home/gaitt/Bureau/gtkcompass.png"></th>
+ * <th><IMG SRC="file:///home/gaitt/Bureau/gtkcompass_g.png"></th>
+ * </tr></table>
+ * 
+ * @b Example: <br>
+ * Add Compass widget to an gtkvbox and set some params <br>
+ * @code
+ * window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+ * vbox = gtk_vbox_new(TRUE, 1);
+ * gtk_container_add(GTK_CONTAINER (window), vbox);
+ * 
+ * comp = gtk_compass_new();
+ * g_object_set(GTK_COMPASS (comp),
+ *		"grayscale-color", false,
+ *		"radial-color", true, NULL);
+ * 
+ * gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(comp), TRUE, TRUE, 0);
+ * gtk_widget_show_all(window);
+ * @endcode
+ * 
+ * The following code show how to change widget's values and redraw it:<br>
+ * Note that here tc's type is "GtkWidget *".<br>
+ * @code
+ * if (IS_GTK_COMPASS (comp))
+ * {
+ *	gtk_compass_set_angle (GTK_COMPASS (comp), angle);
+ *	gtk_compass_redraw(GTK_COMPASS(comp));
+ * }		
+ * @endcode
+ * 
+  @b Widget @b Parameters:<br>
+ * - "grayscale-color": boolean, if TRUE, draw the widget with grayscale colors (outdoor use)<br>
+ * - "radial-color": boolean, if TRUE, draw a fake light reflexion<br>
+ * 
+ * @b Widget @b values:<br>
+ * - "angle": double, provide the compass's rotation - the value is from 0 to 360.<br>
+ * 
+ */
+
 #include <ground_station/gui/gtkcompass.h>
 
+/**
+ * @typedef struct GtkCompassPrivate 
+ * @brief Special Gtk API strucure. Allow to add a private data<br>
+ * for the widget. Defined in the C file in order to be private.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 typedef struct _GtkCompassPrivate
 {
   /* new cairo design */
@@ -27,7 +91,7 @@ typedef struct _GtkCompassPrivate
   GdkRectangle plot_box;
 
   /* widget data */
-  gboolean color_mode_inv;
+  gboolean grayscale_color;
   gboolean radial_color;
   gdouble angle;
 
@@ -49,15 +113,39 @@ typedef struct _GtkCompassPrivate
 
 } GtkCompassPrivate;
 
-enum _GLG_PROPERTY_ID
+/**
+ * @enum _GTK_COMPASS_PROPERTY_ID
+ * @brief Special Gtk API enum. Allow to identify widget's properties.
+ *
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
+enum _GTK_COMPASS_PROPERTY_ID
 {
   PROP_0,
-  PROP_INVERSED_COLOR,
+  PROP_GRAYSCALE_COLOR,
   PROP_RADIAL_COLOR,
-} GLG_PROPERTY_ID;
+} GTK_COMPASS_PROPERTY_ID;
 
+/**
+ * @fn G_DEFINE_TYPE (GtkCompass, gtk_compass, GTK_TYPE_DRAWING_AREA);
+ * @brief Special Gtk API function. Define a new object type named GtkCompass <br>
+ * and all preface of the widget's functions calls with gtk_compass.<br>
+ * We are inheriting the type of GtkDrawingArea.<br>
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 G_DEFINE_TYPE (GtkCompass, gtk_compass, GTK_TYPE_DRAWING_AREA);
 
+/**
+ * @def GTK_COMPASS_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GTK_COMPASS_TYPE, GtkCompassPrivate))
+ * @brief Special Gtk API define. Add a macro for easy access to the private<br>
+ * data struct.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 #define GTK_COMPASS_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GTK_COMPASS_TYPE, GtkCompassPrivate))
 
 static void gtk_compass_class_init (GtkCompassClass * klass);
@@ -73,11 +161,29 @@ static gboolean gtk_compass_motion_notify_event (GtkWidget * widget, GdkEventMot
 static void gtk_compass_draw (GtkWidget * comp);
 static void gtk_compass_draw_screws (GtkWidget * comp);
 static void gtk_compass_draw_plane (GtkWidget * comp);
-static void gtk_compass_draw_svg_file (GtkWidget * comp);
+//static void gtk_compass_draw_svg_file (GtkWidget * comp);  // **** not yet implemented
 static void gtk_compass_draw_tips_and_numbers (GtkWidget * comp);
 
 static gboolean gtk_compass_debug = FALSE;
 
+/**
+ * @fn static void gtk_compass_class_init (GtkCompassClass * klass)
+ * @brief Special Gtk API function. Function called when the class is<br>
+ * initialised. Allow to set certain class wide functions and<br>
+ * properties<br>.
+ * Allow to override some parent’s expose handler like :<br>
+ * - set_property handler<br>
+ * - destroy handler<br>
+ * - configure_event handler<br>
+ * - motion_notify_event handler (not use in this widget)
+ * - button_press_event handler (not use in this widget)
+ * 
+ * Also register the private struct GtkCompassPrivate with<br>
+ * the class and install widget properties.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static void gtk_compass_class_init (GtkCompassClass * klass)
 {
   GObjectClass *obj_class = G_OBJECT_CLASS (klass);
@@ -104,10 +210,11 @@ static void gtk_compass_class_init (GtkCompassClass * klass)
   g_type_class_add_private (obj_class, sizeof (GtkCompassPrivate));
 
   g_object_class_install_property (obj_class,
-                                   PROP_INVERSED_COLOR,
-                                   g_param_spec_boolean ("inverse-color",
-                                                         "inverse or not the widget color",
-                                                         "inverse or not the widget color", FALSE, G_PARAM_WRITABLE));
+                                   PROP_GRAYSCALE_COLOR,
+                                   g_param_spec_boolean ("grayscale-color",
+                                                         "use grayscale for the widget color",
+                                                         "use grayscale for the widget color", FALSE,
+                                                         G_PARAM_WRITABLE));
   g_object_class_install_property (obj_class,
                                    PROP_RADIAL_COLOR,
                                    g_param_spec_boolean ("radial-color",
@@ -116,6 +223,15 @@ static void gtk_compass_class_init (GtkCompassClass * klass)
   return;
 }
 
+/**
+ * @fn static void gtk_compass_init (GtkCompass * comp)
+ * @brief Special Gtk API function. Function called when the creating a<br>
+ * new GtkCompass. Allow to initialize some private variables of<br>
+ * widget.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static void gtk_compass_init (GtkCompass * comp)
 {
   GtkCompassPrivate *priv = NULL;
@@ -131,8 +247,9 @@ static void gtk_compass_init (GtkCompass * comp)
   gtk_widget_add_events (GTK_WIDGET (comp), GDK_BUTTON_PRESS_MASK |
                          GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK);
   priv->b_mouse_onoff = FALSE;
-  priv->color_mode_inv = FALSE;
+  priv->grayscale_color = FALSE;
   priv->radial_color = TRUE;
+  priv->angle=0;
 
   priv->bg_color_bounderie.red = 6553.5;        // 0.1 cairo
   priv->bg_color_bounderie.green = 6553.5;
@@ -153,6 +270,14 @@ static void gtk_compass_init (GtkCompass * comp)
   return;
 }
 
+/**
+ * @fn static gboolean gtk_compass_configure_event (GtkWidget * widget, GdkEventConfigure * event)
+ * @brief Special Gtk API function. Override the _configure_event handler<br>
+ * in order to resize the widget when the main window is resized.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static gboolean gtk_compass_configure_event (GtkWidget * widget, GdkEventConfigure * event)
 {
   GtkCompassPrivate *priv;
@@ -192,6 +317,15 @@ static gboolean gtk_compass_configure_event (GtkWidget * widget, GdkEventConfigu
   return FALSE;
 }
 
+/**
+ * @fn static gboolean gtk_compass_expose (GtkWidget * comp, GdkEventExpose * event)
+ * @brief Special Gtk API function. Override of the expose handler.<br>
+ * An “expose-event” signal is emitted when the widget need to be drawn.<br>
+ * A Cairo context is created for the parent's GdkWindow.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static gboolean gtk_compass_expose (GtkWidget * comp, GdkEventExpose * event)
 {
   GtkCompassPrivate *priv;
@@ -235,6 +369,19 @@ static gboolean gtk_compass_expose (GtkWidget * comp, GdkEventExpose * event)
   return FALSE;
 }
 
+/**
+ * @fn extern void gtk_compass_redraw (GtkCompass * comp)
+ * @brief Special Gtk API function. Redraw the widget when called.
+ * 
+ * This function will redraw the widget canvas. In order to reexpose the canvas<br>
+ * (and cause it to redraw) of our parent class(GtkDrawingArea), it is needed to<br>
+ * use gdk_window_invalidate_rect(). The function gdk_window_invalidate_region()<br>
+ * need to be called as well. And finaly, in order to make all events happen, it<br>
+ * is needed to call gdk_window_process_all_updates().
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 extern void gtk_compass_redraw (GtkCompass * comp)
 {
   GtkWidget *widget;
@@ -259,6 +406,15 @@ extern void gtk_compass_redraw (GtkCompass * comp)
   gdk_region_destroy (region);
 }
 
+
+/**
+ * @fn extern void gtk_compass_set_angle (GtkCompass * comp, gdouble ang)
+ * @brief Public widget's function that allow the main program/user to<br>
+ * set the internal value variable of the widget. 
+ * 
+ * Here, two values have to be set:<br>
+ * "angle": double, provide the compass's rotation - the value is from 0 to 360.<br>
+ */
 extern void gtk_compass_set_angle (GtkCompass * comp, gdouble ang)
 {
   GtkCompassPrivate *priv;
@@ -270,9 +426,21 @@ extern void gtk_compass_set_angle (GtkCompass * comp, gdouble ang)
   g_return_if_fail (IS_GTK_COMPASS (comp));
 
   priv = GTK_COMPASS_GET_PRIVATE (comp);
+  
+   if ((ang >= 0) && (ang <= 360))
   priv->angle = ang;
+  else
+    g_warning ("GtkCompass : gtk_compass_set_angle : value out of range");
 }
 
+/**
+ * @fn extern GtkWidget *gtk_compass_new (void)
+ * @brief Special Gtk API function. This function is simply a wrapper<br>
+ * for convienience.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 extern GtkWidget *gtk_compass_new (void)
 {
   if (gtk_compass_debug)
@@ -282,6 +450,15 @@ extern GtkWidget *gtk_compass_new (void)
   return GTK_WIDGET (gtk_type_new (gtk_compass_get_type ()));
 }
 
+/**
+ * @fn static void gtk_compass_draw (GtkWidget * comp)
+ * @brief Special Gtk API function. Override the _draw handler of the<br>
+ * parent class GtkDrawingArea. This function use the cairo context<br>
+ * created before in order to draw scalable graphics. 
+ * 
+ * See GObject,Cairo and GTK+ references for more informations: 
+ * http://library.gnome.org/devel/references.html.en
+ */
 static void gtk_compass_draw (GtkWidget * comp)
 {
   GtkCompassPrivate *priv;
@@ -323,10 +500,10 @@ static void gtk_compass_draw (GtkWidget * comp)
   cairo_arc (priv->cr, rec_x0 + rec_radius, rec_y0 + rec_radius, rec_radius, 180 * rec_degrees, 270 * rec_degrees);
   cairo_close_path (priv->cr);
 
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -350,7 +527,7 @@ static void gtk_compass_draw (GtkWidget * comp)
   cairo_stroke (priv->cr);
 
   cairo_arc (priv->cr, x, y, radius, 0, 2 * M_PI);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
     cairo_set_source_rgb (priv->cr, 1., 1., 1.);
@@ -358,7 +535,7 @@ static void gtk_compass_draw (GtkWidget * comp)
   cairo_stroke (priv->cr);
 
   cairo_arc (priv->cr, x, y, radius - 0.04 * radius, 0, 2 * M_PI);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 0.6, 0.5, 0.5);
   else
     cairo_set_source_rgb (priv->cr, 1 - 0.6, 1 - 0.5, 1 - 0.5);
@@ -368,10 +545,10 @@ static void gtk_compass_draw (GtkWidget * comp)
   radius = radius - 0.1 * radius;
   cairo_arc (priv->cr, x, y, radius, 0, 2 * M_PI);
 
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_compass.red / 65535,
                             (gdouble) priv->bg_color_compass.green / 65535,
                             (gdouble) priv->bg_color_compass.blue / 65535);
@@ -410,6 +587,10 @@ static void gtk_compass_draw (GtkWidget * comp)
   return;
 }
 
+/**
+ * @fn static void gtk_compass_draw_screws (GtkWidget * comp)
+ * @brief Private widget's function that draw the widget's screws using cairo.
+ */
 static void gtk_compass_draw_screws (GtkWidget * comp)
 {
   GtkCompassPrivate *priv;
@@ -440,10 +621,10 @@ static void gtk_compass_draw_screws (GtkWidget * comp)
   cairo_stroke (priv->cr);
     
   cairo_arc (priv->cr, x-0.82*radius, y-0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -465,7 +646,7 @@ static void gtk_compass_draw_screws (GtkWidget * comp)
   cairo_stroke (priv->cr);
   
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
        cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
        cairo_set_source_rgb (priv->cr, 1., 1., 1.);
@@ -478,7 +659,7 @@ static void gtk_compass_draw_screws (GtkWidget * comp)
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
 		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
       cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
@@ -502,10 +683,10 @@ static void gtk_compass_draw_screws (GtkWidget * comp)
   cairo_stroke (priv->cr);
     
   cairo_arc (priv->cr, x+0.82*radius, y-0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -527,7 +708,7 @@ static void gtk_compass_draw_screws (GtkWidget * comp)
   cairo_stroke (priv->cr);
   
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
        cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
        cairo_set_source_rgb (priv->cr, 1., 1., 1.);
@@ -540,7 +721,7 @@ static void gtk_compass_draw_screws (GtkWidget * comp)
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
 		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
       cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
@@ -564,10 +745,10 @@ static void gtk_compass_draw_screws (GtkWidget * comp)
   cairo_stroke (priv->cr);
     
   cairo_arc (priv->cr, x-0.82*radius, y+0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -589,7 +770,7 @@ static void gtk_compass_draw_screws (GtkWidget * comp)
   cairo_stroke (priv->cr);
   
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
        cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
        cairo_set_source_rgb (priv->cr, 1., 1., 1.);
@@ -602,7 +783,7 @@ static void gtk_compass_draw_screws (GtkWidget * comp)
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
 		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
       cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
@@ -626,10 +807,10 @@ static void gtk_compass_draw_screws (GtkWidget * comp)
   cairo_stroke (priv->cr);
     
   cairo_arc (priv->cr, x+0.82*radius, y+0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -651,7 +832,7 @@ static void gtk_compass_draw_screws (GtkWidget * comp)
   cairo_stroke (priv->cr);
   
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
        cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
        cairo_set_source_rgb (priv->cr, 1., 1., 1.);
@@ -664,7 +845,7 @@ static void gtk_compass_draw_screws (GtkWidget * comp)
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
 		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
       cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
@@ -680,6 +861,7 @@ static void gtk_compass_draw_screws (GtkWidget * comp)
   return;
 }
 
+/*
 static void gtk_compass_draw_svg_file (GtkWidget * comp)
 {
   GtkCompassPrivate *priv;
@@ -693,7 +875,12 @@ static void gtk_compass_draw_svg_file (GtkWidget * comp)
 
   // next release
 }
+*/
 
+/**
+ * @fn static void gtk_compass_draw_plane (GtkWidget * comp)
+ * @brief Private widget's function that draw the compass plane using cairo.
+ */
 static void gtk_compass_draw_plane (GtkWidget * comp)
 {
   GtkCompassPrivate *priv;
@@ -711,10 +898,10 @@ static void gtk_compass_draw_plane (GtkWidget * comp)
   double plane_scale = priv->plane_scale;
   double x0, y0, x1, y1, x2, y2, x3, y3;
 
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 1., 0.7, 0.);
   else
-    cairo_set_source_rgb (priv->cr, 1 - 1., 1 - 0.7, 1 - 0.);
+    cairo_set_source_rgb (priv->cr, 1., 1., 1.);
 
   plane_scale = 1;
   // plane drawing
@@ -872,6 +1059,10 @@ static void gtk_compass_draw_plane (GtkWidget * comp)
   cairo_stroke (priv->cr);
 }
 
+/**
+ * @fn static void gtk_compass_draw_tips_and_numbers (GtkWidget * comp)
+ * @brief Private widget's function that draw compass's tips & numbers using cairo.
+ */
 static void gtk_compass_draw_tips_and_numbers (GtkWidget * comp)
 {
   GtkCompassPrivate *priv;
@@ -937,10 +1128,10 @@ static void gtk_compass_draw_tips_and_numbers (GtkWidget * comp)
         }
     }
 
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, 1., 1., 0);
     else
-      cairo_set_source_rgb (priv->cr, 1 - 0.88, 1 - 0.88, 1 - 0.);
+      cairo_set_source_rgb (priv->cr, 0, 0, 0);
 
     cairo_save (priv->cr);
     cairo_rotate (priv->cr, -DEG2RAD (priv->angle) + i * M_PI / 6);
@@ -960,7 +1151,7 @@ static void gtk_compass_draw_tips_and_numbers (GtkWidget * comp)
         break;
       default:
 
-        if (!priv->color_mode_inv)
+        if (!priv->grayscale_color)
           cairo_set_source_rgb (priv->cr, 1, 1, 1);
         else
           cairo_set_source_rgb (priv->cr, 0., 0., 0.);
@@ -1001,16 +1192,16 @@ static void gtk_compass_draw_tips_and_numbers (GtkWidget * comp)
     if (i % 9 == 0)
     {
       inset = 0.12 * radius;
-      if (!priv->color_mode_inv)
+      if (!priv->grayscale_color)
         cairo_set_source_rgb (priv->cr, 0.88, 0.88, 0);
       else
-        cairo_set_source_rgb (priv->cr, 1 - 0.88, 1 - 0.88, 1 - 0.);
+        cairo_set_source_rgb (priv->cr, 0, 0, 0);
     }
     else
     {
       inset = 0.06 * radius;
       cairo_set_line_width (priv->cr, 0.5 * cairo_get_line_width (priv->cr));
-      if (!priv->color_mode_inv)
+      if (!priv->grayscale_color)
         cairo_set_source_rgb (priv->cr, 1, 1, 1);
       else
         cairo_set_source_rgb (priv->cr, 0., 0., 0.);
@@ -1026,6 +1217,18 @@ static void gtk_compass_draw_tips_and_numbers (GtkWidget * comp)
   return;
 }
 
+/**
+ * @fn static gboolean gtk_compass_button_press_event (GtkWidget * widget, GdkEventButton * ev)
+ * @brief Special Gtk API function. Override the _button_press_event<br>
+ * handler. Perform mouse button press events. 
+ * 
+ * Here, the mouse events are not used for the widget (maybe<br>
+ * in future released) but to allow the user to enable/disable<br>
+ * the debug messages.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static gboolean gtk_compass_button_press_event (GtkWidget * widget, GdkEventButton * ev)
 {
   GtkCompassPrivate *priv;
@@ -1060,6 +1263,16 @@ static gboolean gtk_compass_button_press_event (GtkWidget * widget, GdkEventButt
   return FALSE;
 }
 
+/**
+ * @fn static gboolean gtk_compass_motion_notify_event (GtkWidget * widget, GdkEventMotion * ev)
+ * @brief Special Gtk API function. Override the _motion_notify_event<br>
+ * handler. Perform mouse motion events. 
+ * 
+ * Here, the mouse events are not used (maybe in future released).
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static gboolean gtk_compass_motion_notify_event (GtkWidget * widget, GdkEventMotion * ev)
 {
   GtkCompassPrivate *priv;
@@ -1098,6 +1311,14 @@ static gboolean gtk_compass_motion_notify_event (GtkWidget * widget, GdkEventMot
   return TRUE;
 }
 
+/**
+ * @fn static void gtk_compass_destroy (GtkObject * object)
+ * @brief Special Gtk API function. Override the _destroy handler.<br>
+ * Allow the destruction of all widget's pointer.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static void gtk_compass_destroy (GtkObject * object)
 {
   GtkCompassPrivate *priv = NULL;
@@ -1134,6 +1355,14 @@ static void gtk_compass_destroy (GtkObject * object)
   return;
 }
 
+/**
+ * @fn static void gtk_compass_set_property (GObject * object, guint prop_id, const GValue * value, GParamSpec * pspec)
+ * @brief Special Gtk API function. Override the _set_property handler <br>
+ * in order to set the object parameters.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static void gtk_compass_set_property (GObject * object, guint prop_id, const GValue * value, GParamSpec * pspec)
 {
   GtkCompassPrivate *priv = NULL;
@@ -1153,8 +1382,8 @@ static void gtk_compass_set_property (GObject * object, guint prop_id, const GVa
 
   switch (prop_id)
   {
-    case PROP_INVERSED_COLOR:
-      priv->color_mode_inv = g_value_get_boolean (value);
+    case PROP_GRAYSCALE_COLOR:
+      priv->grayscale_color = g_value_get_boolean (value);
       break;
     case PROP_RADIAL_COLOR:
       priv->radial_color = g_value_get_boolean (value);

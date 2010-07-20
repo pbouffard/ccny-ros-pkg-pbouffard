@@ -19,7 +19,7 @@
 */
 
 /**
- * @file gtkaltimeter.h
+ * @file gtkaltimeter.h 
  * @brief Gtk+ based Altimeter Widget
  * @author Gautier Dumonteil <gautier.dumonteil@gmail.com>
  * @version 0.1
@@ -29,7 +29,18 @@
  * Copyright (C) 2010, CCNY Robotics Lab <br>
  * http://robotics.ccny.cuny.edu <br>
  * 
- * \b Example: Add Altimeter widget to an gtkvbox and set some params <br>
+ * This widget provide an easy to read altimeter instrument. <br>
+ * The design is volontary based on a real altimeter flight instrument <br>
+ * in order to be familiar to aircraft and helicopter pilots.<br>
+ * 
+ * @b Pictures:<br>
+ * <table><tr>
+ * <th><IMG SRC="file:///home/gaitt/Bureau/gtkaltimeter.png"></th>
+ * <th><IMG SRC="file:///home/gaitt/Bureau/gtkaltimeter_g.png"></th>
+ * </tr></table>
+ * 
+ * @b Example: <br>
+ * Add Altimeter widget to an gtkvbox and set some params <br>
  * @code
  * window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
  * vbox = gtk_vbox_new(TRUE, 1);
@@ -37,14 +48,34 @@
  * 
  * alt = gtk_altimeter_new();
  * g_object_set(GTK_ALTIMETER (alt),
- *					"inverse-color", false,
- *					"unit-is-feet", true,
- *					"unit-step-value", 100,
- *					"radial-color", true, NULL);
+ *		"grayscale-colors", false,
+ *		"unit-is-feet", true,
+ *		"unit-step-value", 100,
+ *		"radial-color", true, NULL);
  * 
  * gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(alt), TRUE, TRUE, 0);
  * gtk_widget_show_all(window);
  * @endcode
+ * 
+ * The following code show how to change widget's values and redraw it:<br>
+ * Note that here tc's type is "GtkWidget *".<br>
+ * @code
+ * if (IS_GTK_ALTIMETER (alt))
+ * {
+ *	gtk_altimeter_set_alti (GTK_ALTIMETER (alt), altitude);
+ *	gtk_altimeter_redraw(GTK_ALTIMETER(alt));
+ * }		
+ * @endcode
+ * 
+  @b Widget @b Parameters:<br>
+ * - "grayscale-colors": boolean, if TRUE, draw the widget with grayscale colors (outdoor use)<br>
+ * - "unit-is-feet": boolean, if TRUE, the widget display FEET values else display METER<br>
+ * - "unit-step-value", int, define the step value of the altimeter can be 1,10,100<br>
+ * - "radial-color": boolean, if TRUE, draw a fake light reflexion<br>
+ * 
+ * @b Widget @b values:<br>
+ * - "altitude": double, define the altitude you want to display by the widget - the value is<br>
+ * from 0 to 999999.
  */
 
 #ifndef __GTK_ALTIMETER_H__
@@ -53,32 +84,28 @@
 #include <gtk/gtk.h>
 #include <glib-object.h>
 #include <math.h>
-#include <time.h>
 
 #define GTK_ALTIMETER_MAX_STRING  256   /* Size of a text string */
 #define GTK_ALTIMETER_MODEL_X 300
 #define GTK_ALTIMETER_MODEL_Y 300
 
-G_BEGIN_DECLS 
-
-
+G_BEGIN_DECLS
 /**
  * @typedef struct GtkAltimeterClass 
- * @brief Special Gtk API strucure.
+ * @brief Special Gtk API strucure. Define an instance the widget class
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
  */
-typedef struct _GtkAltimeterClass
+  typedef struct _GtkAltimeterClass
 {
   GtkDrawingAreaClass parent_class;
 
 } GtkAltimeterClass;
 
-
 /**
  * @typedef struct GtkAltimeter 
- * @brief Special Gtk API strucure.
+ * @brief Special Gtk API strucure. Define widget's class
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
@@ -86,7 +113,7 @@ typedef struct _GtkAltimeterClass
 typedef struct _GtkAltimeter
 {
   GtkDrawingArea parent;
-  
+
 } GtkAltimeter;
 
 #define GTK_ALTIMETER_TYPE			(gtk_altimeter_get_type ())
@@ -95,7 +122,6 @@ typedef struct _GtkAltimeter
 #define IS_GTK_ALTIMETER(obj)		(G_TYPE_CHECK_INSTANCE_TYPE ((obj), GTK_ALTIMETER_TYPE))
 #define IS_GTK_ALTIMETER_CLASS(obj)	(G_TYPE_CHECK_CLASS_TYPE ((obj), GTK_ALTIMETER_TYPE))
 #define GTK_ALTIMETER_GET_CLASS	(G_TYPE_INSTANCE_GET_CLASS ((obj), GTK_ALTIMETER_TYPE, GtkAltimeterClass))
-
 
 extern GType gtk_altimeter_get_type (void) G_GNUC_CONST;
 extern GtkWidget *gtk_altimeter_new (void);

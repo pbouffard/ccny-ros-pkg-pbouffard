@@ -29,7 +29,18 @@
  * Copyright (C) 2010, CCNY Robotics Lab <br>
  * http://robotics.ccny.cuny.edu <br>
  * 
- * \b Example: Add Artificial Horizon widget to an gtkvbox and set some params <br>
+ * This widget provide an easy to read artificial horizon instrument. <br>
+ * The design is volontary based on a real artificial horizon flight instrument <br>
+ * in order to be familiar to aircraft and helicopter pilots.<br>
+ * 
+ * @b Pictures:<br>
+ * <table><tr>
+ * <th><IMG SRC="file:///home/gaitt/Bureau/gtkartificialhorizon.png"></th>
+ * <th><IMG SRC="file:///home/gaitt/Bureau/gtkartificialhorizon_g.png"></th>
+ * </tr></table>
+ * 
+ * @b Example: <br>
+ * Add Artificial Horizon widget to an gtkvbox and set some params <br>
  * @code
  * window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
  * vbox = gtk_vbox_new(TRUE, 1);
@@ -37,16 +48,43 @@
  * 
  * art_hor = gtk_artificial_horizon_new(); 
  * g_object_set(GTK_ARTIFICIAL_HORIZON (art_hor),
- * 				"inverse-color", false,
- * 				"radial-color", true, NULL);
+ *		"grayscale-color", false,
+ *		"radial-color", true, NULL);
  * 
  * gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(art_hor), TRUE, TRUE, 0);
  * gtk_widget_show_all(window);
  * @endcode
+ * 
+ * The following code show how to change widget's values and redraw it:<br>
+ * Note that here tc's type is "GtkWidget *".<br>
+ * @code
+ * if (IS_GTK_ARTIFICIAL_HORIZON (art_hor))
+ * {
+ *	gtk_turn_coordinator_set_value (GTK_ARTIFICIAL_HORIZON (art_hor), rotation_angle,trans_y);
+ *	gtk_turn_coordinator_redraw(GTK_ARTIFICIAL_HORIZON(art_hor));
+ * }		
+ * @endcode
+ * 
+  @b Widget @b Parameters:<br>
+ * - "grayscale-colors": boolean, if TRUE, draw the widget with grayscale colors (outdoor use)<br>
+ * - "radial-color": boolean, if TRUE, draw a fake light reflexion<br>
+ * 
+ * @b Widget @b values:<br>
+ * - "rotation_angle": double, provide rotation of the widget sphere<br>
+ * and external arc - the value is from 0 to 360.<br>
+ * - "trans_y": double, provide sphere translation - the value is from -30 to 30
  */
 
 #include <ground_station/gui/gtkartificialhorizon.h>
 
+/**
+ * @typedef struct GtkArtificialHorizonPrivate
+ * @brief Special Gtk API strucure. Allow to add a private data<br>
+ * for the widget. Defined in the C file in order to be private.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 typedef struct _GtkArtificialHorizonPrivate
 {
   /* new cairo design */
@@ -55,19 +93,19 @@ typedef struct _GtkArtificialHorizonPrivate
 
   /* widget data */
   gint unit_value;
-  gboolean unit_is_feet;
-  gboolean color_mode_inv;
+  gboolean grayscale_color;
   gboolean radial_color;
-  gdouble altitude;
+  gdouble angle;
+  gdouble trans_y;
 
   /* drawing data */
   gdouble x;
   gdouble y;
   gdouble radius;
   GdkColor bg_color_inv;
-  GdkColor bg_color_altimeter;
+  GdkColor bg_color_artificialhorizon;
   GdkColor bg_color_bounderie;
-  GdkColor bg_radial_color_begin_altimeter;
+  GdkColor bg_radial_color_begin_artificialhorizon;
   GdkColor bg_radial_color_begin_bounderie;
 
   /* mouse information */
@@ -77,23 +115,48 @@ typedef struct _GtkArtificialHorizonPrivate
 
 } GtkArtificialHorizonPrivate;
 
+/**
+ * @enum _GTK_ARTIFICIAL_HORIZON_PROPERTY_ID
+ * @brief Special Gtk API enum. Allow to identify widget's properties.
+ *
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 enum _GTK_ARTIFICIAL_HORIZON_PROPERTY_ID
 {
   PROP_0,
-  PROP_INVERSED_COLOR,
+  PROP_GRAYSCALE_COLOR,
   PROP_UNIT_IS_FEET,
   PROP_UNIT_STEP_VALUE,
   PROP_RADIAL_COLOR,
 } GTK_ARTIFICIAL_HORIZON_PROPERTY_ID;
 
+/**
+ * @fn G_DEFINE_TYPE (GtkArtificialHorizon, gtk_artificial_horizon, GTK_TYPE_DRAWING_AREA);
+ * @brief Special Gtk API function. Define a new object type named GtkArtificialHorizon <br>
+ * and all preface of the widget's functions calls with gtk_artificial_horizon.<br>
+ * We are inheriting the type of GtkDrawingArea.<br>
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 G_DEFINE_TYPE (GtkArtificialHorizon, gtk_artificial_horizon, GTK_TYPE_DRAWING_AREA);
 
+/**
+ * @def GTK_ARTIFICIAL_HORIZON_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GTK_ARTIFICIAL_HORIZON_TYPE, GtkArtificialHorizonPrivate))
+ * @brief Special Gtk API define. Add a macro for easy access to the private<br>
+ * data struct.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 #define GTK_ARTIFICIAL_HORIZON_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GTK_ARTIFICIAL_HORIZON_TYPE, GtkArtificialHorizonPrivate))
 
 static void gtk_artificial_horizon_class_init (GtkArtificialHorizonClass * klass);
 static void gtk_artificial_horizon_init (GtkArtificialHorizon * arh);
 static void gtk_artificial_horizon_destroy (GtkObject * object);
-static void gtk_artificial_horizon_set_property (GObject * object, guint prop_id, const GValue * value, GParamSpec * pspec);
+static void gtk_artificial_horizon_set_property (GObject * object, guint prop_id, const GValue * value,
+                                                 GParamSpec * pspec);
 
 static gboolean gtk_artificial_horizon_configure_event (GtkWidget * widget, GdkEventConfigure * event);
 static gboolean gtk_artificial_horizon_expose (GtkWidget * graph, GdkEventExpose * event);
@@ -107,6 +170,24 @@ static void gtk_artificial_horizon_draw_internal_sphere (GtkWidget * arh);
 
 static gboolean gtk_artificial_horizon_debug = FALSE;
 
+/**
+ * @fn static void gtk_artificial_horizon_class_init (GtkArtificialHorizonClass * klass)
+ * @brief Special Gtk API function. Function called when the class is<br>
+ * initialised. Allow to set certain class wide functions and<br>
+ * properties<br>.
+ * Allow to override some parent’s expose handler like :<br>
+ * - set_property handler<br>
+ * - destroy handler<br>
+ * - configure_event handler<br>
+ * - motion_notify_event handler (not use in this widget)
+ * - button_press_event handler (not use in this widget)
+ * 
+ * Also register the private struct GtkArtificialHorizonPrivate with<br>
+ * the class and install widget properties.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static void gtk_artificial_horizon_class_init (GtkArtificialHorizonClass * klass)
 {
   GObjectClass *obj_class = G_OBJECT_CLASS (klass);
@@ -133,22 +214,11 @@ static void gtk_artificial_horizon_class_init (GtkArtificialHorizonClass * klass
   g_type_class_add_private (obj_class, sizeof (GtkArtificialHorizonPrivate));
 
   g_object_class_install_property (obj_class,
-                                   PROP_INVERSED_COLOR,
-                                   g_param_spec_boolean ("inverse-color",
-                                                         "inverse or not the widget color",
-                                                         "inverse or not the widget color", FALSE, G_PARAM_WRITABLE));
-  g_object_class_install_property (obj_class,
-                                   PROP_UNIT_IS_FEET,
-                                   g_param_spec_boolean ("unit-is-feet",
-                                                         "set the altimeter unit to feet or meter",
-                                                         "set the altimeter unit to feet or meter",
-                                                         TRUE, G_PARAM_WRITABLE));
-  g_object_class_install_property (obj_class,
-                                   PROP_UNIT_STEP_VALUE,
-                                   g_param_spec_int ("unit-step-value",
-                                                     "select the value of the initial step (1, 10 or 100)",
-                                                     "select the value of the initial step (1, 10 or 100)",
-                                                     1, 100, 100, G_PARAM_WRITABLE));
+                                   PROP_GRAYSCALE_COLOR,
+                                   g_param_spec_boolean ("grayscale-color",
+                                                         "use grayscale for the widget color",
+                                                         "use grayscale for the widget color", FALSE,
+                                                         G_PARAM_WRITABLE));
   g_object_class_install_property (obj_class,
                                    PROP_RADIAL_COLOR,
                                    g_param_spec_boolean ("radial-color",
@@ -157,6 +227,15 @@ static void gtk_artificial_horizon_class_init (GtkArtificialHorizonClass * klass
   return;
 }
 
+/**
+ * @fn static void gtk_artificial_horizon_init (GtkArtificialHorizon * arh)
+ * @brief Special Gtk API function. Function called when the creating a<br>
+ * new GtkArtificialHorizon. Allow to initialize some private variables of<br>
+ * widget.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static void gtk_artificial_horizon_init (GtkArtificialHorizon * arh)
 {
   GtkArtificialHorizonPrivate *priv = NULL;
@@ -172,27 +251,37 @@ static void gtk_artificial_horizon_init (GtkArtificialHorizon * arh)
   gtk_widget_add_events (GTK_WIDGET (arh), GDK_BUTTON_PRESS_MASK |
                          GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK);
   priv->b_mouse_onoff = FALSE;
-  priv->color_mode_inv = FALSE;
+  priv->grayscale_color = FALSE;
   priv->radial_color = TRUE;
+  priv->angle = 0;
+  priv->trans_y = 0;
 
   priv->bg_color_bounderie.red = 6553.5;        // 0.1 cairo
   priv->bg_color_bounderie.green = 6553.5;
   priv->bg_color_bounderie.blue = 6553.5;
-  priv->bg_color_altimeter.red = 3276.75;       // 0.05 cairo
-  priv->bg_color_altimeter.green = 3276.75;
-  priv->bg_color_altimeter.blue = 3276.75;
+  priv->bg_color_artificialhorizon.red = 3276.75;       // 0.05 cairo
+  priv->bg_color_artificialhorizon.green = 3276.75;
+  priv->bg_color_artificialhorizon.blue = 3276.75;
   priv->bg_color_inv.red = 45874.5;     // 0.7 cairo
   priv->bg_color_inv.green = 45874.5;
   priv->bg_color_inv.blue = 45874.5;
   priv->bg_radial_color_begin_bounderie.red = 13107;    // 0.2 cairo
   priv->bg_radial_color_begin_bounderie.green = 13107;
   priv->bg_radial_color_begin_bounderie.blue = 13107;
-  priv->bg_radial_color_begin_altimeter.red = 45874.5;  // 0.7 cairo
-  priv->bg_radial_color_begin_altimeter.green = 45874.5;
-  priv->bg_radial_color_begin_altimeter.blue = 45874.5;
+  priv->bg_radial_color_begin_artificialhorizon.red = 45874.5;  // 0.7 cairo
+  priv->bg_radial_color_begin_artificialhorizon.green = 45874.5;
+  priv->bg_radial_color_begin_artificialhorizon.blue = 45874.5;
   return;
 }
 
+/**
+ * @fn static gboolean gtk_artificial_horizon_configure_event (GtkWidget * widget, GdkEventConfigure * event)
+ * @brief Special Gtk API function. Override the _configure_event handler<br>
+ * in order to resize the widget when the main window is resized.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static gboolean gtk_artificial_horizon_configure_event (GtkWidget * widget, GdkEventConfigure * event)
 {
   GtkArtificialHorizonPrivate *priv;
@@ -232,6 +321,15 @@ static gboolean gtk_artificial_horizon_configure_event (GtkWidget * widget, GdkE
   return FALSE;
 }
 
+/**
+ * @fn static gboolean gtk_artificial_horizon_expose (GtkWidget * arh, GdkEventExpose * event)
+ * @brief Special Gtk API function. Override of the expose handler.<br>
+ * An “expose-event” signal is emitted when the widget need to be drawn.<br>
+ * A Cairo context is created for the parent's GdkWindow.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static gboolean gtk_artificial_horizon_expose (GtkWidget * arh, GdkEventExpose * event)
 {
   GtkArtificialHorizonPrivate *priv;
@@ -275,6 +373,19 @@ static gboolean gtk_artificial_horizon_expose (GtkWidget * arh, GdkEventExpose *
   return FALSE;
 }
 
+/**
+ * @fn extern void gtk_artificial_horizon_redraw (GtkArtificialHorizon * arh)
+ * @brief Special Gtk API function. Redraw the widget when called.
+ * 
+ * This function will redraw the widget canvas. In order to reexpose the canvas<br>
+ * (and cause it to redraw) of our parent class(GtkDrawingArea), it is needed to<br>
+ * use gdk_window_invalidate_rect(). The function gdk_window_invalidate_region()<br>
+ * need to be called as well. And finaly, in order to make all events happen, it<br>
+ * is needed to call gdk_window_process_all_updates().
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 extern void gtk_artificial_horizon_redraw (GtkArtificialHorizon * arh)
 {
   GtkWidget *widget;
@@ -298,21 +409,51 @@ extern void gtk_artificial_horizon_redraw (GtkArtificialHorizon * arh)
 
   gdk_region_destroy (region);
 }
-//~ 
-//~ extern void gtk_artificial_horizon_set_arhi (GtkArtificialHorizon * arh, gdouble arhi)
-//~ {
-  //~ GtkArtificialHorizonPrivate *priv;
-//~ 
-  //~ if (gtk_artificial_horizon_debug)
-  //~ {
-    //~ g_debug ("===> gtk_artificial_horizon_draw()");
-  //~ }
-  //~ g_return_if_fail (IS_GTK_ARTIFICIAL_HORIZON (arh));
-//~ 
-  //~ priv = GTK_ARTIFICIAL_HORIZON_GET_PRIVATE (arh);
-  //~ priv->arhitude = arhi;
-//~ }
 
+
+/**
+ * @fn extern void gtk_turn_coordinator_set_value (GtkTurnCoordinator * tc, gdouble plane_angle, gdouble ball_val)
+ * @brief Public widget's function that allow the main program/user to<br>
+ * set the internal value variable of the widget. 
+ * 
+ * Here, tree values have to be set:<br>
+ * "rotation_angle": double, provide rotation of the widget sphere<br>
+ * and external arc - the value is from 0 to 360.<br>
+ * "trans_y": double, provide sphere translation - the value is from -30 to 30
+ */
+extern void gtk_artificial_horizon_set_value (GtkArtificialHorizon * arh, gdouble angle, gdouble y)
+{
+  GtkArtificialHorizonPrivate *priv;
+
+  if (gtk_artificial_horizon_debug)
+  {
+    g_debug ("===> gtk_artificial_horizon_draw()");
+  }
+  g_return_if_fail (IS_GTK_ARTIFICIAL_HORIZON (arh));
+
+  priv = GTK_ARTIFICIAL_HORIZON_GET_PRIVATE (arh);
+
+  if ((angle >= 0) && (angle <= 360))
+    priv->angle = angle;
+  else
+    g_warning ("GtkArtificialHorizon : gtk_artificial_horizon_set_arhi : value out of range");
+
+  if ((y >= -30) && (y <= 30))
+    priv->trans_y = y;
+  else
+    g_warning ("GtkArtificialHorizon : gtk_artificial_horizon_set_arhi : value out of range");
+
+  return;
+}
+
+/**
+ * @fn extern GtkWidget *gtk_artificial_horizon_new (void)
+ * @brief Special Gtk API function. This function is simply a wrapper<br>
+ * for convienience.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 extern GtkWidget *gtk_artificial_horizon_new (void)
 {
   if (gtk_artificial_horizon_debug)
@@ -322,6 +463,15 @@ extern GtkWidget *gtk_artificial_horizon_new (void)
   return GTK_WIDGET (gtk_type_new (gtk_artificial_horizon_get_type ()));
 }
 
+/**
+ * @fn static void gtk_artificial_horizon_draw (GtkWidget * arh)
+ * @brief Special Gtk API function. Override the _draw handler of the<br>
+ * parent class GtkDrawingArea. This function use the cairo context<br>
+ * created before in order to draw scalable graphics. 
+ * 
+ * See GObject,Cairo and GTK+ references for more informations: 
+ * http://library.gnome.org/devel/references.html.en
+ */
 static void gtk_artificial_horizon_draw (GtkWidget * arh)
 {
   GtkArtificialHorizonPrivate *priv;
@@ -336,7 +486,7 @@ static void gtk_artificial_horizon_draw (GtkWidget * arh)
 
   double x, y, rec_x0, rec_y0, rec_width, rec_height, rec_degrees;
   double rec_aspect, rec_corner_radius, rec_radius, radius;
-  cairo_pattern_t *pat=NULL;
+  cairo_pattern_t *pat = NULL;
 
   x = arh->allocation.width / 2;
   y = arh->allocation.height / 2;
@@ -352,7 +502,7 @@ static void gtk_artificial_horizon_draw (GtkWidget * arh)
   rec_radius = rec_corner_radius / rec_aspect;
   rec_degrees = M_PI / 180.0;
 
-  // Altimeter base
+  // artificialhorizon base
   cairo_new_sub_path (priv->cr);
   cairo_arc (priv->cr, rec_x0 + rec_width - rec_radius, rec_y0 + rec_radius,
              rec_radius, -90 * rec_degrees, 0 * rec_degrees);
@@ -363,10 +513,10 @@ static void gtk_artificial_horizon_draw (GtkWidget * arh)
   cairo_arc (priv->cr, rec_x0 + rec_radius, rec_y0 + rec_radius, rec_radius, 180 * rec_degrees, 270 * rec_degrees);
   cairo_close_path (priv->cr);
 
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -390,7 +540,7 @@ static void gtk_artificial_horizon_draw (GtkWidget * arh)
   cairo_stroke (priv->cr);
 
   cairo_arc (priv->cr, x, y, radius, 0, 2 * M_PI);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
     cairo_set_source_rgb (priv->cr, 1., 1., 1.);
@@ -398,87 +548,28 @@ static void gtk_artificial_horizon_draw (GtkWidget * arh)
   cairo_stroke (priv->cr);
 
   cairo_arc (priv->cr, x, y, radius - 0.04 * radius, 0, 2 * M_PI);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 0.6, 0.5, 0.5);
   else
     cairo_set_source_rgb (priv->cr, 1 - 0.6, 1 - 0.5, 1 - 0.5);
   cairo_stroke (priv->cr);
 
-  cairo_set_line_width (priv->cr, 0.01 * radius);
   radius = radius - 0.1 * radius;
-  cairo_arc (priv->cr, x, y, radius, 0, 2 * M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
-  {
-    if (!priv->color_mode_inv)
-      cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_altimeter.red / 65535,
-                            (gdouble) priv->bg_color_altimeter.green / 65535,
-                            (gdouble) priv->bg_color_altimeter.blue / 65535);
-    else
-      cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_inv.red / 65535,
-                            (gdouble) priv->bg_color_inv.green / 65535, (gdouble) priv->bg_color_inv.blue / 65535);
-  }
-  else
-  {
-    pat = cairo_pattern_create_radial (x - 0.392 * radius, y - 0.967 * radius, 0.167 * radius,
-                                       x - 0.477 * radius, y - 0.967 * radius, 0.836 * radius);
-    cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_altimeter.red / 65535,
-                                       (gdouble) priv->bg_radial_color_begin_altimeter.green / 65535,
-                                       (gdouble) priv->bg_radial_color_begin_altimeter.blue / 65535, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 1, (gdouble) priv->bg_color_altimeter.red / 65535,
-                                       (gdouble) priv->bg_color_altimeter.green / 65535,
-                                       (gdouble) priv->bg_color_altimeter.blue / 65535, 1);
-    cairo_set_source (priv->cr, pat);
-  }
-  cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);
-  
   priv->radius = radius;
   priv->x = x;
   priv->y = y;
-  
-  gtk_artificial_horizon_draw_screws(arh);
-  gtk_artificial_horizon_draw_external_arc(arh);
-  gtk_artificial_horizon_draw_internal_sphere(arh);
+  gtk_artificial_horizon_draw_screws (arh);
 
-  // **** base arrow
-  cairo_new_sub_path (priv->cr);
-  cairo_set_line_width (priv->cr, 0.02 * radius);  
-  cairo_set_source_rgba (priv->cr, 0.3, 0.3, 0.3,0.15);
-  cairo_move_to (priv->cr, x + (radius - 0.205 * radius) * cos (-M_PI / 2),
-									y + (radius - 0.205 * radius) * sin (-M_PI / 2));
-  cairo_line_to (priv->cr, x + (radius - 0.325 * radius) * cos (-M_PI / 2+M_PI/30), 
-									y + (radius - 0.325 * radius) * sin (-M_PI / 2+M_PI/30));
-  cairo_line_to (priv->cr, x + (radius - 0.325 * radius) * cos (-M_PI / 2-M_PI/30), 
-									y + (radius - 0.325 * radius) * sin (-M_PI / 2-M_PI/30));
-  cairo_line_to (priv->cr, x + (radius - 0.205 * radius)  * cos (-M_PI / 2), 
-									y + (radius - 0.205 * radius)  * sin (-M_PI / 2));
-  cairo_close_path (priv->cr);  									
-  cairo_stroke (priv->cr);  
-  
-  cairo_new_sub_path (priv->cr);
-  cairo_set_line_width (priv->cr, 0.02 * radius);  
-  cairo_set_source_rgb (priv->cr, 1, 0.65, 0.);
-  cairo_move_to (priv->cr, x + (radius - 0.18 * radius) * cos (-M_PI / 2),
-									y + (radius - 0.18 * radius) * sin (-M_PI / 2));
-  cairo_line_to (priv->cr, x + (radius - 0.3 * radius) * cos (-M_PI / 2+M_PI/30), 
-									y + (radius - 0.3 * radius) * sin (-M_PI / 2+M_PI/30));
-  cairo_line_to (priv->cr, x + (radius - 0.3 * radius) * cos (-M_PI / 2-M_PI/30), 
-									y + (radius - 0.3 * radius) * sin (-M_PI / 2-M_PI/30));
-  cairo_line_to (priv->cr, x + (radius - 0.18 * radius)  * cos (-M_PI / 2), 
-									y + (radius - 0.18 * radius)  * sin (-M_PI / 2));
-  cairo_close_path (priv->cr);  									
-  cairo_stroke (priv->cr);  
-  
-  // **** base quart arc
-  cairo_arc (priv->cr, x, y, radius+0.009*radius, M_PI/5,4*M_PI/5);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  cairo_save(priv->cr);
+  cairo_set_line_width (priv->cr, 0.01 * radius);
+  cairo_arc (priv->cr, x, y, radius, 0, 2 * M_PI);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
-      cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_altimeter.red / 65535,
-                            (gdouble) priv->bg_color_altimeter.green / 65535,
-                            (gdouble) priv->bg_color_altimeter.blue / 65535);
+    if (!priv->grayscale_color)
+      cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_artificialhorizon.red / 65535,
+                            (gdouble) priv->bg_color_artificialhorizon.green / 65535,
+                            (gdouble) priv->bg_color_artificialhorizon.blue / 65535);
     else
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_inv.red / 65535,
                             (gdouble) priv->bg_color_inv.green / 65535, (gdouble) priv->bg_color_inv.blue / 65535);
@@ -487,26 +578,104 @@ static void gtk_artificial_horizon_draw (GtkWidget * arh)
   {
     pat = cairo_pattern_create_radial (x - 0.392 * radius, y - 0.967 * radius, 0.167 * radius,
                                        x - 0.477 * radius, y - 0.967 * radius, 0.836 * radius);
-    cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_altimeter.red / 65535,
-                                       (gdouble) priv->bg_radial_color_begin_altimeter.green / 65535,
-                                       (gdouble) priv->bg_radial_color_begin_altimeter.blue / 65535, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 1, (gdouble) priv->bg_color_altimeter.red / 65535,
-                                       (gdouble) priv->bg_color_altimeter.green / 65535,
-                                       (gdouble) priv->bg_color_altimeter.blue / 65535, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_artificialhorizon.red / 65535,
+                                       (gdouble) priv->bg_radial_color_begin_artificialhorizon.green / 65535,
+                                       (gdouble) priv->bg_radial_color_begin_artificialhorizon.blue / 65535, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, (gdouble) priv->bg_color_artificialhorizon.red / 65535,
+                                       (gdouble) priv->bg_color_artificialhorizon.green / 65535,
+                                       (gdouble) priv->bg_color_artificialhorizon.blue / 65535, 1);
+    cairo_set_source (priv->cr, pat);
+  }
+  cairo_fill_preserve (priv->cr);
+  cairo_clip (priv->cr);        // **** allow to hide that the internal sphere to be 2* bigger than the widget
+  cairo_stroke (priv->cr);
+
+  priv->radius = radius;
+  priv->x = x;
+  priv->y = y;
+  gtk_artificial_horizon_draw_internal_sphere (arh);
+  cairo_restore(priv->cr);
+  
+  gtk_artificial_horizon_draw_external_arc (arh);
+
+  // **** alpha arc
+  cairo_arc (priv->cr, x, y, radius - 0.15 * radius, 0, 2 * M_PI);
+  pat = cairo_pattern_create_radial (x, y, radius - 0.23 * radius, x, y, radius - 0.15 * radius);
+  cairo_pattern_add_color_stop_rgba (pat, 0, 0.3, 0.3, 0.3, 0.1);
+  cairo_pattern_add_color_stop_rgba (pat, 1, 0.3, 0.3, 0.3, 0.6);
+  cairo_set_source (priv->cr, pat);
+  cairo_fill (priv->cr);
+  cairo_stroke (priv->cr);
+
+  // **** base arrow
+  cairo_new_sub_path (priv->cr);
+  cairo_set_line_width (priv->cr, 0.02 * radius);
+  cairo_set_source_rgba (priv->cr, 0.3, 0.3, 0.3, 0.15);
+  cairo_move_to (priv->cr, x + (radius - 0.205 * radius) * cos (-M_PI / 2),
+                 y + (radius - 0.205 * radius) * sin (-M_PI / 2));
+  cairo_line_to (priv->cr, x + (radius - 0.325 * radius) * cos (-M_PI / 2 + M_PI / 30),
+                 y + (radius - 0.325 * radius) * sin (-M_PI / 2 + M_PI / 30));
+  cairo_line_to (priv->cr, x + (radius - 0.325 * radius) * cos (-M_PI / 2 - M_PI / 30),
+                 y + (radius - 0.325 * radius) * sin (-M_PI / 2 - M_PI / 30));
+  cairo_line_to (priv->cr, x + (radius - 0.205 * radius) * cos (-M_PI / 2),
+                 y + (radius - 0.205 * radius) * sin (-M_PI / 2));
+  cairo_close_path (priv->cr);
+  cairo_stroke (priv->cr);
+
+  cairo_new_sub_path (priv->cr);
+  cairo_set_line_width (priv->cr, 0.02 * radius);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 1, 0.65, 0.);
+  else
+    cairo_set_source_rgb (priv->cr, 0, 0, 0);
+  cairo_move_to (priv->cr, x + (radius - 0.18 * radius) * cos (-M_PI / 2),
+                 y + (radius - 0.18 * radius) * sin (-M_PI / 2));
+  cairo_line_to (priv->cr, x + (radius - 0.3 * radius) * cos (-M_PI / 2 + M_PI / 30),
+                 y + (radius - 0.3 * radius) * sin (-M_PI / 2 + M_PI / 30));
+  cairo_line_to (priv->cr, x + (radius - 0.3 * radius) * cos (-M_PI / 2 - M_PI / 30),
+                 y + (radius - 0.3 * radius) * sin (-M_PI / 2 - M_PI / 30));
+  cairo_line_to (priv->cr, x + (radius - 0.18 * radius) * cos (-M_PI / 2),
+                 y + (radius - 0.18 * radius) * sin (-M_PI / 2));
+  cairo_close_path (priv->cr);
+  cairo_stroke (priv->cr);
+
+  // **** base quart arc
+  cairo_arc (priv->cr, x, y, radius + 0.009 * radius, M_PI / 5, 4 * M_PI / 5);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
+  {
+    if (!priv->grayscale_color)
+      cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_artificialhorizon.red / 65535,
+                            (gdouble) priv->bg_color_artificialhorizon.green / 65535,
+                            (gdouble) priv->bg_color_artificialhorizon.blue / 65535);
+    else
+      cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_inv.red / 65535,
+                            (gdouble) priv->bg_color_inv.green / 65535, (gdouble) priv->bg_color_inv.blue / 65535);
+  }
+  else
+  {
+    pat = cairo_pattern_create_radial (x - 0.392 * radius, y - 0.967 * radius, 0.167 * radius,
+                                       x - 0.477 * radius, y - 0.967 * radius, 0.836 * radius);
+    cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_artificialhorizon.red / 65535,
+                                       (gdouble) priv->bg_radial_color_begin_artificialhorizon.green / 65535,
+                                       (gdouble) priv->bg_radial_color_begin_artificialhorizon.blue / 65535, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, (gdouble) priv->bg_color_artificialhorizon.red / 65535,
+                                       (gdouble) priv->bg_color_artificialhorizon.green / 65535,
+                                       (gdouble) priv->bg_color_artificialhorizon.blue / 65535, 1);
     cairo_set_source (priv->cr, pat);
   }
   cairo_fill (priv->cr);
   cairo_stroke (priv->cr);
 
   cairo_new_sub_path (priv->cr);
-  cairo_set_line_width (priv->cr, 0.02 * radius);  
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  cairo_set_line_width (priv->cr, 0.02 * radius);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
-      cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_altimeter.red / 65535,
-                            (gdouble) priv->bg_color_altimeter.green / 65535,
-                            (gdouble) priv->bg_color_altimeter.blue / 65535);
+    if (!priv->grayscale_color)
+      cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_artificialhorizon.red / 65535,
+                            (gdouble) priv->bg_color_artificialhorizon.green / 65535,
+                            (gdouble) priv->bg_color_artificialhorizon.blue / 65535);
     else
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_inv.red / 65535,
                             (gdouble) priv->bg_color_inv.green / 65535, (gdouble) priv->bg_color_inv.blue / 65535);
@@ -515,55 +684,65 @@ static void gtk_artificial_horizon_draw (GtkWidget * arh)
   {
     pat = cairo_pattern_create_radial (x - 0.392 * radius, y - 0.967 * radius, 0.167 * radius,
                                        x - 0.477 * radius, y - 0.967 * radius, 0.836 * radius);
-    cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_altimeter.red / 65535,
-                                       (gdouble) priv->bg_radial_color_begin_altimeter.green / 65535,
-                                       (gdouble) priv->bg_radial_color_begin_altimeter.blue / 65535, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 1, (gdouble) priv->bg_color_altimeter.red / 65535,
-                                       (gdouble) priv->bg_color_altimeter.green / 65535,
-                                       (gdouble) priv->bg_color_altimeter.blue / 65535, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_artificialhorizon.red / 65535,
+                                       (gdouble) priv->bg_radial_color_begin_artificialhorizon.green / 65535,
+                                       (gdouble) priv->bg_radial_color_begin_artificialhorizon.blue / 65535, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, (gdouble) priv->bg_color_artificialhorizon.red / 65535,
+                                       (gdouble) priv->bg_color_artificialhorizon.green / 65535,
+                                       (gdouble) priv->bg_color_artificialhorizon.blue / 65535, 1);
     cairo_set_source (priv->cr, pat);
   }
-  cairo_move_to (priv->cr, x - 0.3 * radius,y + 0.60 * radius);
-  cairo_line_to (priv->cr, x - 0.2 * radius,y + 0.35 * radius);
-  cairo_line_to (priv->cr, x - 0.05 * radius,y + 0.35 * radius);
-  cairo_line_to (priv->cr, x - 0.05 * radius,y + 0.25 * radius);
-  cairo_line_to (priv->cr, x - 0.015 * radius,y + 0.15 * radius);  
-  cairo_line_to (priv->cr, x - 0.015 * radius,y);
-  cairo_line_to (priv->cr, x + 0.015 * radius,y);
-  cairo_line_to (priv->cr, x + 0.015 * radius,y + 0.15 * radius);  
-  cairo_line_to (priv->cr, x + 0.05 * radius,y + 0.25 * radius);
-  cairo_line_to (priv->cr, x + 0.05 * radius,y + 0.35 * radius);  
-  cairo_line_to (priv->cr, x + 0.2 * radius,y + 0.35 * radius);
-  cairo_line_to (priv->cr, x + 0.3 * radius,y + 0.60 * radius);
-  cairo_fill (priv->cr);  
-  cairo_close_path (priv->cr);  									
-  cairo_stroke (priv->cr);  
-  
-  cairo_set_source_rgb (priv->cr,0,0,0);
-  cairo_set_line_width (priv->cr, 0.06 * radius);  
-  cairo_move_to (priv->cr, x - 0.61 * radius,y);
-  cairo_line_to (priv->cr, x - 0.2 * radius,y);
-  cairo_line_to (priv->cr, x - 0.1 * radius,y + 0.1 * radius);
+  cairo_move_to (priv->cr, x - 0.3 * radius, y + 0.60 * radius);
+  cairo_line_to (priv->cr, x - 0.2 * radius, y + 0.35 * radius);
+  cairo_line_to (priv->cr, x - 0.05 * radius, y + 0.35 * radius);
+  cairo_line_to (priv->cr, x - 0.05 * radius, y + 0.25 * radius);
+  cairo_line_to (priv->cr, x - 0.015 * radius, y + 0.15 * radius);
+  cairo_line_to (priv->cr, x - 0.015 * radius, y);
+  cairo_line_to (priv->cr, x + 0.015 * radius, y);
+  cairo_line_to (priv->cr, x + 0.015 * radius, y + 0.15 * radius);
+  cairo_line_to (priv->cr, x + 0.05 * radius, y + 0.25 * radius);
+  cairo_line_to (priv->cr, x + 0.05 * radius, y + 0.35 * radius);
+  cairo_line_to (priv->cr, x + 0.2 * radius, y + 0.35 * radius);
+  cairo_line_to (priv->cr, x + 0.3 * radius, y + 0.60 * radius);
+  cairo_fill (priv->cr);
+  cairo_close_path (priv->cr);
+  cairo_stroke (priv->cr);
+
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0, 0, 0);
+  else
+    cairo_set_source_rgb (priv->cr, 1, 1, 1);
+  cairo_set_line_width (priv->cr, 0.06 * radius);
+  cairo_move_to (priv->cr, x - 0.61 * radius, y);
+  cairo_line_to (priv->cr, x - 0.2 * radius, y);
+  cairo_line_to (priv->cr, x - 0.1 * radius, y + 0.1 * radius);
   cairo_line_to (priv->cr, x, y);
-  cairo_line_to (priv->cr, x + 0.1 * radius,y + 0.1 * radius);
-  cairo_line_to (priv->cr, x + 0.2 * radius,y);
-  cairo_line_to (priv->cr, x + 0.61 * radius,y);
-  cairo_stroke (priv->cr);  
-  cairo_set_source_rgb (priv->cr,1,0.65,0);
-  cairo_set_line_width (priv->cr, 0.04 * radius);  
-  cairo_move_to (priv->cr, x - 0.6 * radius,y);
-  cairo_line_to (priv->cr, x - 0.2 * radius,y);
-  cairo_line_to (priv->cr, x - 0.1 * radius,y + 0.1 * radius);
+  cairo_line_to (priv->cr, x + 0.1 * radius, y + 0.1 * radius);
+  cairo_line_to (priv->cr, x + 0.2 * radius, y);
+  cairo_line_to (priv->cr, x + 0.61 * radius, y);
+  cairo_stroke (priv->cr);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 1, 0.65, 0.);
+  else
+    cairo_set_source_rgb (priv->cr, 0, 0, 0);
+  cairo_set_line_width (priv->cr, 0.04 * radius);
+  cairo_move_to (priv->cr, x - 0.6 * radius, y);
+  cairo_line_to (priv->cr, x - 0.2 * radius, y);
+  cairo_line_to (priv->cr, x - 0.1 * radius, y + 0.1 * radius);
   cairo_line_to (priv->cr, x, y);
-  cairo_line_to (priv->cr, x + 0.1 * radius,y + 0.1 * radius);
-  cairo_line_to (priv->cr, x + 0.2 * radius,y);
-  cairo_line_to (priv->cr, x + 0.6 * radius,y);
-  cairo_stroke (priv->cr); 
-  
+  cairo_line_to (priv->cr, x + 0.1 * radius, y + 0.1 * radius);
+  cairo_line_to (priv->cr, x + 0.2 * radius, y);
+  cairo_line_to (priv->cr, x + 0.6 * radius, y);
+  cairo_stroke (priv->cr);
+
   cairo_pattern_destroy (pat);
   return;
 }
 
+/**
+ * @fn static void gtk_artificial_horizon_draw_screws (GtkWidget * arh)
+ * @brief Private widget's function that draw the widget's screws using cairo.
+ */
 static void gtk_artificial_horizon_draw_screws (GtkWidget * arh)
 {
   GtkArtificialHorizonPrivate *priv;
@@ -575,29 +754,29 @@ static void gtk_artificial_horizon_draw_screws (GtkWidget * arh)
   g_return_if_fail (IS_GTK_ARTIFICIAL_HORIZON (arh));
 
   priv = GTK_ARTIFICIAL_HORIZON_GET_PRIVATE (arh);
-  
-  cairo_pattern_t *pat=NULL;
+
+  cairo_pattern_t *pat = NULL;
   double x, y, radius;
-  radius=priv->radius;
-  x=priv->x;
-  y=priv->y;
-  radius = radius+0.12*radius;
-  
+  radius = priv->radius;
+  x = priv->x;
+  y = priv->y;
+  radius = radius + 0.12 * radius;
+
   // **** top left screw
-  cairo_arc (priv->cr, x-0.82*radius, y-0.82*radius, 0.1 * radius, 0, 2*M_PI);
-  pat = cairo_pattern_create_radial (x-0.82*radius, y-0.82*radius, 0.07*radius,
-                                     x-0.82*radius, y-0.82*radius, 0.1*radius);
-  cairo_pattern_add_color_stop_rgba (pat,0, 0, 0, 0,0.7);
-  cairo_pattern_add_color_stop_rgba (pat,1, 0, 0, 0,0.1);
+  cairo_arc (priv->cr, x - 0.82 * radius, y - 0.82 * radius, 0.1 * radius, 0, 2 * M_PI);
+  pat = cairo_pattern_create_radial (x - 0.82 * radius, y - 0.82 * radius, 0.07 * radius,
+                                     x - 0.82 * radius, y - 0.82 * radius, 0.1 * radius);
+  cairo_pattern_add_color_stop_rgba (pat, 0, 0, 0, 0, 0.7);
+  cairo_pattern_add_color_stop_rgba (pat, 1, 0, 0, 0, 0.1);
   cairo_set_source (priv->cr, pat);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-    
-  cairo_arc (priv->cr, x-0.82*radius, y-0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+
+  cairo_arc (priv->cr, x - 0.82 * radius, y - 0.82 * radius, 0.07 * radius, 0, 2 * M_PI);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -612,54 +791,54 @@ static void gtk_artificial_horizon_draw_screws (GtkWidget * arh)
     cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_bounderie.red / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.green / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.blue / 65535, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15,0.15,0.15, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15, 0.15, 0.15, 1);
     cairo_set_source (priv->cr, pat);
   }
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-  
+
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
-       cairo_set_source_rgb (priv->cr, 0., 0., 0.);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
-       cairo_set_source_rgb (priv->cr, 1., 1., 1.);
-  cairo_move_to (priv->cr, x-0.88*radius, y-0.82*radius);
-  cairo_line_to (priv->cr, x-0.76*radius, y-0.82*radius);
+    cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+  cairo_move_to (priv->cr, x - 0.88 * radius, y - 0.82 * radius);
+  cairo_line_to (priv->cr, x - 0.76 * radius, y - 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x-0.82*radius, y-0.88*radius);
-  cairo_line_to (priv->cr, x-0.82*radius, y-0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x - 0.82 * radius, y - 0.88 * radius);
+  cairo_line_to (priv->cr, x - 0.82 * radius, y - 0.76 * radius);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
-		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
-      cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
-  cairo_move_to (priv->cr, x-0.88*radius, y-0.82*radius);
-  cairo_line_to (priv->cr, x-0.76*radius, y-0.82*radius);
+    cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);
+  cairo_move_to (priv->cr, x - 0.88 * radius, y - 0.82 * radius);
+  cairo_line_to (priv->cr, x - 0.76 * radius, y - 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x-0.82*radius, y-0.88*radius);
-  cairo_line_to (priv->cr, x-0.82*radius, y-0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x - 0.82 * radius, y - 0.88 * radius);
+  cairo_line_to (priv->cr, x - 0.82 * radius, y - 0.76 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);      
-  
-   // **** top right screw
-  cairo_arc (priv->cr, x+0.82*radius, y-0.82*radius, 0.1 * radius, 0, 2*M_PI);
-  pat = cairo_pattern_create_radial (x+0.82*radius, y-0.82*radius, 0.07*radius,
-                                     x+0.82*radius, y-0.82*radius, 0.1*radius);
-  cairo_pattern_add_color_stop_rgba (pat,0, 0, 0, 0,0.7);
-  cairo_pattern_add_color_stop_rgba (pat,1, 0, 0, 0,0.1);
+  cairo_stroke (priv->cr);
+
+  // **** top right screw
+  cairo_arc (priv->cr, x + 0.82 * radius, y - 0.82 * radius, 0.1 * radius, 0, 2 * M_PI);
+  pat = cairo_pattern_create_radial (x + 0.82 * radius, y - 0.82 * radius, 0.07 * radius,
+                                     x + 0.82 * radius, y - 0.82 * radius, 0.1 * radius);
+  cairo_pattern_add_color_stop_rgba (pat, 0, 0, 0, 0, 0.7);
+  cairo_pattern_add_color_stop_rgba (pat, 1, 0, 0, 0, 0.1);
   cairo_set_source (priv->cr, pat);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-    
-  cairo_arc (priv->cr, x+0.82*radius, y-0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+
+  cairo_arc (priv->cr, x + 0.82 * radius, y - 0.82 * radius, 0.07 * radius, 0, 2 * M_PI);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -674,54 +853,54 @@ static void gtk_artificial_horizon_draw_screws (GtkWidget * arh)
     cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_bounderie.red / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.green / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.blue / 65535, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15,0.15,0.15, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15, 0.15, 0.15, 1);
     cairo_set_source (priv->cr, pat);
   }
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-  
+
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
-       cairo_set_source_rgb (priv->cr, 0., 0., 0.);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
-       cairo_set_source_rgb (priv->cr, 1., 1., 1.);
-  cairo_move_to (priv->cr, x+0.88*radius, y-0.82*radius);
-  cairo_line_to (priv->cr, x+0.76*radius, y-0.82*radius);
+    cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+  cairo_move_to (priv->cr, x + 0.88 * radius, y - 0.82 * radius);
+  cairo_line_to (priv->cr, x + 0.76 * radius, y - 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x+0.82*radius, y-0.88*radius);
-  cairo_line_to (priv->cr, x+0.82*radius, y-0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x + 0.82 * radius, y - 0.88 * radius);
+  cairo_line_to (priv->cr, x + 0.82 * radius, y - 0.76 * radius);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
-		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
-      cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
-  cairo_move_to (priv->cr, x+0.88*radius, y-0.82*radius);
-  cairo_line_to (priv->cr, x+0.76*radius, y-0.82*radius);
+    cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);
+  cairo_move_to (priv->cr, x + 0.88 * radius, y - 0.82 * radius);
+  cairo_line_to (priv->cr, x + 0.76 * radius, y - 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x+0.82*radius, y-0.88*radius);
-  cairo_line_to (priv->cr, x+0.82*radius, y-0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x + 0.82 * radius, y - 0.88 * radius);
+  cairo_line_to (priv->cr, x + 0.82 * radius, y - 0.76 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);     
-  
-   // **** bottom left screw
-  cairo_arc (priv->cr, x-0.82*radius, y+0.82*radius, 0.1 * radius, 0, 2*M_PI);
-  pat = cairo_pattern_create_radial (x-0.82*radius, y+0.82*radius, 0.07*radius,
-                                     x-0.82*radius, y+0.82*radius, 0.1*radius);
-  cairo_pattern_add_color_stop_rgba (pat,0, 0, 0, 0,0.7);
-  cairo_pattern_add_color_stop_rgba (pat,1, 0, 0, 0,0.1);
+  cairo_stroke (priv->cr);
+
+  // **** bottom left screw
+  cairo_arc (priv->cr, x - 0.82 * radius, y + 0.82 * radius, 0.1 * radius, 0, 2 * M_PI);
+  pat = cairo_pattern_create_radial (x - 0.82 * radius, y + 0.82 * radius, 0.07 * radius,
+                                     x - 0.82 * radius, y + 0.82 * radius, 0.1 * radius);
+  cairo_pattern_add_color_stop_rgba (pat, 0, 0, 0, 0, 0.7);
+  cairo_pattern_add_color_stop_rgba (pat, 1, 0, 0, 0, 0.1);
   cairo_set_source (priv->cr, pat);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-    
-  cairo_arc (priv->cr, x-0.82*radius, y+0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+
+  cairo_arc (priv->cr, x - 0.82 * radius, y + 0.82 * radius, 0.07 * radius, 0, 2 * M_PI);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -736,54 +915,54 @@ static void gtk_artificial_horizon_draw_screws (GtkWidget * arh)
     cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_bounderie.red / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.green / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.blue / 65535, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15,0.15,0.15, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15, 0.15, 0.15, 1);
     cairo_set_source (priv->cr, pat);
   }
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-  
+
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
-       cairo_set_source_rgb (priv->cr, 0., 0., 0.);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
-       cairo_set_source_rgb (priv->cr, 1., 1., 1.);
-  cairo_move_to (priv->cr, x-0.88*radius, y+0.82*radius);
-  cairo_line_to (priv->cr, x-0.76*radius, y+0.82*radius);
+    cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+  cairo_move_to (priv->cr, x - 0.88 * radius, y + 0.82 * radius);
+  cairo_line_to (priv->cr, x - 0.76 * radius, y + 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x-0.82*radius, y+0.88*radius);
-  cairo_line_to (priv->cr, x-0.82*radius, y+0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x - 0.82 * radius, y + 0.88 * radius);
+  cairo_line_to (priv->cr, x - 0.82 * radius, y + 0.76 * radius);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
-		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
-      cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
-  cairo_move_to (priv->cr, x-0.88*radius, y+0.82*radius);
-  cairo_line_to (priv->cr, x-0.76*radius, y+0.82*radius);
+    cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);
+  cairo_move_to (priv->cr, x - 0.88 * radius, y + 0.82 * radius);
+  cairo_line_to (priv->cr, x - 0.76 * radius, y + 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x-0.82*radius, y+0.88*radius);
-  cairo_line_to (priv->cr, x-0.82*radius, y+0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x - 0.82 * radius, y + 0.88 * radius);
+  cairo_line_to (priv->cr, x - 0.82 * radius, y + 0.76 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);     
-  
-   // **** bottom right screw
-  cairo_arc (priv->cr, x+0.82*radius, y+0.82*radius, 0.1 * radius, 0, 2*M_PI);
-  pat = cairo_pattern_create_radial (x+0.82*radius, y+0.82*radius, 0.07*radius,
-                                     x+0.82*radius, y+0.82*radius, 0.1*radius);
-  cairo_pattern_add_color_stop_rgba (pat,0, 0, 0, 0,0.7);
-  cairo_pattern_add_color_stop_rgba (pat,1, 0, 0, 0,0.1);
+  cairo_stroke (priv->cr);
+
+  // **** bottom right screw
+  cairo_arc (priv->cr, x + 0.82 * radius, y + 0.82 * radius, 0.1 * radius, 0, 2 * M_PI);
+  pat = cairo_pattern_create_radial (x + 0.82 * radius, y + 0.82 * radius, 0.07 * radius,
+                                     x + 0.82 * radius, y + 0.82 * radius, 0.1 * radius);
+  cairo_pattern_add_color_stop_rgba (pat, 0, 0, 0, 0, 0.7);
+  cairo_pattern_add_color_stop_rgba (pat, 1, 0, 0, 0, 0.1);
   cairo_set_source (priv->cr, pat);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-    
-  cairo_arc (priv->cr, x+0.82*radius, y+0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+
+  cairo_arc (priv->cr, x + 0.82 * radius, y + 0.82 * radius, 0.07 * radius, 0, 2 * M_PI);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -798,359 +977,409 @@ static void gtk_artificial_horizon_draw_screws (GtkWidget * arh)
     cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_bounderie.red / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.green / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.blue / 65535, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15,0.15,0.15, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15, 0.15, 0.15, 1);
     cairo_set_source (priv->cr, pat);
   }
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-  
+
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
-       cairo_set_source_rgb (priv->cr, 0., 0., 0.);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
-       cairo_set_source_rgb (priv->cr, 1., 1., 1.);
-  cairo_move_to (priv->cr, x+0.88*radius, y+0.82*radius);
-  cairo_line_to (priv->cr, x+0.76*radius, y+0.82*radius);
+    cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+  cairo_move_to (priv->cr, x + 0.88 * radius, y + 0.82 * radius);
+  cairo_line_to (priv->cr, x + 0.76 * radius, y + 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x+0.82*radius, y+0.88*radius);
-  cairo_line_to (priv->cr, x+0.82*radius, y+0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x + 0.82 * radius, y + 0.88 * radius);
+  cairo_line_to (priv->cr, x + 0.82 * radius, y + 0.76 * radius);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
-		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
-      cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
-  cairo_move_to (priv->cr, x+0.88*radius, y+0.82*radius);
-  cairo_line_to (priv->cr, x+0.76*radius, y+0.82*radius);
+    cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);
+  cairo_move_to (priv->cr, x + 0.88 * radius, y + 0.82 * radius);
+  cairo_line_to (priv->cr, x + 0.76 * radius, y + 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x+0.82*radius, y+0.88*radius);
-  cairo_line_to (priv->cr, x+0.82*radius, y+0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x + 0.82 * radius, y + 0.88 * radius);
+  cairo_line_to (priv->cr, x + 0.82 * radius, y + 0.76 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);     
-  cairo_pattern_destroy (pat);  
+  cairo_stroke (priv->cr);
+  cairo_pattern_destroy (pat);
   return;
 }
 
-
+/**
+ * @fn static void gtk_artificial_horizon_draw_internal_sphere (GtkWidget * arh)
+ * @brief Private widget's function that draw the widget's internal sphere using cairo.
+ */
 static void gtk_artificial_horizon_draw_internal_sphere (GtkWidget * arh)
 {
   GtkArtificialHorizonPrivate *priv;
 
   if (gtk_artificial_horizon_debug)
   {
-    g_debug ("===> gtk_artificial_horizon_draw()");
+    g_debug ("===> gtk_artificial_horizon_draw_internal_sphere()");
   }
   g_return_if_fail (IS_GTK_ARTIFICIAL_HORIZON (arh));
 
   priv = GTK_ARTIFICIAL_HORIZON_GET_PRIVATE (arh);
-  
+
   cairo_pattern_t *pat = NULL;
   double x, y, radius;
-  radius=priv->radius;
-  x=priv->x;
-  y=priv->y;
-  
+  radius = priv->radius;
+  x = priv->x;
+  y = priv->y;
+
+  cairo_save (priv->cr);
+  cairo_translate (priv->cr, x, y);
+  x = 0;
+  y = (priv->trans_y * 0.134 * radius) / 10;    //priv->trans_y;
+  cairo_rotate (priv->cr, DEG2RAD (priv->angle));
+
   // **** internal sphere
-  cairo_arc (priv->cr, x, y, radius - 0.15 * radius, M_PI,0);
-  if(!priv->radial_color)
+  cairo_arc (priv->cr, x, y, 2 * radius, M_PI, 0);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
+  {
+    if (!priv->grayscale_color)
+      cairo_set_source_rgb (priv->cr, 0.117, 0.564, 1.);
+    else
+      cairo_set_source_rgb (priv->cr, 0.8, 0.8, 0.8);
+  }
+  else
   {
     cairo_set_source_rgb (priv->cr, 0.117, 0.564, 1.);
   }
+  cairo_fill (priv->cr);
+  cairo_stroke (priv->cr);
+
+  cairo_arc (priv->cr, x, y, 2 * radius, 0, M_PI);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
+  {
+    if (!priv->grayscale_color)
+      cairo_set_source_rgb (priv->cr, 0.651, 0.435, 0.098);
+    else
+      cairo_set_source_rgb (priv->cr, 0.2, 0.2, 0.2);
+  }
   else
   {
-    pat = cairo_pattern_create_radial (x - 0.392 * radius, y - 0.967 * radius, 0.167 * radius,
-                                       x - 0.477 * radius, y - 0.967 * radius, 0.836 * radius);
-    cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_altimeter.red / 65535,
-                                       (gdouble) priv->bg_radial_color_begin_altimeter.green / 65535,
-                                       (gdouble) priv->bg_radial_color_begin_altimeter.blue / 65535, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 1, 0.117, 0.564, 1.,1);
-    cairo_set_source (priv->cr, pat);
+    cairo_set_source_rgb (priv->cr, 0.651, 0.435, 0.098);
   }
   cairo_fill (priv->cr);
   cairo_stroke (priv->cr);
 
-  cairo_stroke (priv->cr);
-
-  
-  cairo_arc (priv->cr, x, y, radius - 0.15 * radius, 0, M_PI);
-  if(!priv->radial_color)
-  {
-          cairo_set_source_rgb (priv->cr, 0.651, 0.435, 0.098);
-  }
-  else
-  {
-    pat = cairo_pattern_create_radial (x - 0.392 * radius, y - 0.967 * radius, 0.167 * radius,
-                                       x - 0.477 * radius, y - 0.967 * radius, 0.836 * radius);
-    cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_altimeter.red / 65535,
-                                       (gdouble) priv->bg_radial_color_begin_altimeter.green / 65535,
-                                       (gdouble) priv->bg_radial_color_begin_altimeter.blue / 65535, 1);
-    cairo_pattern_add_color_stop_rgba (pat,1, 0.651, 0.435, 0.098,1);
-    cairo_set_source (priv->cr, pat);
-  }
-  cairo_fill (priv->cr);
-  cairo_stroke (priv->cr);
-  
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  cairo_move_to (priv->cr, x - radius + 0.15 * radius, y);
-  cairo_line_to (priv->cr, x + radius - 0.15 * radius, y);
+  cairo_move_to (priv->cr, x - radius, y);
+  cairo_line_to (priv->cr, x + radius, y);
   cairo_set_source_rgb (priv->cr, 1., 1., 1.);
   cairo_stroke (priv->cr);
-  
+
   // **** horizontal line (pitch)
-  cairo_move_to (priv->cr, x - 0.4*radius,y- 0.4*radius);
-  cairo_line_to (priv->cr, x + 0.4*radius,y- 0.4*radius);
+  cairo_move_to (priv->cr, x - 0.4 * radius, y - 0.4 * radius);
+  cairo_line_to (priv->cr, x + 0.4 * radius, y - 0.4 * radius);
   cairo_stroke (priv->cr);
-  cairo_move_to (priv->cr, x - 0.3*radius,y- 0.268*radius);
-  cairo_line_to (priv->cr, x + 0.3*radius,y- 0.268*radius);
+  cairo_move_to (priv->cr, x - 0.3 * radius, y - 0.268 * radius);
+  cairo_line_to (priv->cr, x + 0.3 * radius, y - 0.268 * radius);
   cairo_stroke (priv->cr);
-  cairo_move_to (priv->cr, x - 0.2*radius,y- 0.134*radius);
-  cairo_line_to (priv->cr, x + 0.2*radius,y- 0.134*radius);
+  cairo_move_to (priv->cr, x - 0.2 * radius, y - 0.134 * radius);
+  cairo_line_to (priv->cr, x + 0.2 * radius, y - 0.134 * radius);
   cairo_stroke (priv->cr);
-  cairo_move_to (priv->cr, x - 0.1*radius,y- 0.4*radius + 0.067*radius);
-  cairo_line_to (priv->cr, x + 0.1*radius,y- 0.4*radius + 0.067*radius);
+  cairo_move_to (priv->cr, x - 0.1 * radius, y - 0.4 * radius + 0.067 * radius);
+  cairo_line_to (priv->cr, x + 0.1 * radius, y - 0.4 * radius + 0.067 * radius);
   cairo_stroke (priv->cr);
-  cairo_move_to (priv->cr, x - 0.1*radius,y- 0.268*radius+ 0.067*radius);
-  cairo_line_to (priv->cr, x + 0.1*radius,y- 0.268*radius+ 0.067*radius);
+  cairo_move_to (priv->cr, x - 0.1 * radius, y - 0.268 * radius + 0.067 * radius);
+  cairo_line_to (priv->cr, x + 0.1 * radius, y - 0.268 * radius + 0.067 * radius);
   cairo_stroke (priv->cr);
-  cairo_move_to (priv->cr, x - 0.1*radius,y- 0.134*radius+ 0.067*radius);
-  cairo_line_to (priv->cr, x + 0.1*radius,y- 0.134*radius+ 0.067*radius);
+  cairo_move_to (priv->cr, x - 0.1 * radius, y - 0.134 * radius + 0.067 * radius);
+  cairo_line_to (priv->cr, x + 0.1 * radius, y - 0.134 * radius + 0.067 * radius);
   cairo_stroke (priv->cr);
-  
-  cairo_move_to (priv->cr, x - 0.4*radius,y+ 0.4*radius);
-  cairo_line_to (priv->cr, x + 0.4*radius,y+ 0.4*radius);
+
+  cairo_move_to (priv->cr, x - 0.4 * radius, y + 0.4 * radius);
+  cairo_line_to (priv->cr, x + 0.4 * radius, y + 0.4 * radius);
   cairo_stroke (priv->cr);
-  cairo_move_to (priv->cr, x - 0.3*radius,y+ 0.268*radius);
-  cairo_line_to (priv->cr, x + 0.3*radius,y+ 0.268*radius);
+  cairo_move_to (priv->cr, x - 0.3 * radius, y + 0.268 * radius);
+  cairo_line_to (priv->cr, x + 0.3 * radius, y + 0.268 * radius);
   cairo_stroke (priv->cr);
-  cairo_move_to (priv->cr, x - 0.2*radius,y+ 0.134*radius);
-  cairo_line_to (priv->cr, x + 0.2*radius,y+ 0.134*radius);
+  cairo_move_to (priv->cr, x - 0.2 * radius, y + 0.134 * radius);
+  cairo_line_to (priv->cr, x + 0.2 * radius, y + 0.134 * radius);
   cairo_stroke (priv->cr);
-  cairo_move_to (priv->cr, x - 0.1*radius,y+ 0.4*radius- 0.067*radius);
-  cairo_line_to (priv->cr, x + 0.1*radius,y+ 0.4*radius- 0.067*radius);
+  cairo_move_to (priv->cr, x - 0.1 * radius, y + 0.4 * radius - 0.067 * radius);
+  cairo_line_to (priv->cr, x + 0.1 * radius, y + 0.4 * radius - 0.067 * radius);
   cairo_stroke (priv->cr);
-  cairo_move_to (priv->cr, x - 0.1*radius,y+ 0.268*radius- 0.067*radius);
-  cairo_line_to (priv->cr, x + 0.1*radius,y+ 0.268*radius- 0.067*radius);
+  cairo_move_to (priv->cr, x - 0.1 * radius, y + 0.268 * radius - 0.067 * radius);
+  cairo_line_to (priv->cr, x + 0.1 * radius, y + 0.268 * radius - 0.067 * radius);
   cairo_stroke (priv->cr);
-  cairo_move_to (priv->cr, x - 0.1*radius,y+ 0.134*radius- 0.067*radius);
-  cairo_line_to (priv->cr, x + 0.1*radius,y+ 0.134*radius- 0.067*radius);
+  cairo_move_to (priv->cr, x - 0.1 * radius, y + 0.134 * radius - 0.067 * radius);
+  cairo_line_to (priv->cr, x + 0.1 * radius, y + 0.134 * radius - 0.067 * radius);
   cairo_stroke (priv->cr);
-  
+
   // **** 10 drawing  
   cairo_select_font_face (priv->cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
   cairo_set_font_size (priv->cr, 0.1 * radius);
-  cairo_move_to (priv->cr, x - 0.35 * radius, y- 0.1*radius);
+  cairo_move_to (priv->cr, x - 0.35 * radius, y - 0.1 * radius);
   cairo_show_text (priv->cr, "10");
   cairo_stroke (priv->cr);
-  cairo_move_to (priv->cr, x + 0.21 * radius, y- 0.1*radius);
+  cairo_move_to (priv->cr, x + 0.21 * radius, y - 0.1 * radius);
   cairo_show_text (priv->cr, "10");
   cairo_stroke (priv->cr);
-  
-  cairo_move_to (priv->cr, x - 0.35 * radius, y+ 0.17*radius);
-  cairo_show_text (priv->cr, "10");
-  cairo_stroke (priv->cr);
-  cairo_move_to (priv->cr, x + 0.21 * radius, y+ 0.17*radius);
-  cairo_show_text (priv->cr, "10");
-  cairo_stroke (priv->cr);
-  
-  // **** 20 drawing    
-  cairo_move_to (priv->cr, x - 0.45 * radius, y- 0.234*radius);
-  cairo_show_text (priv->cr, "20");
-  cairo_stroke (priv->cr);
-  cairo_move_to (priv->cr, x + 0.31 * radius, y- 0.234*radius);
-  cairo_show_text (priv->cr, "20");
-  cairo_stroke (priv->cr);
-  
-  cairo_move_to (priv->cr, x - 0.45 * radius, y+ 0.302*radius);
-  cairo_show_text (priv->cr, "20");
-  cairo_stroke (priv->cr);
-  cairo_move_to (priv->cr, x + 0.31 * radius, y+ 0.302*radius);
-  cairo_show_text (priv->cr, "20");
-  cairo_stroke (priv->cr);
-  
-  // **** 30 drawing    
-  cairo_move_to (priv->cr, x - 0.55 * radius, y- 0.368*radius);
-  cairo_show_text (priv->cr, "30");
-  cairo_stroke (priv->cr);
-  cairo_move_to (priv->cr, x + 0.41 * radius, y- 0.368*radius);
-  cairo_show_text (priv->cr, "30");
-  cairo_stroke (priv->cr);
-  
-  cairo_move_to (priv->cr, x - 0.55 * radius, y+ 0.434*radius);
-  cairo_show_text (priv->cr, "30");
-  cairo_stroke (priv->cr);
-  cairo_move_to (priv->cr, x + 0.41 * radius, y+ 0.434*radius);
-  cairo_show_text (priv->cr, "30");
-  cairo_stroke (priv->cr);  
 
-  // **** alpha arc
-  cairo_arc (priv->cr, x, y, radius - 0.15 * radius, 0, 2*M_PI);
-  pat = cairo_pattern_create_radial (x, y, radius - 0.23 * radius,
-                                     x, y, radius - 0.15 * radius);
-  cairo_pattern_add_color_stop_rgba (pat,0, 0.3, 0.3, 0.3,0.1);
-  cairo_pattern_add_color_stop_rgba (pat,1, 0.3, 0.3, 0.3,0.6);
-  cairo_set_source (priv->cr, pat);
-  cairo_fill (priv->cr);
+  cairo_move_to (priv->cr, x - 0.35 * radius, y + 0.17 * radius);
+  cairo_show_text (priv->cr, "10");
   cairo_stroke (priv->cr);
-  cairo_pattern_destroy (pat);    
+  cairo_move_to (priv->cr, x + 0.21 * radius, y + 0.17 * radius);
+  cairo_show_text (priv->cr, "10");
+  cairo_stroke (priv->cr);
+
+  // **** 20 drawing    
+  cairo_move_to (priv->cr, x - 0.45 * radius, y - 0.234 * radius);
+  cairo_show_text (priv->cr, "20");
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x + 0.31 * radius, y - 0.234 * radius);
+  cairo_show_text (priv->cr, "20");
+  cairo_stroke (priv->cr);
+
+  cairo_move_to (priv->cr, x - 0.45 * radius, y + 0.302 * radius);
+  cairo_show_text (priv->cr, "20");
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x + 0.31 * radius, y + 0.302 * radius);
+  cairo_show_text (priv->cr, "20");
+  cairo_stroke (priv->cr);
+
+  // **** 30 drawing    
+  cairo_move_to (priv->cr, x - 0.55 * radius, y - 0.368 * radius);
+  cairo_show_text (priv->cr, "30");
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x + 0.41 * radius, y - 0.368 * radius);
+  cairo_show_text (priv->cr, "30");
+  cairo_stroke (priv->cr);
+
+  cairo_move_to (priv->cr, x - 0.55 * radius, y + 0.434 * radius);
+  cairo_show_text (priv->cr, "30");
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x + 0.41 * radius, y + 0.434 * radius);
+  cairo_show_text (priv->cr, "30");
+  cairo_stroke (priv->cr);
+  cairo_restore (priv->cr);
+
+  if ((priv->radial_color) && (!priv->grayscale_color))
+  {
+    x = priv->x;
+    y = priv->y;
+    cairo_arc (priv->cr, x, y, radius, 0, 2 * M_PI);
+    pat = cairo_pattern_create_radial (x - 0.392 * radius, y - 0.967 * radius, 0.167 * radius,
+                                       x - 0.477 * radius, y - 0.967 * radius, 0.836 * radius);
+    cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_artificialhorizon.red / 65535,
+                                       (gdouble) priv->bg_radial_color_begin_artificialhorizon.green / 65535,
+                                       (gdouble) priv->bg_radial_color_begin_artificialhorizon.blue / 65535, 0.7);
+    cairo_pattern_add_color_stop_rgba (pat, 1, (gdouble) priv->bg_radial_color_begin_artificialhorizon.red / 65535,
+                                       (gdouble) priv->bg_radial_color_begin_artificialhorizon.green / 65535,
+                                       (gdouble) priv->bg_radial_color_begin_artificialhorizon.blue / 65535, 0.05);
+    cairo_set_source (priv->cr, pat);
+    cairo_fill_preserve (priv->cr);
+    cairo_stroke (priv->cr);
+  }
+
+  cairo_pattern_destroy (pat);
   return;
 }
 
+/**
+ * @fn static void gtk_artificial_horizon_draw_external_arc (GtkWidget * arh)
+ * @brief Private widget's function that draw the widget's external arc using cairo.
+ */
 static void gtk_artificial_horizon_draw_external_arc (GtkWidget * arh)
 {
   GtkArtificialHorizonPrivate *priv;
 
   if (gtk_artificial_horizon_debug)
   {
-    g_debug ("===> gtk_artificial_horizon_draw()");
+    g_debug ("===> gtk_artificial_horizon_draw_external_arc()");
   }
   g_return_if_fail (IS_GTK_ARTIFICIAL_HORIZON (arh));
 
   priv = GTK_ARTIFICIAL_HORIZON_GET_PRIVATE (arh);
-  
+
   cairo_pattern_t *pat = NULL;
   double x, y, radius;
-  radius=priv->radius;
-  x=priv->x;
-  y=priv->y;
-  
+  radius = priv->radius;
+  x = priv->x;
+  y = priv->y;
+
+  cairo_save (priv->cr);
+  cairo_translate (priv->cr, x, y);
+  x = 0;
+  y = 0;
+  cairo_rotate (priv->cr, DEG2RAD (priv->angle));
+
   // **** external demi arc sky
-  cairo_arc (priv->cr, x, y, radius, M_PI, 0);
- if(!priv->radial_color)
+  cairo_set_line_width (priv->cr, 0.15 * radius);
+  cairo_arc (priv->cr, x, y, radius - 0.075 * radius, M_PI, 0);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
+  {
+    if (!priv->grayscale_color)
+      cairo_set_source_rgb (priv->cr, 0.117, 0.564, 1.);
+    else
+      cairo_set_source_rgb (priv->cr, 0.8, 0.8, 0.8);
+  }
+  else
   {
     cairo_set_source_rgb (priv->cr, 0.117, 0.564, 1.);
   }
-  else
-  {
-    pat = cairo_pattern_create_radial (x - 0.392 * radius, y - 0.967 * radius, 0.167 * radius,
-                                       x - 0.477 * radius, y - 0.967 * radius, 0.836 * radius);
-    cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_altimeter.red / 65535,
-                                       (gdouble) priv->bg_radial_color_begin_altimeter.green / 65535,
-                                       (gdouble) priv->bg_radial_color_begin_altimeter.blue / 65535, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 1, 0.117, 0.564, 1.,1);
-    cairo_set_source (priv->cr, pat);
-  }
-  cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-  
+
   // **** external demi arc ground
-  cairo_arc (priv->cr, x, y, radius, 0, M_PI);
-  if(!priv->radial_color)
+  cairo_arc (priv->cr, x, y, radius - 0.075 * radius, 0, M_PI);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
+  {
+    if (!priv->grayscale_color)
+      cairo_set_source_rgb (priv->cr, 0.651, 0.435, 0.098);
+    else
+      cairo_set_source_rgb (priv->cr, 0.2, 0.2, 0.2);
+  }
+  else
   {
     cairo_set_source_rgb (priv->cr, 0.651, 0.435, 0.098);
   }
-  else
-  {
-    pat = cairo_pattern_create_radial (x - 0.392 * radius, y - 0.967 * radius, 0.167 * radius,
-                                       x - 0.477 * radius, y - 0.967 * radius, 0.836 * radius);
-    cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_altimeter.red / 65535,
-                                       (gdouble) priv->bg_radial_color_begin_altimeter.green / 65535,
-                                       (gdouble) priv->bg_radial_color_begin_altimeter.blue / 65535, 1);
-    cairo_pattern_add_color_stop_rgba (pat,1, 0.651, 0.435, 0.098,1);
-    cairo_set_source (priv->cr, pat);
-  }
-  cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  
-  // **** external arc alpha composante
-  cairo_arc (priv->cr, x, y, radius, 0,2 *M_PI);
-  cairo_set_source_rgba (priv->cr, 0.3, 0.3, 0.3,0.3);
-  cairo_fill (priv->cr);
   cairo_stroke (priv->cr);
-  
-  // **** external arc tips
+
+  // **** external arc alpha composante
+  cairo_arc (priv->cr, x, y, radius - 0.075 * radius, 0, 2 * M_PI);
+  cairo_set_source_rgba (priv->cr, 0.3, 0.3, 0.3, 0.3);
+  cairo_stroke (priv->cr);
+
   cairo_set_line_width (priv->cr, 0.04 * radius);
   cairo_move_to (priv->cr, x - radius, y);
-  cairo_line_to (priv->cr, x + radius, y);
+  cairo_line_to (priv->cr, x - radius + 0.15 * radius, y);
   cairo_set_source_rgb (priv->cr, 1., 1., 1.);
   cairo_stroke (priv->cr);
-  
+  cairo_set_line_width (priv->cr, 0.04 * radius);
+  cairo_move_to (priv->cr, x + radius, y);
+  cairo_line_to (priv->cr, x + radius - 0.15 * radius, y);
+  cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+  cairo_stroke (priv->cr);
+
+  // **** external arc tips
   cairo_set_line_width (priv->cr, 0.02 * radius);
   cairo_move_to (priv->cr, x + (radius - 0.15 * radius) * cos (-M_PI / 6),
-									y + (radius - 0.15 * radius) * sin (-M_PI / 6));
-  cairo_line_to (priv->cr, x + (radius - 0.04 * radius)  * cos (-M_PI / 6), 
-									y + (radius - 0.04 * radius)  * sin (-M_PI / 6));
+                 y + (radius - 0.15 * radius) * sin (-M_PI / 6));
+  cairo_line_to (priv->cr, x + (radius - 0.04 * radius) * cos (-M_PI / 6),
+                 y + (radius - 0.04 * radius) * sin (-M_PI / 6));
   cairo_stroke (priv->cr);
-  
-  cairo_move_to (priv->cr, x + (radius - 0.15 * radius) * cos (-2*M_PI / 6),
-									y + (radius - 0.15 * radius) * sin (-2*M_PI / 6));
-  cairo_line_to (priv->cr, x + (radius - 0.04 * radius)  * cos (-2*M_PI / 6), 
-									y + (radius - 0.04 * radius)  * sin (-2*M_PI / 6));
+
+  cairo_move_to (priv->cr, x + (radius - 0.15 * radius) * cos (-2 * M_PI / 6),
+                 y + (radius - 0.15 * radius) * sin (-2 * M_PI / 6));
+  cairo_line_to (priv->cr, x + (radius - 0.04 * radius) * cos (-2 * M_PI / 6),
+                 y + (radius - 0.04 * radius) * sin (-2 * M_PI / 6));
   cairo_stroke (priv->cr);
-  
-  cairo_move_to (priv->cr, x + (radius - 0.15 * radius) * cos (-4*M_PI / 6),
-									y + (radius - 0.15 * radius) * sin (-4*M_PI / 6));
-  cairo_line_to (priv->cr, x + (radius - 0.04 * radius)  * cos (-4*M_PI / 6), 
-									y + (radius - 0.04 * radius)  * sin (-4*M_PI / 6));
+
+  cairo_move_to (priv->cr, x + (radius - 0.15 * radius) * cos (-4 * M_PI / 6),
+                 y + (radius - 0.15 * radius) * sin (-4 * M_PI / 6));
+  cairo_line_to (priv->cr, x + (radius - 0.04 * radius) * cos (-4 * M_PI / 6),
+                 y + (radius - 0.04 * radius) * sin (-4 * M_PI / 6));
   cairo_stroke (priv->cr);
-  
-  cairo_move_to (priv->cr, x + (radius - 0.15 * radius) * cos (-5*M_PI / 6),
-									y + (radius - 0.15 * radius) * sin (-5*M_PI / 6));
-  cairo_line_to (priv->cr, x + (radius - 0.04 * radius)  * cos (-5*M_PI / 6), 
-									y + (radius - 0.04 * radius)  * sin (-5*M_PI / 6));
+
+  cairo_move_to (priv->cr, x + (radius - 0.15 * radius) * cos (-5 * M_PI / 6),
+                 y + (radius - 0.15 * radius) * sin (-5 * M_PI / 6));
+  cairo_line_to (priv->cr, x + (radius - 0.04 * radius) * cos (-5 * M_PI / 6),
+                 y + (radius - 0.04 * radius) * sin (-5 * M_PI / 6));
   cairo_stroke (priv->cr);
-  
+
   cairo_set_line_width (priv->cr, 0.015 * radius);
-  cairo_move_to (priv->cr, x + (radius - 0.15 * radius) * cos (-7*M_PI / 18),
-									y + (radius - 0.15 * radius) * sin (-7*M_PI / 18));
-  cairo_line_to (priv->cr, x + (radius - 0.07 * radius)  * cos (-7*M_PI / 18), 
-									y + (radius - 0.07 * radius)  * sin (-7*M_PI / 18));
+  cairo_move_to (priv->cr, x + (radius - 0.15 * radius) * cos (-7 * M_PI / 18),
+                 y + (radius - 0.15 * radius) * sin (-7 * M_PI / 18));
+  cairo_line_to (priv->cr, x + (radius - 0.07 * radius) * cos (-7 * M_PI / 18),
+                 y + (radius - 0.07 * radius) * sin (-7 * M_PI / 18));
   cairo_stroke (priv->cr);
-    cairo_move_to (priv->cr, x + (radius - 0.15 * radius) * cos (-8*M_PI / 18),
-									y + (radius - 0.15 * radius) * sin (-8*M_PI / 18));
-  cairo_line_to (priv->cr, x + (radius - 0.07 * radius)  * cos (-8*M_PI / 18), 
-									y + (radius - 0.07 * radius)  * sin (-8*M_PI / 18));
+  cairo_move_to (priv->cr, x + (radius - 0.15 * radius) * cos (-8 * M_PI / 18),
+                 y + (radius - 0.15 * radius) * sin (-8 * M_PI / 18));
+  cairo_line_to (priv->cr, x + (radius - 0.07 * radius) * cos (-8 * M_PI / 18),
+                 y + (radius - 0.07 * radius) * sin (-8 * M_PI / 18));
   cairo_stroke (priv->cr);
-    cairo_move_to (priv->cr, x + (radius - 0.15 * radius) * cos (-10*M_PI / 18),
-									y + (radius - 0.15 * radius) * sin (-10*M_PI / 18));
-  cairo_line_to (priv->cr, x + (radius - 0.07 * radius)  * cos (-10*M_PI / 18), 
-									y + (radius - 0.07 * radius)  * sin (-10*M_PI / 18));
+  cairo_move_to (priv->cr, x + (radius - 0.15 * radius) * cos (-10 * M_PI / 18),
+                 y + (radius - 0.15 * radius) * sin (-10 * M_PI / 18));
+  cairo_line_to (priv->cr, x + (radius - 0.07 * radius) * cos (-10 * M_PI / 18),
+                 y + (radius - 0.07 * radius) * sin (-10 * M_PI / 18));
   cairo_stroke (priv->cr);
-    cairo_move_to (priv->cr, x + (radius - 0.15 * radius) * cos (-11*M_PI / 18),
-									y + (radius - 0.15 * radius) * sin (-11*M_PI / 18));
-  cairo_line_to (priv->cr, x + (radius - 0.07 * radius)  * cos (-11*M_PI / 18), 
-									y + (radius - 0.07 * radius)  * sin (-11*M_PI / 18));
+  cairo_move_to (priv->cr, x + (radius - 0.15 * radius) * cos (-11 * M_PI / 18),
+                 y + (radius - 0.15 * radius) * sin (-11 * M_PI / 18));
+  cairo_line_to (priv->cr, x + (radius - 0.07 * radius) * cos (-11 * M_PI / 18),
+                 y + (radius - 0.07 * radius) * sin (-11 * M_PI / 18));
   cairo_stroke (priv->cr);
-  
+
   // **** external arc arrow
-  cairo_move_to (priv->cr, x + (radius - 0.15 * radius) * cos (-3*M_PI / 12),
-									y + (radius - 0.15 * radius) * sin (-3*M_PI / 12));
-  cairo_line_to (priv->cr, x + (radius - 0.07 * radius)  * cos (-3*M_PI / 12+M_PI/45), 
-									y + (radius - 0.07 * radius)  * sin (-3*M_PI / 12+M_PI/45));
-  cairo_line_to (priv->cr, x + (radius - 0.07 * radius)  * cos (-3*M_PI / 12-M_PI/45), 
-									y + (radius - 0.07 * radius)  * sin (-3*M_PI / 12-M_PI/45));
-  cairo_line_to (priv->cr, x + (radius - 0.15 * radius)  * cos (-3*M_PI / 12), 
-									y + (radius - 0.15 * radius)  * sin (-3*M_PI / 12));
+  cairo_move_to (priv->cr, x + (radius - 0.15 * radius) * cos (-3 * M_PI / 12),
+                 y + (radius - 0.15 * radius) * sin (-3 * M_PI / 12));
+  cairo_line_to (priv->cr, x + (radius - 0.07 * radius) * cos (-3 * M_PI / 12 + M_PI / 45),
+                 y + (radius - 0.07 * radius) * sin (-3 * M_PI / 12 + M_PI / 45));
+  cairo_line_to (priv->cr, x + (radius - 0.07 * radius) * cos (-3 * M_PI / 12 - M_PI / 45),
+                 y + (radius - 0.07 * radius) * sin (-3 * M_PI / 12 - M_PI / 45));
+  cairo_line_to (priv->cr, x + (radius - 0.15 * radius) * cos (-3 * M_PI / 12),
+                 y + (radius - 0.15 * radius) * sin (-3 * M_PI / 12));
   cairo_fill (priv->cr);
   cairo_stroke (priv->cr);
-  
-  cairo_move_to (priv->cr, x + (radius - 0.15 * radius) * cos (-9*M_PI / 12),
-									y + (radius - 0.15 * radius) * sin (-9*M_PI / 12));
-  cairo_line_to (priv->cr, x + (radius - 0.07 * radius)  * cos (-9*M_PI / 12+M_PI/45), 
-									y + (radius - 0.07 * radius)  * sin (-9*M_PI / 12+M_PI/45));
-  cairo_line_to (priv->cr, x + (radius - 0.07 * radius)  * cos (-9*M_PI / 12-M_PI/45), 
-									y + (radius - 0.07 * radius)  * sin (-9*M_PI / 12-M_PI/45));
-  cairo_line_to (priv->cr, x + (radius - 0.15 * radius)  * cos (-9*M_PI / 12), 
-									y + (radius - 0.15 * radius)  * sin (-9*M_PI / 12));
+
+  cairo_move_to (priv->cr, x + (radius - 0.15 * radius) * cos (-9 * M_PI / 12),
+                 y + (radius - 0.15 * radius) * sin (-9 * M_PI / 12));
+  cairo_line_to (priv->cr, x + (radius - 0.07 * radius) * cos (-9 * M_PI / 12 + M_PI / 45),
+                 y + (radius - 0.07 * radius) * sin (-9 * M_PI / 12 + M_PI / 45));
+  cairo_line_to (priv->cr, x + (radius - 0.07 * radius) * cos (-9 * M_PI / 12 - M_PI / 45),
+                 y + (radius - 0.07 * radius) * sin (-9 * M_PI / 12 - M_PI / 45));
+  cairo_line_to (priv->cr, x + (radius - 0.15 * radius) * cos (-9 * M_PI / 12),
+                 y + (radius - 0.15 * radius) * sin (-9 * M_PI / 12));
   cairo_fill (priv->cr);
-  cairo_stroke (priv->cr);  
-  
+  cairo_stroke (priv->cr);
+
   cairo_move_to (priv->cr, x + (radius - 0.15 * radius) * cos (-M_PI / 2),
-									y + (radius - 0.15 * radius) * sin (-M_PI / 2));
-  cairo_line_to (priv->cr, x + radius * cos (-M_PI / 2+M_PI/30), 
-									y + radius * sin (-M_PI / 2+M_PI/30));
-  cairo_line_to (priv->cr, x + radius * cos (-M_PI / 2-M_PI/30), 
-									y + radius * sin (-M_PI / 2-M_PI/30));
-  cairo_line_to (priv->cr, x + (radius - 0.15 * radius)  * cos (-M_PI / 2), 
-									y + (radius - 0.15 * radius)  * sin (-M_PI / 2));
+                 y + (radius - 0.15 * radius) * sin (-M_PI / 2));
+  cairo_line_to (priv->cr, x + radius * cos (-M_PI / 2 + M_PI / 30), y + radius * sin (-M_PI / 2 + M_PI / 30));
+  cairo_line_to (priv->cr, x + radius * cos (-M_PI / 2 - M_PI / 30), y + radius * sin (-M_PI / 2 - M_PI / 30));
+  cairo_line_to (priv->cr, x + (radius - 0.15 * radius) * cos (-M_PI / 2),
+                 y + (radius - 0.15 * radius) * sin (-M_PI / 2));
   cairo_fill (priv->cr);
-  cairo_stroke (priv->cr);  
+  cairo_stroke (priv->cr);
+  cairo_restore (priv->cr);
+
+  if ((priv->radial_color) && (!priv->grayscale_color))
+  {
+    x = priv->x;
+    y = priv->y;
+    cairo_arc (priv->cr, x, y, radius, 0, 2 * M_PI);
+    pat = cairo_pattern_create_radial (x - 0.392 * radius, y - 0.967 * radius, 0.167 * radius,
+                                       x - 0.477 * radius, y - 0.967 * radius, 0.836 * radius);
+    cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_artificialhorizon.red / 65535,
+                                       (gdouble) priv->bg_radial_color_begin_artificialhorizon.green / 65535,
+                                       (gdouble) priv->bg_radial_color_begin_artificialhorizon.blue / 65535, 0.7);
+    cairo_pattern_add_color_stop_rgba (pat, 1, (gdouble) priv->bg_radial_color_begin_artificialhorizon.red / 65535,
+                                       (gdouble) priv->bg_radial_color_begin_artificialhorizon.green / 65535,
+                                       (gdouble) priv->bg_radial_color_begin_artificialhorizon.blue / 65535, 0.05);
+    cairo_set_source (priv->cr, pat);
+    cairo_fill_preserve (priv->cr);
+    cairo_stroke (priv->cr);
+  }
   cairo_pattern_destroy (pat);
   return;
 }
 
+/**
+ * @fn static gboolean gtk_artificial_horizon_button_press_event (GtkWidget * widget, GdkEventButton * ev)
+ * @brief Special Gtk API function. Override the _button_press_event<br>
+ * handler. Perform mouse button press events. 
+ * 
+ * Here, the mouse events are not used for the widget (maybe<br>
+ * in future released) but to allow the user to enable/disable<br>
+ * the debug messages.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static gboolean gtk_artificial_horizon_button_press_event (GtkWidget * widget, GdkEventButton * ev)
 {
   GtkArtificialHorizonPrivate *priv;
@@ -1185,6 +1414,16 @@ static gboolean gtk_artificial_horizon_button_press_event (GtkWidget * widget, G
   return FALSE;
 }
 
+/**
+ * @fn static gboolean gtk_artificial_horizon_motion_notify_event (GtkWidget * widget, GdkEventMotion * ev)
+ * @brief Special Gtk API function. Override the _motion_notify_event<br>
+ * handler. Perform mouse motion events. 
+ * 
+ * Here, the mouse events are not used (maybe in future released).
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static gboolean gtk_artificial_horizon_motion_notify_event (GtkWidget * widget, GdkEventMotion * ev)
 {
   GtkArtificialHorizonPrivate *priv;
@@ -1223,6 +1462,14 @@ static gboolean gtk_artificial_horizon_motion_notify_event (GtkWidget * widget, 
   return TRUE;
 }
 
+/**
+ * @fn static void gtk_artificial_horizon_destroy (GtkObject * object)
+ * @brief Special Gtk API function. Override the _destroy handler.<br>
+ * Allow the destruction of all widget's pointer.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static void gtk_artificial_horizon_destroy (GtkObject * object)
 {
   GtkArtificialHorizonPrivate *priv = NULL;
@@ -1259,7 +1506,16 @@ static void gtk_artificial_horizon_destroy (GtkObject * object)
   return;
 }
 
-static void gtk_artificial_horizon_set_property (GObject * object, guint prop_id, const GValue * value, GParamSpec * pspec)
+/**
+ * @fn static void gtk_artificial_horizon_set_property (GObject * object, guint prop_id, const GValue * value, GParamSpec * pspec)
+ * @brief Special Gtk API function. Override the _set_property handler <br>
+ * in order to set the object parameters.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
+static void gtk_artificial_horizon_set_property (GObject * object, guint prop_id, const GValue * value,
+                                                 GParamSpec * pspec)
 {
   GtkArtificialHorizonPrivate *priv = NULL;
   GtkArtificialHorizon *arh = NULL;
@@ -1278,14 +1534,8 @@ static void gtk_artificial_horizon_set_property (GObject * object, guint prop_id
 
   switch (prop_id)
   {
-    case PROP_INVERSED_COLOR:
-      priv->color_mode_inv = g_value_get_boolean (value);
-      break;
-    case PROP_UNIT_IS_FEET:
-      priv->unit_is_feet = g_value_get_boolean (value);
-      break;
-    case PROP_UNIT_STEP_VALUE:
-      priv->unit_value = g_value_get_int (value);
+    case PROP_GRAYSCALE_COLOR:
+      priv->grayscale_color = g_value_get_boolean (value);
       break;
     case PROP_RADIAL_COLOR:
       priv->radial_color = g_value_get_boolean (value);

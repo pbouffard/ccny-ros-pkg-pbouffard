@@ -18,8 +18,102 @@
 *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/**
+ * @file gtkgauge.c
+ * @brief Gtk+ based Gauge Widget
+ * @author Gautier Dumonteil <gautier.dumonteil@gmail.com>
+ * @version 0.1
+ * @date 06/06/2010
+ *
+ * Gtk Gauge Widget <br>
+ * Copyright (C) 2010, CCNY Robotics Lab <br>
+ * http://robotics.ccny.cuny.edu <br>
+ * 
+ * This widget provide an easy to read gauge instrument. <br>
+ * The design is volontary made to look like to a real gauge<br>
+ * flight instrument in order to be familiar to aircraft and<br>
+ * helicopter pilots. This widget is fully comfigurable and<br>
+ * useable for several gauge type (Battery Voltage, Current,<br> 
+ * Velocity, ...).
+ * 
+ * @b Pictures:<br>
+ * <table><tr>
+ * <th><IMG SRC="file:///home/gaitt/Bureau/gtkgauge.png"></th>
+ * <th><IMG SRC="file:///home/gaitt/Bureau/gtkgauge_g.png"></th>
+ * </tr></table>
+ * 
+ * \b Example:<br>
+ * Add Gauge widget to an gtkvbox and set some params <br>
+ * @code
+ * window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+ * vbox = gtk_vbox_new(TRUE, 1);
+ * gtk_container_add(GTK_CONTAINER (window), vbox);
+ * 
+ * batt = gtk_gauge_new();
+ * g_object_set (GTK_GAUGE (batt), "name",
+ *		"<big>Battery voltage</big>\n" "<span foreground=\"orange\"><i>(V)</i></span>", NULL);
+ * g_object_set (GTK_GAUGE (batt),
+ *		"grayscale-color", false,
+ *		"radial-color", true,
+ *		"start-value", 0, 
+ *		"end-value", 12, 
+ *		"initial-step", 2, 
+ *		"sub-step", (gdouble) 0.2, 
+ *		"drawing-step", 2,
+ *		"color-strip-order", "RYG",
+ *		"green-strip-start", 10,
+ *		"yellow-strip-start", 8,
+ *		"red-strip-start", 0, NULL);
+ * 
+ * gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(batt), TRUE, TRUE, 0);
+ * gtk_widget_show_all(window);
+ * @endcode
+ * 
+ * The following code show how to change widget's values and redraw it:<br>
+ * Note that here tc's type is "GtkWidget *".<br>
+ * @code
+ * if (IS_GTK_GAUGE (batt))
+ * {
+ *	gtk_turn_coordinator_set_value (GTK_GAUGE (batt), value);
+ *	gtk_turn_coordinator_redraw(GTK_GAUGE(batt));
+ * }		
+ * @endcode
+ * 
+ * @b Widget @b Parameters:<br>
+ * - "grayscale-color": boolean, if TRUE, draw the widget with grayscale colors (outdoor use)<br>
+ * - "radial-color": boolean, if TRUE, draw a fake light reflexion<br>
+ * - "start-value": int, indicates the start value of the gauge<br>
+ * - "end-value": int, indicates the end value of the gauge<br>
+ * - "initial-step": int, fisrt step, divide the gauge range into step<br>
+ * - "sub-step": double, sub step, divide the gauge range into sub step<br>
+ * WARNING: you need to cast in 'gdouble' when set.<br>
+ * - "drawing-step": int, indicates the step where numbers will be drawn<br>
+ * - "name": char, provide the gauge's name (support pango text attribute)<br>
+ * - OPTIONAL - "color-strip-order": char, allow to reverse the color strip.<br>
+ * By default it's YOR (Yellow Orange Red) - possible: GYR,RYG,ROY<br>
+ * - OPTIONAL - "green-strip-start": int, indicates the start of the green strip<br>
+ * - OPTIONAL - "yellow-strip-start": int, indicates the start of the yellow strip<br>
+ * - OPTIONAL - "orange-strip-start": int, indicates the start of the orange strip<br>
+ * - OPTIONAL - "red-strip-start": int, indicates the start of the red strip<br>
+ * - OPTIONAL - "grayscale-color-strip-order": char, allow to reverse <br>
+ * grayscale strip. By default it's WB (White to Black) - possible: BW<br>
+ * 
+ * @b Widget @b values:<br>
+ * - "value": double, provide the hand rotation according to the start-value<br>
+ * and the end-value.
+ * 
+ */
+
 #include <ground_station/gui/gtkgauge.h>
 
+/**
+ * @typedef struct GtkGaugePrivate 
+ * @brief Special Gtk API strucure. Allow to add a private data<br>
+ * for the widget. Defined in the C file in order to be private.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 typedef struct _GtkGaugePrivate
 {
   /* new cairo design */
@@ -32,7 +126,7 @@ typedef struct _GtkGaugePrivate
   gint initial_step;
   gdouble sub_step;
   gint drawing_step;
-  gboolean color_mode_inv;
+  gboolean grayscale_color;
   gboolean radial_color;
   gdouble value;
   gchar *gauge_name;
@@ -48,6 +142,7 @@ typedef struct _GtkGaugePrivate
   GdkColor bg_radial_color_begin_bounderie;
 
   gchar *strip_color_order;
+  gchar *strip_grayscale_color_order;
   gboolean gauge_name_font_size_ok;
   gdouble gauge_name_font_size;
   gdouble green_strip_start;
@@ -62,11 +157,18 @@ typedef struct _GtkGaugePrivate
 
 } GtkGaugePrivate;
 
-enum _GLG_PROPERTY_ID
+/**
+ * @enum _GTK_GAUGE_PROPERTY_ID
+ * @brief Special Gtk API enum. Allow to identify widget's properties.
+ *
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
+enum _GTK_GAUGE_PROPERTY_ID
 {
   PROP_0,
   PROP_NAME,
-  PROP_INVERSED_COLOR,
+  PROP_GRAYSCALE_COLOR,
   PROP_RADIAL_COLOR,
   PROP_START_VALUE,
   PROP_END_VALUE,
@@ -74,14 +176,32 @@ enum _GLG_PROPERTY_ID
   PROP_SUB_STEP,
   PROP_DRAWING_STEP,
   PROP_STRIP_COLOR_ORDER,
+  PROP_STRIP_GRAYSCALE_COLOR_ORDER,
   PROP_GREEN_STRIP_START,
   PROP_YELLOW_STRIP_START,
   PROP_ORANGE_STRIP_START,
   PROP_RED_STRIP_START,
-} GLG_PROPERTY_ID;
+} GTK_GAUGE_PROPERTY_ID;
 
+/**
+ * @fn G_DEFINE_TYPE (GtkGauge, gtk_gauge, GTK_TYPE_DRAWING_AREA);
+ * @brief Special Gtk API function. Define a new object type named GtkGauge <br>
+ * and all preface of the widget's functions calls with gtk_gauge.<br>
+ * We are inheriting the type of GtkDrawingArea.<br>
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 G_DEFINE_TYPE (GtkGauge, gtk_gauge, GTK_TYPE_DRAWING_AREA);
 
+/**
+ * @def GTK_GAUGE_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GTK_GAUGE_TYPE, GtkGaugePrivate))
+ * @brief Special Gtk API define. Add a macro for easy access to the private<br>
+ * data struct.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 #define GTK_GAUGE_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GTK_GAUGE_TYPE, GtkGaugePrivate))
 
 static void gtk_gauge_class_init (GtkGaugeClass * klass);
@@ -101,6 +221,24 @@ static void gtk_gauge_draw_hand (GtkWidget * gauge);
 
 static gboolean gtk_gauge_debug = FALSE;
 
+/**
+ * @fn static void gtk_gauge_class_init (GtkGaugeClass * klass)
+ * @brief Special Gtk API function. Function called when the class is<br>
+ * initialised. Allow to set certain class wide functions and<br>
+ * properties<br>.
+ * Allow to override some parent’s expose handler like :<br>
+ * - set_property handler<br>
+ * - destroy handler<br>
+ * - configure_event handler<br>
+ * - motion_notify_event handler (not use in this widget)
+ * - button_press_event handler (not use in this widget)
+ * 
+ * Also register the private struct GtkGaugePrivate with<br>
+ * the class and install widget properties.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static void gtk_gauge_class_init (GtkGaugeClass * klass)
 {
   GObjectClass *obj_class = G_OBJECT_CLASS (klass);
@@ -133,10 +271,11 @@ static void gtk_gauge_class_init (GtkGaugeClass * klass)
                                                         "Gauge name",
                                                         "Gauge name", "...Name not set...", G_PARAM_WRITABLE));
   g_object_class_install_property (obj_class,
-                                   PROP_INVERSED_COLOR,
-                                   g_param_spec_boolean ("inverse-color",
-                                                         "inverse or not the widget color",
-                                                         "inverse or not the widget color", FALSE, G_PARAM_WRITABLE));
+                                   PROP_GRAYSCALE_COLOR,
+                                   g_param_spec_boolean ("grayscale-color",
+                                                         "use grayscale for the widget color",
+                                                         "use grayscale for the widget color", FALSE,
+                                                         G_PARAM_WRITABLE));
   g_object_class_install_property (obj_class,
                                    PROP_RADIAL_COLOR,
                                    g_param_spec_boolean ("radial-color",
@@ -174,6 +313,10 @@ static void gtk_gauge_class_init (GtkGaugeClass * klass)
                                                         "color order for gauge strip (YOR,GYR,RYG,ROY)",
                                                         "color order for gauge strip (YOR,GYR,RYG,ROY)", "YOR",
                                                         G_PARAM_WRITABLE));
+  g_object_class_install_property (obj_class, PROP_STRIP_GRAYSCALE_COLOR_ORDER,
+                                   g_param_spec_string ("grayscale-color-strip-order",
+                                                        "color order for gauge strip (WB,BW)",
+                                                        "color order for gauge strip (WB,BW)", "WB", G_PARAM_WRITABLE));
   g_object_class_install_property (obj_class, PROP_GREEN_STRIP_START,
                                    g_param_spec_int ("green-strip-start", "set the green strip start of the gauge",
                                                      "set the green strip start of the gauge", 0, 10000, 0,
@@ -193,6 +336,15 @@ static void gtk_gauge_class_init (GtkGaugeClass * klass)
   return;
 }
 
+/**
+ * @fn static void gtk_gauge_init (GtkGauge * gauge)
+ * @brief Special Gtk API function. Function called when the creating a<br>
+ * new GtkGauge. Allow to initialize some private variables of<br>
+ * widget.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static void gtk_gauge_init (GtkGauge * gauge)
 {
   GtkGaugePrivate *priv = NULL;
@@ -212,6 +364,7 @@ static void gtk_gauge_init (GtkGauge * gauge)
 
   priv->gauge_name = g_strdup ("**NO TITLE SET**");
   priv->strip_color_order = g_strdup ("YOR");
+  priv->strip_grayscale_color_order = g_strdup ("WB");
 
   priv->start_value = -1;
   priv->end_value = -1;
@@ -223,7 +376,7 @@ static void gtk_gauge_init (GtkGauge * gauge)
   priv->orange_strip_start = -1;
   priv->red_strip_start = -1;
 
-  priv->color_mode_inv = TRUE;
+  priv->grayscale_color = TRUE;
   priv->radial_color = FALSE;
   priv->value = 0;
 
@@ -245,6 +398,14 @@ static void gtk_gauge_init (GtkGauge * gauge)
   return;
 }
 
+/**
+ * @fn static gboolean gtk_gauge_configure_event (GtkWidget * widget, GdkEventConfigure * event)
+ * @brief Special Gtk API function. Override the _configure_event handler<br>
+ * in order to resize the widget when the main window is resized.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static gboolean gtk_gauge_configure_event (GtkWidget * widget, GdkEventConfigure * event)
 {
   GtkGaugePrivate *priv;
@@ -287,6 +448,15 @@ static gboolean gtk_gauge_configure_event (GtkWidget * widget, GdkEventConfigure
   return FALSE;
 }
 
+/**
+ * @fn static gboolean gtk_gauge_expose (GtkWidget * gauge, GdkEventExpose * event)
+ * @brief Special Gtk API function. Override of the expose handler.<br>
+ * An “expose-event” signal is emitted when the widget need to be drawn.<br>
+ * A Cairo context is created for the parent's GdkWindow.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static gboolean gtk_gauge_expose (GtkWidget * gauge, GdkEventExpose * event)
 {
   GtkGaugePrivate *priv;
@@ -330,6 +500,19 @@ static gboolean gtk_gauge_expose (GtkWidget * gauge, GdkEventExpose * event)
   return FALSE;
 }
 
+/**
+ * @fn extern void gtk_gauge_redraw (GtkGauge * gauge)
+ * @brief Special Gtk API function. Redraw the widget when called.
+ * 
+ * This function will redraw the widget canvas. In order to reexpose the canvas<br>
+ * (and cause it to redraw) of our parent class(GtkDrawingArea), it is needed to<br>
+ * use gdk_window_invalidate_rect(). The function gdk_window_invalidate_region()<br>
+ * need to be called as well. And finaly, in order to make all events happen, it<br>
+ * is needed to call gdk_window_process_all_updates().
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 extern void gtk_gauge_redraw (GtkGauge * gauge)
 {
   GtkWidget *widget;
@@ -354,6 +537,14 @@ extern void gtk_gauge_redraw (GtkGauge * gauge)
   gdk_region_destroy (region);
 }
 
+/**
+ * @fn extern void gtk_gauge_set_value (GtkGauge * gauge, gdouble val)
+ * @brief Public widget's function that allow the main program/user to<br>
+ * set the internal value variable of the widget. 
+ * 
+ * "value": double, provide the hand rotation according to the start-value<br>
+ * and the end-value.
+ */
 extern void gtk_gauge_set_value (GtkGauge * gauge, gdouble val)
 {
   GtkGaugePrivate *priv;
@@ -368,6 +559,14 @@ extern void gtk_gauge_set_value (GtkGauge * gauge, gdouble val)
   priv->value = val;
 }
 
+/**
+ * @fn extern GtkWidget *gtk_gauge_new (void)
+ * @brief Special Gtk API function. This function is simply a wrapper<br>
+ * for convienience.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 extern GtkWidget *gtk_gauge_new (void)
 {
   if (gtk_gauge_debug)
@@ -377,6 +576,15 @@ extern GtkWidget *gtk_gauge_new (void)
   return GTK_WIDGET (gtk_type_new (gtk_gauge_get_type ()));
 }
 
+/**
+ * @fn static void gtk_gauge_draw (GtkWidget * gauge)
+ * @brief Special Gtk API function. Override the _draw handler of the<br>
+ * parent class GtkDrawingArea. This function use the cairo context<br>
+ * created before in order to draw scalable graphics. 
+ * 
+ * See GObject,Cairo and GTK+ references for more informations: 
+ * http://library.gnome.org/devel/references.html.en
+ */
 static void gtk_gauge_draw (GtkWidget * gauge)
 {
   GtkGaugePrivate *priv;
@@ -393,13 +601,13 @@ static void gtk_gauge_draw (GtkWidget * gauge)
   if ((priv->start_value == -1) || (priv->end_value == -1) || (priv->initial_step == -1)
       || (priv->drawing_step == -1) || (priv->sub_step == -1))
   {
-    g_warning ("GTK_GAUGE : minimal parameters not set, unable to paint.");
+    g_warning ("GTK_GAUGE: gtk_gauge_draw: minimal parameters not set, unable to paint.");
     return;
   }
 
   if ((priv->end_value == 0) || (priv->initial_step == 0) || (priv->drawing_step == 0) || (priv->sub_step == 0))
   {
-    g_warning ("GTK_GAUGE : one of the minimal parameters is set to 0, unable to paint.");
+    g_warning ("GTK_GAUGE : gtk_gauge_draw: one of the minimal parameters is set to 0, unable to paint.");
     return;
   }
 
@@ -409,7 +617,7 @@ static void gtk_gauge_draw (GtkWidget * gauge)
   double alpha = 0, alpha_inv = 1, alpha_step = 0;
   char str[GTK_GAUGE_MAX_STRING];
   int i, strip_c_order = 0;
-  cairo_pattern_t *pat =NULL;
+  cairo_pattern_t *pat = NULL;
 
   x = gauge->allocation.width / 2;
   y = gauge->allocation.height / 2;
@@ -436,10 +644,10 @@ static void gtk_gauge_draw (GtkWidget * gauge)
   cairo_arc (priv->cr, rec_x0 + rec_radius, rec_y0 + rec_radius, rec_radius, 180 * rec_degrees, 270 * rec_degrees);
   cairo_close_path (priv->cr);
 
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -463,7 +671,7 @@ static void gtk_gauge_draw (GtkWidget * gauge)
   cairo_stroke (priv->cr);
 
   cairo_arc (priv->cr, x, y, radius, 0, 2 * M_PI);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
     cairo_set_source_rgb (priv->cr, 1., 1., 1.);
@@ -471,7 +679,7 @@ static void gtk_gauge_draw (GtkWidget * gauge)
   cairo_stroke (priv->cr);
 
   cairo_arc (priv->cr, x, y, radius - 0.04 * radius, 0, 2 * M_PI);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 0.6, 0.5, 0.5);
   else
     cairo_set_source_rgb (priv->cr, 1 - 0.6, 1 - 0.5, 1 - 0.5);
@@ -480,10 +688,10 @@ static void gtk_gauge_draw (GtkWidget * gauge)
   cairo_set_line_width (priv->cr, 0.01 * radius);
   radius = radius - 0.1 * radius;
   cairo_arc (priv->cr, x, y, radius, 0, 2 * M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_gauge.red / 65535,
                             (gdouble) priv->bg_color_gauge.green / 65535, (gdouble) priv->bg_color_gauge.blue / 65535);
     else
@@ -506,45 +714,55 @@ static void gtk_gauge_draw (GtkWidget * gauge)
   cairo_stroke (priv->cr);
 
   // **** Gauge color strips 
-  if (!g_strcmp0 (priv->strip_color_order, "YOR"))
+  if (!priv->grayscale_color)
   {
-    strip_c_order = 0;
-    if ((priv->yellow_strip_start == -1) || (priv->orange_strip_start == -1) || (priv->red_strip_start == -1))
+    if (!g_strcmp0 (priv->strip_color_order, "YOR"))
     {
-      priv->yellow_strip_start = 0;
-      priv->orange_strip_start = priv->end_value / 3;
-      priv->red_strip_start = 2 * priv->end_value / 3;
+      strip_c_order = 0;
+      if ((priv->yellow_strip_start == -1) || (priv->orange_strip_start == -1) || (priv->red_strip_start == -1))
+      {
+        priv->yellow_strip_start = 0;
+        priv->orange_strip_start = priv->end_value / 3;
+        priv->red_strip_start = 2 * priv->end_value / 3;
+      }
+    }
+    else if (!g_strcmp0 (priv->strip_color_order, "GYR"))
+    {
+      strip_c_order = 1;
+      if ((priv->yellow_strip_start == -1) || (priv->green_strip_start == -1) || (priv->red_strip_start == -1))
+      {
+        priv->green_strip_start = 0;
+        priv->yellow_strip_start = priv->end_value / 3;
+        priv->red_strip_start = 2 * priv->end_value / 3;
+      }
+    }
+    else if (!g_strcmp0 (priv->strip_color_order, "ROY"))
+    {
+      strip_c_order = 2;
+      if ((priv->yellow_strip_start == -1) || (priv->orange_strip_start == -1) || (priv->red_strip_start == -1))
+      {
+        priv->red_strip_start = 0;
+        priv->orange_strip_start = priv->end_value / 3;
+        priv->yellow_strip_start = 2 * priv->end_value / 3;
+      }
+    }
+    else if (!g_strcmp0 (priv->strip_color_order, "RYG"))
+    {
+      strip_c_order = 3;
+      if ((priv->yellow_strip_start == -1) || (priv->green_strip_start == -1) || (priv->red_strip_start == -1))
+      {
+        priv->red_strip_start = 0;
+        priv->yellow_strip_start = priv->end_value / 3;
+        priv->green_strip_start = 2 * priv->end_value / 3;
+      }
     }
   }
-  else if (!g_strcmp0 (priv->strip_color_order, "GYR"))
+  else
   {
-    strip_c_order = 1;
-    if ((priv->yellow_strip_start == -1) || (priv->green_strip_start == -1) || (priv->red_strip_start == -1))
-    {
-      priv->green_strip_start = 0;
-      priv->yellow_strip_start = priv->end_value / 3;
-      priv->red_strip_start = 2 * priv->end_value / 3;
-    }
-  }
-  else if (!g_strcmp0 (priv->strip_color_order, "ROY"))
-  {
-    strip_c_order = 2;
-    if ((priv->yellow_strip_start == -1) || (priv->orange_strip_start == -1) || (priv->red_strip_start == -1))
-    {
-      priv->red_strip_start = 0;
-      priv->orange_strip_start = priv->end_value / 3;
-      priv->yellow_strip_start = 2 * priv->end_value / 3;
-    }
-  }
-  else if (!g_strcmp0 (priv->strip_color_order, "RYG"))
-  {
-    strip_c_order = 3;
-    if ((priv->yellow_strip_start == -1) || (priv->green_strip_start == -1) || (priv->red_strip_start == -1))
-    {
-      priv->red_strip_start = 0;
-      priv->yellow_strip_start = priv->end_value / 3;
-      priv->green_strip_start = 2 * priv->end_value / 3;
-    }
+    if (!g_strcmp0 (priv->strip_grayscale_color_order, "WB"))
+      strip_c_order = 4;
+    else if (!g_strcmp0 (priv->strip_grayscale_color_order, "BW"))
+      strip_c_order = 5;
   }
 
   for (i = 0; i < ((priv->end_value - priv->start_value) / priv->sub_step); i++)
@@ -645,6 +863,28 @@ static void gtk_gauge_draw (GtkWidget * gauge)
                                     1) * ((5 * M_PI / 4) / ((priv->end_value - priv->start_value) / priv->sub_step)));
         cairo_stroke (priv->cr);
         break;
+      case 4:                  // **** White - Black
+        cairo_set_line_width (priv->cr, 0.1 * radius);
+        cairo_set_source_rgb (priv->cr, alpha_inv, alpha_inv, alpha_inv);
+        cairo_arc (priv->cr, x, y, radius - 0.06 * radius,
+                   -5 * M_PI / 4 +
+                   i * ((5 * M_PI / 4) / ((priv->end_value - priv->start_value) / priv->sub_step)),
+                   -5 * M_PI / 4 + (i +
+                                    1) * ((5 * M_PI / 4) / ((priv->end_value - priv->start_value) / priv->sub_step)));
+        cairo_stroke (priv->cr);
+        alpha_inv = alpha_inv - (1 / fabs ((priv->end_value - priv->start_value) / priv->sub_step));
+        break;
+      case 5:                  // **** Black - White
+        cairo_set_line_width (priv->cr, 0.1 * radius);
+        cairo_set_source_rgb (priv->cr, alpha, alpha, alpha);
+        cairo_arc (priv->cr, x, y, radius - 0.06 * radius,
+                   -5 * M_PI / 4 +
+                   i * ((5 * M_PI / 4) / ((priv->end_value - priv->start_value) / priv->sub_step)),
+                   -5 * M_PI / 4 + (i +
+                                    1) * ((5 * M_PI / 4) / ((priv->end_value - priv->start_value) / priv->sub_step)));
+        cairo_stroke (priv->cr);
+        alpha = alpha + (1 / fabs ((priv->end_value - priv->start_value) / priv->sub_step));
+        break;
       case 0:
       default:
         alpha_step = fabs (1 / ((priv->yellow_strip_start - priv->orange_strip_start) / priv->sub_step));
@@ -691,7 +931,7 @@ static void gtk_gauge_draw (GtkWidget * gauge)
 
     if (((i * (int) priv->sub_step) % priv->initial_step) == 0)
     {
-      if (!priv->color_mode_inv)
+      if (!priv->grayscale_color)
         cairo_set_source_rgb (priv->cr, 1, 1, 1);
       else
         cairo_set_source_rgb (priv->cr, 0., 0., 0.);
@@ -722,6 +962,10 @@ static void gtk_gauge_draw (GtkWidget * gauge)
 
   }
 
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 1, 1, 1);
+  else
+    cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   cairo_move_to (priv->cr, x + (radius - 0.18 * radius) * cos (0), y + (radius - 0.18 * radius) * sin (0));
   cairo_line_to (priv->cr, x + radius * cos (0), y + radius * sin (0));
   priv->end_value = priv->end_value / 10;
@@ -737,7 +981,10 @@ static void gtk_gauge_draw (GtkWidget * gauge)
     if (i * priv->drawing_step + priv->start_value < 10)
     {
       cairo_save (priv->cr);
-      cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+      if (!priv->grayscale_color)
+        cairo_set_source_rgb (priv->cr, 1, 1, 1);
+      else
+        cairo_set_source_rgb (priv->cr, 0., 0., 0.);
       cairo_select_font_face (priv->cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
       cairo_set_font_size (priv->cr, 0.15 * radius);
       inset = 0.3 * radius;
@@ -758,7 +1005,10 @@ static void gtk_gauge_draw (GtkWidget * gauge)
     else if ((i * priv->drawing_step + priv->start_value >= 10) && (i * priv->drawing_step + priv->start_value < 100))
     {
       cairo_save (priv->cr);
-      cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+      if (!priv->grayscale_color)
+        cairo_set_source_rgb (priv->cr, 1, 1, 1);
+      else
+        cairo_set_source_rgb (priv->cr, 0., 0., 0.);
       cairo_select_font_face (priv->cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
       cairo_set_font_size (priv->cr, 0.15 * radius);
       inset = 0.33 * radius;
@@ -779,7 +1029,10 @@ static void gtk_gauge_draw (GtkWidget * gauge)
     else if ((i * priv->drawing_step + priv->start_value >= 100) && (i * priv->drawing_step + priv->start_value < 1000))
     {
       cairo_save (priv->cr);
-      cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+      if (!priv->grayscale_color)
+        cairo_set_source_rgb (priv->cr, 1, 1, 1);
+      else
+        cairo_set_source_rgb (priv->cr, 0., 0., 0.);
       cairo_select_font_face (priv->cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
       cairo_set_font_size (priv->cr, 0.14 * radius);
       inset = 0.36 * radius;
@@ -802,7 +1055,10 @@ static void gtk_gauge_draw (GtkWidget * gauge)
              && (i * priv->drawing_step + priv->start_value < 10000))
     {
       cairo_save (priv->cr);
-      cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+      if (!priv->grayscale_color)
+        cairo_set_source_rgb (priv->cr, 1, 1, 1);
+      else
+        cairo_set_source_rgb (priv->cr, 0., 0., 0.);
       cairo_select_font_face (priv->cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
       cairo_set_font_size (priv->cr, 0.14 * radius);
       inset = 0.4 * radius;
@@ -835,7 +1091,7 @@ static void gtk_gauge_draw (GtkWidget * gauge)
   priv->x = x;
   priv->y = y;
   priv->radius = radius;
-  gtk_gauge_draw_screws(gauge);
+  gtk_gauge_draw_screws (gauge);
 
   // **** draw hand
   gtk_gauge_draw_hand (gauge);
@@ -843,7 +1099,10 @@ static void gtk_gauge_draw (GtkWidget * gauge)
   return;
 }
 
-
+/**
+ * @fn static void gtk_gauge_draw_screws (GtkWidget * gauge)
+ * @brief Private widget's function that draw the widget's screws using cairo.
+ */
 static void gtk_gauge_draw_screws (GtkWidget * gauge)
 {
   GtkGaugePrivate *priv;
@@ -855,29 +1114,29 @@ static void gtk_gauge_draw_screws (GtkWidget * gauge)
   g_return_if_fail (IS_GTK_GAUGE (gauge));
 
   priv = GTK_GAUGE_GET_PRIVATE (gauge);
-  
-  cairo_pattern_t *pat=NULL;
+
+  cairo_pattern_t *pat = NULL;
   double x, y, radius;
-  radius=priv->radius;
-  x=priv->x;
-  y=priv->y;
-  radius = radius+0.12*radius;
-  
+  radius = priv->radius;
+  x = priv->x;
+  y = priv->y;
+  radius = radius + 0.12 * radius;
+
   // **** top left screw
-  cairo_arc (priv->cr, x-0.82*radius, y-0.82*radius, 0.1 * radius, 0, 2*M_PI);
-  pat = cairo_pattern_create_radial (x-0.82*radius, y-0.82*radius, 0.07*radius,
-                                     x-0.82*radius, y-0.82*radius, 0.1*radius);
-  cairo_pattern_add_color_stop_rgba (pat,0, 0, 0, 0,0.7);
-  cairo_pattern_add_color_stop_rgba (pat,1, 0, 0, 0,0.1);
+  cairo_arc (priv->cr, x - 0.82 * radius, y - 0.82 * radius, 0.1 * radius, 0, 2 * M_PI);
+  pat = cairo_pattern_create_radial (x - 0.82 * radius, y - 0.82 * radius, 0.07 * radius,
+                                     x - 0.82 * radius, y - 0.82 * radius, 0.1 * radius);
+  cairo_pattern_add_color_stop_rgba (pat, 0, 0, 0, 0, 0.7);
+  cairo_pattern_add_color_stop_rgba (pat, 1, 0, 0, 0, 0.1);
   cairo_set_source (priv->cr, pat);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-    
-  cairo_arc (priv->cr, x-0.82*radius, y-0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+
+  cairo_arc (priv->cr, x - 0.82 * radius, y - 0.82 * radius, 0.07 * radius, 0, 2 * M_PI);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -892,54 +1151,54 @@ static void gtk_gauge_draw_screws (GtkWidget * gauge)
     cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_bounderie.red / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.green / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.blue / 65535, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15,0.15,0.15, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15, 0.15, 0.15, 1);
     cairo_set_source (priv->cr, pat);
   }
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-  
+
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
-       cairo_set_source_rgb (priv->cr, 0., 0., 0.);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
-       cairo_set_source_rgb (priv->cr, 1., 1., 1.);
-  cairo_move_to (priv->cr, x-0.88*radius, y-0.82*radius);
-  cairo_line_to (priv->cr, x-0.76*radius, y-0.82*radius);
+    cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+  cairo_move_to (priv->cr, x - 0.88 * radius, y - 0.82 * radius);
+  cairo_line_to (priv->cr, x - 0.76 * radius, y - 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x-0.82*radius, y-0.88*radius);
-  cairo_line_to (priv->cr, x-0.82*radius, y-0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x - 0.82 * radius, y - 0.88 * radius);
+  cairo_line_to (priv->cr, x - 0.82 * radius, y - 0.76 * radius);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
-		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
-      cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
-  cairo_move_to (priv->cr, x-0.88*radius, y-0.82*radius);
-  cairo_line_to (priv->cr, x-0.76*radius, y-0.82*radius);
+    cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);
+  cairo_move_to (priv->cr, x - 0.88 * radius, y - 0.82 * radius);
+  cairo_line_to (priv->cr, x - 0.76 * radius, y - 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x-0.82*radius, y-0.88*radius);
-  cairo_line_to (priv->cr, x-0.82*radius, y-0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x - 0.82 * radius, y - 0.88 * radius);
+  cairo_line_to (priv->cr, x - 0.82 * radius, y - 0.76 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);      
-  
-   // **** top right screw
-  cairo_arc (priv->cr, x+0.82*radius, y-0.82*radius, 0.1 * radius, 0, 2*M_PI);
-  pat = cairo_pattern_create_radial (x+0.82*radius, y-0.82*radius, 0.07*radius,
-                                     x+0.82*radius, y-0.82*radius, 0.1*radius);
-  cairo_pattern_add_color_stop_rgba (pat,0, 0, 0, 0,0.7);
-  cairo_pattern_add_color_stop_rgba (pat,1, 0, 0, 0,0.1);
+  cairo_stroke (priv->cr);
+
+  // **** top right screw
+  cairo_arc (priv->cr, x + 0.82 * radius, y - 0.82 * radius, 0.1 * radius, 0, 2 * M_PI);
+  pat = cairo_pattern_create_radial (x + 0.82 * radius, y - 0.82 * radius, 0.07 * radius,
+                                     x + 0.82 * radius, y - 0.82 * radius, 0.1 * radius);
+  cairo_pattern_add_color_stop_rgba (pat, 0, 0, 0, 0, 0.7);
+  cairo_pattern_add_color_stop_rgba (pat, 1, 0, 0, 0, 0.1);
   cairo_set_source (priv->cr, pat);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-    
-  cairo_arc (priv->cr, x+0.82*radius, y-0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+
+  cairo_arc (priv->cr, x + 0.82 * radius, y - 0.82 * radius, 0.07 * radius, 0, 2 * M_PI);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -954,54 +1213,54 @@ static void gtk_gauge_draw_screws (GtkWidget * gauge)
     cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_bounderie.red / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.green / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.blue / 65535, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15,0.15,0.15, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15, 0.15, 0.15, 1);
     cairo_set_source (priv->cr, pat);
   }
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-  
+
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
-       cairo_set_source_rgb (priv->cr, 0., 0., 0.);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
-       cairo_set_source_rgb (priv->cr, 1., 1., 1.);
-  cairo_move_to (priv->cr, x+0.88*radius, y-0.82*radius);
-  cairo_line_to (priv->cr, x+0.76*radius, y-0.82*radius);
+    cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+  cairo_move_to (priv->cr, x + 0.88 * radius, y - 0.82 * radius);
+  cairo_line_to (priv->cr, x + 0.76 * radius, y - 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x+0.82*radius, y-0.88*radius);
-  cairo_line_to (priv->cr, x+0.82*radius, y-0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x + 0.82 * radius, y - 0.88 * radius);
+  cairo_line_to (priv->cr, x + 0.82 * radius, y - 0.76 * radius);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
-		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
-      cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
-  cairo_move_to (priv->cr, x+0.88*radius, y-0.82*radius);
-  cairo_line_to (priv->cr, x+0.76*radius, y-0.82*radius);
+    cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);
+  cairo_move_to (priv->cr, x + 0.88 * radius, y - 0.82 * radius);
+  cairo_line_to (priv->cr, x + 0.76 * radius, y - 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x+0.82*radius, y-0.88*radius);
-  cairo_line_to (priv->cr, x+0.82*radius, y-0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x + 0.82 * radius, y - 0.88 * radius);
+  cairo_line_to (priv->cr, x + 0.82 * radius, y - 0.76 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);     
-  
-   // **** bottom left screw
-  cairo_arc (priv->cr, x-0.82*radius, y+0.82*radius, 0.1 * radius, 0, 2*M_PI);
-  pat = cairo_pattern_create_radial (x-0.82*radius, y+0.82*radius, 0.07*radius,
-                                     x-0.82*radius, y+0.82*radius, 0.1*radius);
-  cairo_pattern_add_color_stop_rgba (pat,0, 0, 0, 0,0.7);
-  cairo_pattern_add_color_stop_rgba (pat,1, 0, 0, 0,0.1);
+  cairo_stroke (priv->cr);
+
+  // **** bottom left screw
+  cairo_arc (priv->cr, x - 0.82 * radius, y + 0.82 * radius, 0.1 * radius, 0, 2 * M_PI);
+  pat = cairo_pattern_create_radial (x - 0.82 * radius, y + 0.82 * radius, 0.07 * radius,
+                                     x - 0.82 * radius, y + 0.82 * radius, 0.1 * radius);
+  cairo_pattern_add_color_stop_rgba (pat, 0, 0, 0, 0, 0.7);
+  cairo_pattern_add_color_stop_rgba (pat, 1, 0, 0, 0, 0.1);
   cairo_set_source (priv->cr, pat);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-    
-  cairo_arc (priv->cr, x-0.82*radius, y+0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+
+  cairo_arc (priv->cr, x - 0.82 * radius, y + 0.82 * radius, 0.07 * radius, 0, 2 * M_PI);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -1016,54 +1275,54 @@ static void gtk_gauge_draw_screws (GtkWidget * gauge)
     cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_bounderie.red / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.green / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.blue / 65535, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15,0.15,0.15, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15, 0.15, 0.15, 1);
     cairo_set_source (priv->cr, pat);
   }
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-  
+
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
-       cairo_set_source_rgb (priv->cr, 0., 0., 0.);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
-       cairo_set_source_rgb (priv->cr, 1., 1., 1.);
-  cairo_move_to (priv->cr, x-0.88*radius, y+0.82*radius);
-  cairo_line_to (priv->cr, x-0.76*radius, y+0.82*radius);
+    cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+  cairo_move_to (priv->cr, x - 0.88 * radius, y + 0.82 * radius);
+  cairo_line_to (priv->cr, x - 0.76 * radius, y + 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x-0.82*radius, y+0.88*radius);
-  cairo_line_to (priv->cr, x-0.82*radius, y+0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x - 0.82 * radius, y + 0.88 * radius);
+  cairo_line_to (priv->cr, x - 0.82 * radius, y + 0.76 * radius);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
-		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
-      cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
-  cairo_move_to (priv->cr, x-0.88*radius, y+0.82*radius);
-  cairo_line_to (priv->cr, x-0.76*radius, y+0.82*radius);
+    cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);
+  cairo_move_to (priv->cr, x - 0.88 * radius, y + 0.82 * radius);
+  cairo_line_to (priv->cr, x - 0.76 * radius, y + 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x-0.82*radius, y+0.88*radius);
-  cairo_line_to (priv->cr, x-0.82*radius, y+0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x - 0.82 * radius, y + 0.88 * radius);
+  cairo_line_to (priv->cr, x - 0.82 * radius, y + 0.76 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);     
-  
-   // **** bottom right screw
-  cairo_arc (priv->cr, x+0.82*radius, y+0.82*radius, 0.1 * radius, 0, 2*M_PI);
-  pat = cairo_pattern_create_radial (x+0.82*radius, y+0.82*radius, 0.07*radius,
-                                     x+0.82*radius, y+0.82*radius, 0.1*radius);
-  cairo_pattern_add_color_stop_rgba (pat,0, 0, 0, 0,0.7);
-  cairo_pattern_add_color_stop_rgba (pat,1, 0, 0, 0,0.1);
+  cairo_stroke (priv->cr);
+
+  // **** bottom right screw
+  cairo_arc (priv->cr, x + 0.82 * radius, y + 0.82 * radius, 0.1 * radius, 0, 2 * M_PI);
+  pat = cairo_pattern_create_radial (x + 0.82 * radius, y + 0.82 * radius, 0.07 * radius,
+                                     x + 0.82 * radius, y + 0.82 * radius, 0.1 * radius);
+  cairo_pattern_add_color_stop_rgba (pat, 0, 0, 0, 0, 0.7);
+  cairo_pattern_add_color_stop_rgba (pat, 1, 0, 0, 0, 0.1);
   cairo_set_source (priv->cr, pat);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-    
-  cairo_arc (priv->cr, x+0.82*radius, y+0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+
+  cairo_arc (priv->cr, x + 0.82 * radius, y + 0.82 * radius, 0.07 * radius, 0, 2 * M_PI);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -1078,42 +1337,46 @@ static void gtk_gauge_draw_screws (GtkWidget * gauge)
     cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_bounderie.red / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.green / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.blue / 65535, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15,0.15,0.15, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15, 0.15, 0.15, 1);
     cairo_set_source (priv->cr, pat);
   }
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-  
+
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
-       cairo_set_source_rgb (priv->cr, 0., 0., 0.);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
-       cairo_set_source_rgb (priv->cr, 1., 1., 1.);
-  cairo_move_to (priv->cr, x+0.88*radius, y+0.82*radius);
-  cairo_line_to (priv->cr, x+0.76*radius, y+0.82*radius);
+    cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+  cairo_move_to (priv->cr, x + 0.88 * radius, y + 0.82 * radius);
+  cairo_line_to (priv->cr, x + 0.76 * radius, y + 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x+0.82*radius, y+0.88*radius);
-  cairo_line_to (priv->cr, x+0.82*radius, y+0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x + 0.82 * radius, y + 0.88 * radius);
+  cairo_line_to (priv->cr, x + 0.82 * radius, y + 0.76 * radius);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
-		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
-      cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
-  cairo_move_to (priv->cr, x+0.88*radius, y+0.82*radius);
-  cairo_line_to (priv->cr, x+0.76*radius, y+0.82*radius);
+    cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);
+  cairo_move_to (priv->cr, x + 0.88 * radius, y + 0.82 * radius);
+  cairo_line_to (priv->cr, x + 0.76 * radius, y + 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x+0.82*radius, y+0.88*radius);
-  cairo_line_to (priv->cr, x+0.82*radius, y+0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x + 0.82 * radius, y + 0.88 * radius);
+  cairo_line_to (priv->cr, x + 0.82 * radius, y + 0.76 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);     
-  cairo_pattern_destroy (pat);  
+  cairo_stroke (priv->cr);
+  cairo_pattern_destroy (pat);
   return;
 }
 
+/**
+ * @fn static void gtk_gauge_draw_name (GtkGauge * gauge, gchar * pch_text, GdkRectangle * rect)
+ * @brief Private widget's function that draw the gauge name using pango.
+ */
 static void gtk_gauge_draw_name (GtkGauge * gauge, gchar * pch_text, GdkRectangle * rect)
 {
   GtkGaugePrivate *priv;
@@ -1181,7 +1444,7 @@ static void gtk_gauge_draw_name (GtkGauge * gauge, gchar * pch_text, GdkRectangl
   x_pos = rect->x + (gint) ((rect->width - width) / 2);
   y_pos = rect->y + (gint) ((rect->height - height) / 2);
 
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 1, 1, 1);
   else
     cairo_set_source_rgb (priv->cr, 0., 0., 0.);
@@ -1194,12 +1457,16 @@ static void gtk_gauge_draw_name (GtkGauge * gauge, gchar * pch_text, GdkRectangl
   return;
 }
 
+/**
+ * @fn static void gtk_gauge_draw_hand (GtkWidget * gauge)
+ * @brief Private widget's function that draw the gauge hand using cairo.
+ */
 static void gtk_gauge_draw_hand (GtkWidget * gauge)
 {
   GtkGaugePrivate *priv;
   if (gtk_gauge_debug)
   {
-    g_debug ("===> gtk_gauge_draw_hands()");
+    g_debug ("===> gtk_gauge_draw_hand()");
   }
   g_return_if_fail (IS_GTK_GAUGE (gauge));
 
@@ -1212,14 +1479,14 @@ static void gtk_gauge_draw_hand (GtkWidget * gauge)
 
   // **** centre cercle 
   cairo_save (priv->cr);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 0, 0, 0);
   else
     cairo_set_source_rgb (priv->cr, 1, 1, 1);
   cairo_arc (priv->cr, x, y, radius - 0.9 * radius, 0, 2 * M_PI);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 0.2, 0.2, 0.2);
   else
     cairo_set_source_rgb (priv->cr, 0.8, 0.8, 0.8);
@@ -1229,7 +1496,7 @@ static void gtk_gauge_draw_hand (GtkWidget * gauge)
 
   // **** gauge hand
   cairo_save (priv->cr);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 1, 1, 1);
   else
     cairo_set_source_rgb (priv->cr, 0, 0, 0);
@@ -1247,13 +1514,13 @@ static void gtk_gauge_draw_hand (GtkWidget * gauge)
                                                                ((priv->end_value - priv->start_value) * 1000))));
   }
   else
-    g_warning ("GTK_GAUGE : value out of range");
+    g_warning ("GTK_GAUGE: gtk_gauge_draw_hand: value out of range");
 
   cairo_stroke (priv->cr);
   cairo_restore (priv->cr);
 
   cairo_save (priv->cr);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 1, 1, 1);
   else
     cairo_set_source_rgb (priv->cr, 0, 0, 0);
@@ -1270,12 +1537,24 @@ static void gtk_gauge_draw_hand (GtkWidget * gauge)
                                                                ((priv->end_value - priv->start_value) * 1000))));
   }
   else
-    g_warning ("GTK_GAUGE : value out of range");
+    g_warning ("GTK_GAUGE: gtk_gauge_draw_hand: value out of range");
   cairo_stroke (priv->cr);
   cairo_restore (priv->cr);
   return;
 }
 
+/**
+ * @fn static gboolean gtk_gauge_button_press_event (GtkWidget * widget, GdkEventButton * ev)
+ * @brief Special Gtk API function. Override the _button_press_event<br>
+ * handler. Perform mouse button press events. 
+ * 
+ * Here, the mouse events are not used for the widget (maybe<br>
+ * in future released) but to allow the user to enable/disable<br>
+ * the debug messages.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static gboolean gtk_gauge_button_press_event (GtkWidget * widget, GdkEventButton * ev)
 {
   GtkGaugePrivate *priv;
@@ -1310,6 +1589,16 @@ static gboolean gtk_gauge_button_press_event (GtkWidget * widget, GdkEventButton
   return FALSE;
 }
 
+/**
+ * @fn static gboolean gtk_gauge_motion_notify_event (GtkWidget * widget, GdkEventMotion * ev)
+ * @brief Special Gtk API function. Override the _motion_notify_event<br>
+ * handler. Perform mouse motion events. 
+ * 
+ * Here, the mouse events are not used (maybe in future released).
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static gboolean gtk_gauge_motion_notify_event (GtkWidget * widget, GdkEventMotion * ev)
 {
   GtkGaugePrivate *priv;
@@ -1348,6 +1637,14 @@ static gboolean gtk_gauge_motion_notify_event (GtkWidget * widget, GdkEventMotio
   return TRUE;
 }
 
+/**
+ * @fn static void gtk_gauge_destroy (GtkObject * object)
+ * @brief Special Gtk API function. Override the _destroy handler.<br>
+ * Allow the destruction of all widget's pointer.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static void gtk_gauge_destroy (GtkObject * object)
 {
   GtkGaugePrivate *priv = NULL;
@@ -1371,6 +1668,8 @@ static void gtk_gauge_destroy (GtkObject * object)
   {
     g_free (priv->cr);
     g_free (priv->gauge_name);
+    g_free (priv->strip_color_order);
+    g_free (priv->strip_grayscale_color_order);
 
     if (GTK_OBJECT_CLASS (gtk_gauge_parent_class)->destroy != NULL)
     {
@@ -1385,6 +1684,14 @@ static void gtk_gauge_destroy (GtkObject * object)
   return;
 }
 
+/**
+ * @fn static void gtk_gauge_set_property (GObject * object, guint prop_id, const GValue * value, GParamSpec * pspec)
+ * @brief Special Gtk API function. Override the _set_property handler <br>
+ * in order to set the object parameters.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static void gtk_gauge_set_property (GObject * object, guint prop_id, const GValue * value, GParamSpec * pspec)
 {
   GtkGaugePrivate *priv = NULL;
@@ -1407,8 +1714,8 @@ static void gtk_gauge_set_property (GObject * object, guint prop_id, const GValu
     case PROP_NAME:
       priv->gauge_name = g_strdup (g_value_get_string (value));
       break;
-    case PROP_INVERSED_COLOR:
-      priv->color_mode_inv = g_value_get_boolean (value);
+    case PROP_GRAYSCALE_COLOR:
+      priv->grayscale_color = g_value_get_boolean (value);
       break;
     case PROP_RADIAL_COLOR:
       priv->radial_color = g_value_get_boolean (value);
@@ -1430,6 +1737,21 @@ static void gtk_gauge_set_property (GObject * object, guint prop_id, const GValu
       break;
     case PROP_STRIP_COLOR_ORDER:
       priv->strip_color_order = g_strdup (g_value_get_string (value));
+      if ((g_strcmp0 (priv->strip_color_order, "YOR")) && (g_strcmp0 (priv->strip_color_order, "GYR")) &&
+          (g_strcmp0 (priv->strip_color_order, "ROY")) && (g_strcmp0 (priv->strip_color_order, "RYG")))
+      {
+        g_warning ("GtkGauge: gtk_gauge_set_property: strip-color-order not allowed");
+        priv->strip_color_order = g_strdup ("YOR");
+      }
+      break;
+    case PROP_STRIP_GRAYSCALE_COLOR_ORDER:
+      priv->strip_grayscale_color_order = g_strdup (g_value_get_string (value));
+      if ((g_strcmp0 (priv->strip_grayscale_color_order, "WB"))
+          && (!g_strcmp0 (priv->strip_grayscale_color_order, "BW")))
+      {
+        g_warning ("GtkGauge: gtk_gauge_set_property: grayscale-strip-color-order not allowed");
+        priv->strip_grayscale_color_order = g_strdup ("WB");
+      }
       break;
     case PROP_GREEN_STRIP_START:
       priv->green_strip_start = g_value_get_int (value);

@@ -18,8 +18,99 @@
 *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/**
+ * @file gtkbargauge.c
+ * @brief Gtk+ based Bar Gauge Widget
+ * @author Gautier Dumonteil <gautier.dumonteil@gmail.com>
+ * @version 0.1
+ * @date 06/06/2010
+ *
+ * Gtk Bar Gauge Widget
+ * Copyright (C) 2010, CCNY Robotics Lab <br>
+ * http://robotics.ccny.cuny.edu <br>
+ * 
+ * This widget provide an easy to read bar gauge instrument. <br>
+ * This widget is fully comfigurable and useable for several<br>
+ * gauge type (Battery Voltage, Current, Velocity, ...).
+ * 
+ * @b Pictures:<br>
+ * <table><tr>
+ * <th><IMG SRC="file:///home/gaitt/Bureau/gtkbargauge.png"></th>
+ * <th><IMG SRC="file:///home/gaitt/Bureau/gtkbargauge_g.png"></th>
+ * </tr></table>
+ * 
+ * \b Example:<br>
+ * Add Bar Gauge widget to an gtkvbox and set some params <br>
+ * @code
+ * window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+ * vbox = gtk_vbox_new(TRUE, 1);
+ * gtk_container_add(GTK_CONTAINER (window), vbox);
+ * 
+ * bg = gtk_bar_gauge_new ();
+ * g_object_set (GTK_BAR_GAUGE (bg), "name-bar-1",
+ *		"<big>Bat</big>\n" "<span foreground=\"orange\"><i>(V)</i></span>", NULL);
+ * g_object_set (GTK_BAR_GAUGE (bg), "name-bar-2",
+ *		"<big>Aux</big>\n" "<span foreground=\"orange\"><i>(?)</i></span>", NULL);     
+ * g_object_set (GTK_BAR_GAUGE (bg), "name-bar-3",
+ *		"<big>Aux2</big>\n" "<span foreground=\"orange\"><i>(?)</i></span>", NULL);  
+ * g_object_set (GTK_BAR_GAUGE (bg),
+ *		"bar-number", 3,
+ *		"grayscale-color", false,
+ *		"radial-color", true,
+ *		"start-value-bar-1", 0, 
+ *		"end-value-bar-1", 12, 
+ *		"green-strip-start-1", 10,
+ *		"yellow-strip-start-1", 8,
+ *		"start-value-bar-2", 0, 
+ *		"end-value-bar-2", 100,
+ *		"start-value-bar-3", 0, 
+ *		"end-value-bar-3", 100, NULL);
+ * 
+ * gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(bg), TRUE, TRUE, 0);
+ * gtk_widget_show_all(window);
+ * @endcode
+ * 
+ * The following code show how to change widget's values and redraw it:<br>
+ * Note that here tc's type is "GtkWidget *".<br>
+ * @code
+ * if (IS_GTK_BAR_GAUGE (bg))
+ * {
+ *	gtk_bar_gauge_set_value (GTK_BAR_GAUGE(bg), index, val);
+ *	gtk_turn_coordinator_redraw(GTK_BAR_GAUGE(bg));
+ * }		
+ * @endcode
+ *
+ * @b Widget @b Parameters:<br>
+ * - "grayscale-color": boolean, if TRUE, draw the widget with grayscale colors (outdoor use)<br>
+ * - "radial-color": boolean, if TRUE, draw a fake light reflexion<br>
+ * - "widget-name": char, indicates the widget name to be displayed<br>
+ * - "bar-number", int, indicates the number of bar gauge to display (1 to 4)<br>
+ * - "start-value-bar-X": int, indicates the start value of bar gauge X<br>
+ * - "end-value-bar-X": int, indicates the end value of the bar gauge X<br>
+ * - "name-bar-X": char, provide the name of the bar gauge X (support<br>
+ * pango text attribute)<br>
+ * - OPTIONAL - "green-strip-start-X": int, indicates the start of the green <br>
+ * for the bar gauge X<br>
+ * - OPTIONAL - "yellow-strip-start-X": int, indicates the start of the yellow<br>
+ * for the bar gauge X<br>
+ * 
+ * @b Widget @b values:<br>
+ * - "index": the value of the bar you want to update<br>
+ * - "val": double, provide the bar drawing according to the start-value<br>
+ * and the end-value.
+ * 
+ */
+
 #include <ground_station/gui/gtkbargauge.h>
 
+/**
+ * @typedef struct GtkBarGaugePrivate 
+ * @brief Special Gtk API strucure. Allow to add a private data<br>
+ * for the widget. Defined in the C file in order to be private.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 typedef struct _GtkBarGaugePrivate
 {
   /* new cairo design */
@@ -27,8 +118,10 @@ typedef struct _GtkBarGaugePrivate
   GdkRectangle plot_box;
 
   /* widget data */
-  gboolean color_mode_inv;
+  gboolean grayscale_color;
   gboolean radial_color;
+  gboolean alert1,alert2,alert3,alert4;
+  gchar * widget_name;
     
   gint start_value1;
   gint end_value1;  
@@ -80,11 +173,19 @@ typedef struct _GtkBarGaugePrivate
 
 } GtkBarGaugePrivate;
 
-enum _GLG_PROPERTY_ID
+/**
+ * @enum _GTK_BAR_GAUGE_PROPERTY_ID
+ * @brief Special Gtk API enum. Allow to identify widget's properties.
+ *
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
+enum _GTK_BAR_GAUGE_PROPERTY_ID
 {
   PROP_0,
+  PROP_NAME,
   PROP_BAR_NUMBER,
-  PROP_INVERSED_COLOR,
+  PROP_GRAYSCALE_COLOR,
   PROP_RADIAL_COLOR,
   PROP_RADIAL_BAR_PATTERN,
   PROP_NAME1,
@@ -107,10 +208,27 @@ enum _GLG_PROPERTY_ID
   PROP_END_VALUE4,
   PROP_GREEN_STRIP_START4,
   PROP_YELLOW_STRIP_START4,
-} GLG_PROPERTY_ID;
+} GTK_BAR_GAUGE_PROPERTY_ID;
 
+/**
+ * @fn G_DEFINE_TYPE (GtkBarGauge, gtk_bar_gauge, GTK_TYPE_DRAWING_AREA);
+ * @brief Special Gtk API function. Define a new object type named GtkBarGauge <br>
+ * and all preface of the widget's functions calls with gtk_bar_gauge.<br>
+ * We are inheriting the type of GtkDrawingArea.<br>
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 G_DEFINE_TYPE (GtkBarGauge, gtk_bar_gauge, GTK_TYPE_DRAWING_AREA);
 
+/**
+ * @def GTK_BAR_GAUGE_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GTK_BAR_GAUGE_TYPE, GtkBarGaugePrivate))
+ * @brief Special Gtk API define. Add a macro for easy access to the private<br>
+ * data struct.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 #define GTK_BAR_GAUGE_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GTK_BAR_GAUGE_TYPE, GtkBarGaugePrivate))
 
 static void gtk_bar_gauge_class_init (GtkBarGaugeClass * klass);
@@ -125,13 +243,30 @@ static gboolean gtk_bar_gauge_motion_notify_event (GtkWidget * widget, GdkEventM
 
 static void gtk_bar_gauge_draw (GtkWidget * bg);
 static void gtk_bar_gauge_draw_screws (GtkWidget * arh);
-static void gtk_bar_gauge_draw_simple (GtkBarGauge * bg, gint index, gdouble x_bar, gdouble y_bar);
-static void gtk_bar_gauge_draw_extend (GtkBarGauge * bg, gint index, gdouble x_bar, gdouble y_bar);
+static void gtk_bar_gauge_draw_bar (GtkBarGauge * bg, gint index, gdouble x_bar, gdouble y_bar, gdouble width);
 static void gtk_bar_gauge_draw_name (GtkBarGauge * bg, gchar * pch_text, GdkRectangle * rect);
 
 
 static gboolean gtk_bar_gauge_debug = FALSE;
 
+/**
+ * @fn static void gtk_bar_gauge_class_init (GtkBarGaugeClass * klass)
+ * @brief Special Gtk API function. Function called when the class is<br>
+ * initialised. Allow to set certain class wide functions and<br>
+ * properties<br>.
+ * Allow to override some parent’s expose handler like :<br>
+ * - set_property handler<br>
+ * - destroy handler<br>
+ * - configure_event handler<br>
+ * - motion_notify_event handler (not use in this widget)
+ * - button_press_event handler (not use in this widget)
+ * 
+ * Also register the private struct GtkBarGaugePrivate with<br>
+ * the class and install widget properties.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static void gtk_bar_gauge_class_init (GtkBarGaugeClass * klass)
 {
   GObjectClass *obj_class = G_OBJECT_CLASS (klass);
@@ -158,10 +293,16 @@ static void gtk_bar_gauge_class_init (GtkBarGaugeClass * klass)
   g_type_class_add_private (obj_class, sizeof (GtkBarGaugePrivate));
   
   g_object_class_install_property (obj_class,
-                                   PROP_INVERSED_COLOR,
-                                   g_param_spec_boolean ("inverse-color",
-                                                         "inverse or not the widget color",
-                                                         "inverse or not the widget color", FALSE, G_PARAM_WRITABLE));
+                                   PROP_NAME,
+                                   g_param_spec_string ("widget-name",
+                                                        "Gauge name",
+                                                        "Gauge name", "...Name not set...", G_PARAM_WRITABLE));
+  g_object_class_install_property (obj_class,
+                                   PROP_GRAYSCALE_COLOR,
+                                   g_param_spec_boolean ("grayscale-color",
+                                                         "use grayscale for the widget color",
+                                                         "use grayscale for the widget color", FALSE,
+                                                         G_PARAM_WRITABLE));
   g_object_class_install_property (obj_class,
                                    PROP_RADIAL_COLOR,
                                    g_param_spec_boolean ("radial-color",
@@ -294,6 +435,15 @@ static void gtk_bar_gauge_class_init (GtkBarGaugeClass * klass)
   return;
 }
 
+/**
+ * @fn static void gtk_bar_gauge_init (GtkBarGauge * bg)
+ * @brief Special Gtk API function. Function called when the creating a<br>
+ * new GtkBarGauge. Allow to initialize some private variables of<br>
+ * widget.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static void gtk_bar_gauge_init (GtkBarGauge * bg)
 {
   GtkBarGaugePrivate *priv = NULL;
@@ -310,27 +460,28 @@ static void gtk_bar_gauge_init (GtkBarGauge * bg)
                          GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK);
   priv->b_mouse_onoff = FALSE;
   priv->gauge_name_font_size_ok = FALSE;
+  priv->widget_name= g_strdup ("-- NO NAME SET --");
 
   priv->name_bar1 = g_strdup ("NO NAME");
   priv->start_value1 = -1;
   priv->end_value1 = -1;
   priv->green_strip_start1 = -1;
   priv->yellow_strip_start1 = -1;  
-  priv->value_bar1=0;
+  priv->value_bar1=12;
     
   priv->name_bar2 = g_strdup ("NO NAME");
   priv->start_value2 = -1;
   priv->end_value2 = -1;
   priv->green_strip_start2 = -1;
   priv->yellow_strip_start2 = -1;  
-  priv->value_bar2=0;
+  priv->value_bar2=100;
     
   priv->name_bar3 = g_strdup ("NO NAME");
   priv->start_value3 = -1;
   priv->end_value3 = -1;
   priv->green_strip_start3 = -1;
   priv->yellow_strip_start3 = -1;  
-  priv->value_bar3=0;
+  priv->value_bar3=100;
   
   priv->name_bar4 = g_strdup ("NO NAME");
   priv->start_value4 = -1;
@@ -339,8 +490,12 @@ static void gtk_bar_gauge_init (GtkBarGauge * bg)
   priv->yellow_strip_start4 = -1;  
   priv->value_bar4=0;  
   
-  priv->color_mode_inv = TRUE;
+  priv->grayscale_color = TRUE;
   priv->radial_color = FALSE;
+  priv->alert1=TRUE;
+  priv->alert2=TRUE;
+  priv->alert3=TRUE;
+  priv->alert4=TRUE;
   
   priv->bar_number=-1;
 
@@ -362,6 +517,14 @@ static void gtk_bar_gauge_init (GtkBarGauge * bg)
   return;
 }
 
+/**
+ * @fn static gboolean gtk_bar_gauge_configure_event (GtkWidget * widget, GdkEventConfigure * event)
+ * @brief Special Gtk API function. Override the _configure_event handler<br>
+ * in order to resize the widget when the main window is resized.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static gboolean gtk_bar_gauge_configure_event (GtkWidget * widget, GdkEventConfigure * event)
 {
   GtkBarGaugePrivate *priv;
@@ -404,6 +567,15 @@ static gboolean gtk_bar_gauge_configure_event (GtkWidget * widget, GdkEventConfi
   return FALSE;
 }
 
+/**
+ * @fn static gboolean gtk_bar_gauge_expose (GtkWidget * bg, GdkEventExpose * event)
+ * @brief Special Gtk API function. Override of the expose handler.<br>
+ * An “expose-event” signal is emitted when the widget need to be drawn.<br>
+ * A Cairo context is created for the parent's GdkWindow.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static gboolean gtk_bar_gauge_expose (GtkWidget * bg, GdkEventExpose * event)
 {
   GtkBarGaugePrivate *priv;
@@ -447,6 +619,19 @@ static gboolean gtk_bar_gauge_expose (GtkWidget * bg, GdkEventExpose * event)
   return FALSE;
 }
 
+/**
+ * @fn extern void gtk_bar_gauge_redraw (GtkBarGauge * bg)
+ * @brief Special Gtk API function. Redraw the widget when called.
+ * 
+ * This function will redraw the widget canvas. In order to reexpose the canvas<br>
+ * (and cause it to redraw) of our parent class(GtkDrawingArea), it is needed to<br>
+ * use gdk_window_invalidate_rect(). The function gdk_window_invalidate_region()<br>
+ * need to be called as well. And finaly, in order to make all events happen, it<br>
+ * is needed to call gdk_window_process_all_updates().
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 extern void gtk_bar_gauge_redraw (GtkBarGauge * bg)
 {
   GtkWidget *widget;
@@ -471,6 +656,15 @@ extern void gtk_bar_gauge_redraw (GtkBarGauge * bg)
   gdk_region_destroy (region);
 }
 
+/**
+ * @fn extern void gtk_bar_gauge_set_value (GtkBarGauge * bg, gint bar_index, gdouble val)
+ * @brief Public widget's function that allow the main program/user to<br>
+ * set the internal value variable of the widget. 
+ * 
+ * "index": the value of the bar you want to update<br>
+ * "val": double, provide the bar drawing according to the start-value<br>
+ * and the end-value.
+ */
 extern void gtk_bar_gauge_set_value (GtkBarGauge * bg, gint bar_index, gdouble val)
 {
   GtkBarGaugePrivate *priv;
@@ -521,6 +715,14 @@ extern void gtk_bar_gauge_set_value (GtkBarGauge * bg, gint bar_index, gdouble v
   
 }
 
+/**
+ * @fn extern GtkWidget *gtk_bar_gauge_new (void)
+ * @brief Special Gtk API function. This function is simply a wrapper<br>
+ * for convienience.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 extern GtkWidget *gtk_bar_gauge_new (void)
 {
   if (gtk_bar_gauge_debug)
@@ -530,6 +732,15 @@ extern GtkWidget *gtk_bar_gauge_new (void)
   return GTK_WIDGET (gtk_type_new (gtk_bar_gauge_get_type ()));
 }
 
+/**
+ * @fn static void gtk_bar_gauge_draw (GtkWidget * bg)
+ * @brief Special Gtk API function. Override the _draw handler of the<br>
+ * parent class GtkDrawingArea. This function use the cairo context<br>
+ * created before in order to draw scalable graphics. 
+ * 
+ * See GObject,Cairo and GTK+ references for more informations: 
+ * http://library.gnome.org/devel/references.html.en
+ */
 static void gtk_bar_gauge_draw (GtkWidget * bg)
 {
   GtkBarGaugePrivate *priv;
@@ -607,6 +818,8 @@ static void gtk_bar_gauge_draw (GtkWidget * bg)
   double x, y, rec_x0, rec_y0, rec_width, rec_height, rec_degrees;
   double rec_aspect, rec_corner_radius, rec_radius, radius;
   cairo_pattern_t *pat=NULL;
+  GdkRectangle name_box;
+  char str[GTK_BAR_GAUGE_MAX_STRING];  
 
   x = bg->allocation.width / 2;
   y = bg->allocation.height / 2;
@@ -632,10 +845,10 @@ static void gtk_bar_gauge_draw (GtkWidget * bg)
   cairo_arc (priv->cr, rec_x0 + rec_radius, rec_y0 + rec_radius, rec_radius, 180 * rec_degrees, 270 * rec_degrees);
   cairo_close_path (priv->cr);
 
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -657,30 +870,122 @@ static void gtk_bar_gauge_draw (GtkWidget * bg)
   }
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
+  
+  // **** widget name plate
+  cairo_set_line_width (priv->cr, 0.015 * radius);
+  cairo_rectangle(priv->cr, x - 0.65 * radius, y-0.93*radius, 1.3*radius,0.17*radius);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
+  {
+    if (!priv->grayscale_color)
+      cairo_set_source_rgb(priv->cr, 0.6,0.6,0.6);
+    else
+      cairo_set_source_rgb(priv->cr, 0.4,0.4,0.4);
+  }
+  else
+  {
+    pat = cairo_pattern_create_radial (x - 0.392 * radius, y - 0.967 * radius, 0.167 * radius,
+                                       x - 0.477 * radius, y - 0.967 * radius, 0.836 * radius);
+    cairo_pattern_add_color_stop_rgba (pat, 0, 0.9,0.9,0.9, 0.8);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.6,0.6,0.6, 0.8);
+    cairo_set_source (priv->cr, pat);
+  }
+  cairo_fill (priv->cr);
+  cairo_stroke (priv->cr);
+  
+  cairo_arc (priv->cr, x-0.57*radius, y-0.845*radius, 0.05 * radius, 0, 2*M_PI);
+  pat = cairo_pattern_create_radial (x-0.57*radius, y-0.845*radius, 0.07*radius,
+                                     x-0.57*radius, y-0.845*radius, 0.05*radius);
+  cairo_pattern_add_color_stop_rgba (pat,0, 0.6, 0.6, 0.6,0.4);
+  cairo_pattern_add_color_stop_rgba (pat,1, 0.2, 0.2, 0.2,0.4);
+  cairo_set_source (priv->cr, pat);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);
+    
+  cairo_arc (priv->cr, x-0.57*radius, y-0.845*radius, 0.04 * radius, 0, 2*M_PI);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
+  {
+    if (!priv->grayscale_color)
+      cairo_set_source_rgb(priv->cr, 0.5,0.5,0.5);
+    else
+      cairo_pattern_add_color_stop_rgba (pat, 0, 1-0.7,1-0.7,1-0.7, 1);
+  }
+  else
+  {
+    pat = cairo_pattern_create_radial (x - 0.392 * radius, y - 0.967 * radius, 0.167 * radius,
+                                       x - 0.477 * radius, y - 0.967 * radius, 0.836 * radius);
+    cairo_pattern_add_color_stop_rgba (pat, 0, 0.7,0.7,0.7, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.5,0.5,0.5, 1);
+    cairo_set_source (priv->cr, pat);
+  }
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);
+  
+  cairo_arc (priv->cr, x+0.57*radius, y-0.845*radius, 0.05 * radius, 0, 2*M_PI);
+  pat = cairo_pattern_create_radial (x+0.57*radius, y-0.845*radius, 0.07*radius,
+                                     x+0.57*radius, y-0.845*radius, 0.05*radius);
+  cairo_pattern_add_color_stop_rgba (pat,0, 0.6, 0.6, 0.6,0.4);
+  cairo_pattern_add_color_stop_rgba (pat,1, 0.2, 0.2, 0.2,0.4);
+  cairo_set_source (priv->cr, pat);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);
+  
+  cairo_arc (priv->cr, x+0.57*radius, y-0.845*radius, 0.04 * radius, 0, 2*M_PI);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
+  {
+    if (!priv->grayscale_color)
+      cairo_set_source_rgb(priv->cr, 0.5,0.5,0.5);
+    else
+      cairo_pattern_add_color_stop_rgba (pat, 0, 1-0.7,1-0.7,1-0.7, 1);
+  }
+  else
+  {
+    pat = cairo_pattern_create_radial (x - 0.392 * radius, y - 0.967 * radius, 0.167 * radius,
+                                       x - 0.477 * radius, y - 0.967 * radius, 0.836 * radius);
+    cairo_pattern_add_color_stop_rgba (pat, 0, 0.7,0.7,0.7, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.5,0.5,0.5, 1);
+    cairo_set_source (priv->cr, pat);
+  }
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);
+  
 
+  name_box.x = x-0.48*radius;
+  name_box.y = y-0.91*radius;
+  name_box.width = 0.97*radius;
+  name_box.height = 0.14*radius;
+  if (!priv->grayscale_color)
+		sprintf (str, "<span foreground=\"black\">%s</span>", priv->widget_name);
+  else
+		sprintf (str, "<span foreground=\"white\">%s</span>", priv->widget_name);
+  gtk_bar_gauge_draw_name (GTK_BAR_GAUGE (bg), (gchar *)&str, &name_box);
+  
   priv->x = x;
   priv->y = y;
   priv->radius = radius;
-  //gtk_bar_gauge_draw_screws (GTK_BAR_GAUGE(bg));
+  gtk_bar_gauge_draw_screws (bg);
+   
   switch(priv->bar_number)
   {
 	  case 1:
-	  	gtk_bar_gauge_draw_extend(GTK_BAR_GAUGE(bg),1,x - 0.35 * radius ,y-0.86*radius);
+	  	gtk_bar_gauge_draw_bar(GTK_BAR_GAUGE(bg),1,x - 0.3 * radius ,y-0.5*radius,0.6 * radius);
 	  break;
 	  case 2:
-		gtk_bar_gauge_draw_extend(GTK_BAR_GAUGE(bg),1,x - 0.80 * radius ,y-0.86*radius);
-		gtk_bar_gauge_draw_extend(GTK_BAR_GAUGE(bg),2,x + 0.10 * radius ,y-0.86*radius);
+		gtk_bar_gauge_draw_bar(GTK_BAR_GAUGE(bg),1,x - 0.6 * radius ,y-0.5*radius,0.5 * radius);
+		gtk_bar_gauge_draw_bar(GTK_BAR_GAUGE(bg),2,x + 0.1 * radius ,y-0.5*radius,0.5 * radius);
 		break;
 	  case 3:
-		gtk_bar_gauge_draw_simple(GTK_BAR_GAUGE(bg),1,x - 0.65 * radius ,y-0.86*radius);
-		gtk_bar_gauge_draw_simple(GTK_BAR_GAUGE(bg),2,x - 0.16 * radius ,y-0.86*radius);
-		gtk_bar_gauge_draw_simple(GTK_BAR_GAUGE(bg),3,x + 0.33 * radius ,y-0.86*radius);
+		gtk_bar_gauge_draw_bar(GTK_BAR_GAUGE(bg),1,x - 0.645 * radius ,y-0.5*radius,0.3 * radius);
+		gtk_bar_gauge_draw_bar(GTK_BAR_GAUGE(bg),2,x - 0.145 * radius ,y-0.5*radius,0.3 * radius);
+		gtk_bar_gauge_draw_bar(GTK_BAR_GAUGE(bg),3,x + 0.355 * radius ,y-0.5*radius,0.3 * radius);
 		break;
 	  case 4:
-		gtk_bar_gauge_draw_simple(GTK_BAR_GAUGE(bg),1, x - 0.80 * radius ,y-0.86*radius);
-		gtk_bar_gauge_draw_simple(GTK_BAR_GAUGE(bg),2, x - 0.36 * radius ,y-0.86*radius);
-		gtk_bar_gauge_draw_simple(GTK_BAR_GAUGE(bg),3, x + 0.08 * radius ,y-0.86*radius);
-		gtk_bar_gauge_draw_simple(GTK_BAR_GAUGE(bg),4, x + 0.52 * radius ,y-0.86*radius);
+		gtk_bar_gauge_draw_bar(GTK_BAR_GAUGE(bg),1, x - 0.65 * radius ,y-0.5*radius,0.25 * radius);
+		gtk_bar_gauge_draw_bar(GTK_BAR_GAUGE(bg),2, x - 0.30 * radius ,y-0.5*radius,0.25 * radius);
+		gtk_bar_gauge_draw_bar(GTK_BAR_GAUGE(bg),3, x + 0.05 * radius ,y-0.5*radius,0.25 * radius);
+		gtk_bar_gauge_draw_bar(GTK_BAR_GAUGE(bg),4, x + 0.4 * radius ,y-0.5*radius,0.25 * radius);
 	   break;
   }
   
@@ -688,287 +993,27 @@ static void gtk_bar_gauge_draw (GtkWidget * bg)
   return;
 }
 
-static void gtk_bar_gauge_draw_extend (GtkBarGauge * bg, gint index, gdouble x_bar, gdouble y_bar)
+/**
+ * @fn static void gtk_bar_gauge_draw_bar (GtkBarGauge * bg, gint index, gdouble x_bar, gdouble y_bar, gdouble width)
+ * @brief Private widget's function that draw one bar.
+ */
+static void gtk_bar_gauge_draw_bar (GtkBarGauge * bg, gint index, gdouble x_bar, gdouble y_bar, gdouble width)
 {
   GtkBarGaugePrivate *priv;
 
   if (gtk_bar_gauge_debug)
   {
-    g_debug ("===> gtk_bar_gauge_draw()");
+    g_debug ("===> gtk_bar_gauge_draw_bar()");
   }
   g_return_if_fail (IS_GTK_BAR_GAUGE (bg));
 
   priv = GTK_BAR_GAUGE_GET_PRIVATE (bg);
   
-  double x, y, rec_x0, rec_y0, rec_width, rec_height, rec_degrees;
-  double rec_aspect, rec_corner_radius, rec_radius, radius;
-  char str[GTK_BAR_GAUGE_MAX_STRING];
-  char * name = NULL;
-  double value_bar=0, bar_y=0, bar_height=0;
-  int start_value_bar=0,end_value_bar=0,green_strip_start=0,yellow_strip_start=0;
-  cairo_pattern_t *pat=NULL;
-  GdkRectangle bar_box,name_box;
- 
-  x=priv->x;
-  y=priv->y;
-  radius=priv->radius;
-    
-  bar_box.x = x_bar;
-  bar_box.y = y_bar;
-  bar_box.width = 0.3 * radius;
-  bar_box.height = 1.5 * radius;
-  
-  rec_x0 = bar_box.x-0.05*radius;
-  rec_y0 = bar_box.y-0.05*radius;
-  rec_width = bar_box.width+0.5*radius;
-  rec_height = bar_box.height+0.35*radius;
-  rec_aspect = 1.0;
-  rec_corner_radius = rec_height / 20.0;
-  rec_radius = rec_corner_radius / rec_aspect;
-  rec_degrees = M_PI / 180.0;
-
-  cairo_new_sub_path (priv->cr);
-  cairo_arc (priv->cr, rec_x0 + rec_width - rec_radius, rec_y0 + rec_radius,
-             rec_radius, -90 * rec_degrees, 0 * rec_degrees);
-  cairo_arc (priv->cr, rec_x0 + rec_width - rec_radius, rec_y0 + rec_height - rec_radius,
-             rec_radius, 0 * rec_degrees, 90 * rec_degrees);
-  cairo_arc (priv->cr, rec_x0 + rec_radius, rec_y0 + rec_height - rec_radius,
-             rec_radius, 90 * rec_degrees, 180 * rec_degrees);
-  cairo_arc (priv->cr, rec_x0 + rec_radius, rec_y0 + rec_radius, rec_radius, 180 * rec_degrees, 270 * rec_degrees);
-  cairo_close_path (priv->cr);
-
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
-  {
-    if (!priv->color_mode_inv)
-        cairo_set_source_rgb(priv->cr,0.55,0.55,0.55);
-    else
-        cairo_set_source_rgb(priv->cr,1-0.55,1-0.55,1-0.55);
-  }
-  else
-  {
-    pat = cairo_pattern_create_radial (x - 0.392 * radius, y - 0.967 * radius, 0.167 * radius,
-                                       x - 0.477 * radius, y - 0.967 * radius, 0.836 * radius);
-    cairo_pattern_add_color_stop_rgba (pat, 0, 0.9,0.9,0.9, 0.8);
-    cairo_pattern_add_color_stop_rgba (pat, 1, 0.45,0.45,0.45, 0.8);
-    cairo_set_source (priv->cr, pat);
-  }
-  cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);
-  
-  rec_x0 = bar_box.x;
-  rec_y0 = bar_box.y;
-  rec_width = bar_box.width+0.4*radius;
-  rec_height = bar_box.height;
-  rec_aspect = 1.0;
-  rec_corner_radius = rec_height / 20.0;
-  rec_radius = rec_corner_radius / rec_aspect;
-  rec_degrees = M_PI / 180.0;
-
-  cairo_new_sub_path (priv->cr);
-  cairo_arc (priv->cr, rec_x0 + rec_width - rec_radius, rec_y0 + rec_radius,
-             rec_radius, -90 * rec_degrees, 0 * rec_degrees);
-  cairo_arc (priv->cr, rec_x0 + rec_width - rec_radius, rec_y0 + rec_height - rec_radius,
-             rec_radius, 0 * rec_degrees, 90 * rec_degrees);
-  cairo_arc (priv->cr, rec_x0 + rec_radius, rec_y0 + rec_height - rec_radius,
-             rec_radius, 90 * rec_degrees, 180 * rec_degrees);
-  cairo_arc (priv->cr, rec_x0 + rec_radius, rec_y0 + rec_radius, rec_radius, 180 * rec_degrees, 270 * rec_degrees);
-  cairo_close_path (priv->cr);
-
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
-  {
-    if (!priv->color_mode_inv)
-        cairo_set_source_rgb(priv->cr,0.4,0.4,0.4);
-    else
-        cairo_set_source_rgb(priv->cr,1-0.4,1-0.4,1-0.4);
-  }
-  else
-  {
-    pat = cairo_pattern_create_radial (x - 0.392 * radius, y - 0.967 * radius, 0.167 * radius,
-                                       x - 0.477 * radius, y - 0.967 * radius, 0.836 * radius);
-    cairo_pattern_add_color_stop_rgba (pat, 0, 0.9,0.9,0.9, 0.8);
-    cairo_pattern_add_color_stop_rgba (pat, 1, 0.65,0.65,0.65, 0.8);
-    cairo_set_source (priv->cr, pat);
-  }
-  cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);
-  
-  
-  switch(index)
-  {
-	  case 1:
-		value_bar=priv->value_bar1;
-		start_value_bar=priv->start_value1;
-		end_value_bar=priv->end_value1;
-		name=priv->name_bar1;
-	
-		if ((priv->green_strip_start1 == -1) || (priv->yellow_strip_start1 == -1))
-		{
-			priv->green_strip_start1 = priv->end_value1 - priv->end_value1 / 3;
-			priv->yellow_strip_start1 = priv->end_value1 - 2*priv->end_value1 / 3;
-		}
-		green_strip_start=priv->green_strip_start1;
-		yellow_strip_start=priv->yellow_strip_start1;
-		break;
-	  case 2:
-		value_bar=priv->value_bar2;
-		start_value_bar=priv->start_value2;
-		end_value_bar=priv->end_value2;		
-		name=priv->name_bar2;
-		
-		if ((priv->green_strip_start2 == -1) || (priv->yellow_strip_start2 == -1))
-		{
-			priv->green_strip_start2 = priv->end_value2 - priv->end_value2 / 3;
-			priv->yellow_strip_start2 = priv->end_value2 - 2*priv->end_value2 / 3;
-		}		
-		green_strip_start=priv->green_strip_start2;
-		yellow_strip_start=priv->yellow_strip_start2;
-		break;
-	  case 3:
-		value_bar=priv->value_bar3;
-		start_value_bar=priv->start_value3;
-		end_value_bar=priv->end_value3;		
-		name=priv->name_bar3;		
-		
-		if ((priv->green_strip_start3 == -1) || (priv->yellow_strip_start3 == -1))
-		{
-			priv->green_strip_start3 = priv->end_value3 - priv->end_value3 / 3;
-			priv->yellow_strip_start3 = priv->end_value3 - 2*priv->end_value3 / 3;
-		}		
-		green_strip_start=priv->green_strip_start3;
-		yellow_strip_start=priv->yellow_strip_start3;		
-		break;
-	  case 4:
-		value_bar=priv->value_bar4;
-		start_value_bar=priv->start_value4;
-		end_value_bar=priv->end_value4;		
-		name=priv->name_bar4;		
-		
-		if ((priv->green_strip_start4 == -1) || (priv->yellow_strip_start4 == -1))
-		{
-			priv->green_strip_start4 = priv->end_value4- priv->end_value4 / 3;
-			priv->yellow_strip_start4 = priv->end_value4 - 2*priv->end_value4 / 3;
-		}		
-		green_strip_start=priv->green_strip_start4;
-		yellow_strip_start=priv->yellow_strip_start4;	
-		break;
-  }
-     
-  bar_y = bar_box.y + ((((gdouble)end_value_bar-(gdouble)value_bar) / (gdouble)end_value_bar)*bar_box.height);
-  bar_height = bar_box.height - ((((gdouble)end_value_bar-(gdouble)value_bar) / (gdouble)end_value_bar)*bar_box.height);
-   
-  if(!priv->color_mode_inv)
-  {
-	  if(value_bar>=green_strip_start)
-	  {
-			cairo_rectangle(priv->cr,bar_box.x,bar_y,bar_box.width,bar_height);
-			cairo_set_source_rgba (priv->cr,0,1,0, 1);
-			cairo_fill_preserve (priv->cr);
-			cairo_stroke(priv->cr);
-	  }
-	  else  if((value_bar<green_strip_start)&&(value_bar>=yellow_strip_start))
-	  {
-			cairo_rectangle(priv->cr,bar_box.x,bar_y,bar_box.width,bar_height);
-			cairo_set_source_rgba (priv->cr,1,1,0, 1);
-			cairo_fill_preserve (priv->cr);
-			cairo_stroke(priv->cr);
-	  }
-	  else  if(value_bar<=yellow_strip_start)
-	  {
-			cairo_rectangle(priv->cr,bar_box.x,bar_y,bar_box.width,bar_height);
-			cairo_set_source_rgba (priv->cr,1,0,0, 1);
-			cairo_fill_preserve (priv->cr);
-			cairo_stroke(priv->cr);
-	  }
-  }
-  else
-  {
-	  if(value_bar>=green_strip_start)
-	  {
-			cairo_rectangle(priv->cr,bar_box.x,bar_y,bar_box.width,bar_height);
-			cairo_set_source_rgba (priv->cr,0.2,0.2,0.2, 1);
-			cairo_fill_preserve (priv->cr);
-			cairo_stroke(priv->cr);
-	  }
-	  else  if((value_bar<green_strip_start)&&(value_bar>=yellow_strip_start))
-	  {
-			cairo_rectangle(priv->cr,bar_box.x,bar_y,bar_box.width,bar_height);
-			cairo_set_source_rgba (priv->cr,0.8,0.8,0.8, 1);
-			
-			cairo_fill_preserve (priv->cr);
-			cairo_stroke(priv->cr);
-	  }
-	  else  if(value_bar<=yellow_strip_start)
-	  {
-			cairo_rectangle(priv->cr,bar_box.x,bar_y,bar_box.width,bar_height);
-			cairo_set_source_rgba (priv->cr,1,1,1, 1);			
-			cairo_fill_preserve (priv->cr);
-			cairo_stroke(priv->cr);
-	  }
-  }
-     
-  if((bar_y>bar_box.y-20)&&(bar_y<bar_box.y+0.05*radius))
-		bar_y	= bar_box.y + 0.06*radius;
-  else if((bar_y>bar_box.y+bar_box.height-0.05*radius)&&(bar_y<bar_box.y+bar_box.height+20))
-			bar_y = bar_box.y+bar_box.height-0.06*radius;
- 
-	cairo_move_to(priv->cr,bar_box.x+bar_box.width+0.01*radius,bar_y);
-	cairo_line_to(priv->cr,bar_box.x+bar_box.width+0.06*radius,bar_y-0.05*radius);
-	cairo_line_to(priv->cr,bar_box.x+bar_box.width+0.06*radius,bar_y+0.05*radius);
-	cairo_line_to(priv->cr,bar_box.x+bar_box.width,bar_y);
-	cairo_set_source_rgb (priv->cr, 1,1,1);
-	cairo_fill_preserve(priv->cr);
-	cairo_stroke(priv->cr);
- 
-	// **** draw value
-	name_box.x = bar_box.x+bar_box.width+0.08*radius;
-	name_box.y = bar_y-0.052*radius;
-	name_box.width = 0.32*radius;
-	name_box.height = 0.12*radius;
-	int val = value_bar *100;
-	if (!priv->color_mode_inv)
-		sprintf (str, "<span foreground=\"black\"><i>%d,%d</i></span>", (int)(value_bar),(int)(val/10%10)*10+(val%10));
-	else
-		sprintf (str, "<span foreground=\"white\"><i>%d,%d</i></span>", (int)(value_bar),(int)(val/10%10)*10+(val%10));
-  gtk_bar_gauge_draw_name (GTK_BAR_GAUGE (bg), (gchar *)&str, &name_box); 
-  cairo_rectangle(priv->cr,  name_box.x, name_box.y, name_box.width, name_box.height);
-  cairo_set_source_rgba(priv->cr,0.2,0.2,0.2,0.2);
-  cairo_fill_preserve(priv->cr);  
-  cairo_stroke(priv->cr);
-   
-  cairo_set_line_width (priv->cr, 0.015 * radius);
-  cairo_rectangle(priv->cr,  bar_box.x, bar_box.y, bar_box.width, bar_box.height);
-  cairo_set_source_rgb(priv->cr,0.2,0.2,0.2);
-  cairo_stroke(priv->cr);
-  
-  // **** draw gauge name
-  name_box.x = bar_box.x-0.03*radius;
-  name_box.y = bar_box.y+bar_box.height+0.02*radius;
-  name_box.width = bar_box.width+0.5*radius;
-  name_box.height = 0.26 * radius;
-  gtk_bar_gauge_draw_name (GTK_BAR_GAUGE (bg), (gchar *)name, &name_box);
-  cairo_pattern_destroy (pat);    
-  return;
-}
-
-static void gtk_bar_gauge_draw_simple (GtkBarGauge * bg, gint index, gdouble x_bar, gdouble y_bar)
-{
-  GtkBarGaugePrivate *priv;
-
-  if (gtk_bar_gauge_debug)
-  {
-    g_debug ("===> gtk_bar_gauge_draw()");
-  }
-  g_return_if_fail (IS_GTK_BAR_GAUGE (bg));
-
-  priv = GTK_BAR_GAUGE_GET_PRIVATE (bg);
-  
-  double x, y, rec_x0, rec_y0, rec_width, rec_height, rec_degrees;
-  double rec_aspect, rec_corner_radius, rec_radius, radius;
   char * name =NULL;
-  double value_bar=0, bar_y=0, bar_height=0;
+  char str[GTK_BAR_GAUGE_MAX_STRING];
+  double x,y,radius,value_bar=0, bar_y=0, bar_height=0;
   int start_value_bar=0,end_value_bar=0,green_strip_start=0,yellow_strip_start=0;
+  gboolean alert=TRUE;
   cairo_pattern_t *pat=NULL;
   GdkRectangle bar_box,name_box;
  
@@ -978,48 +1023,9 @@ static void gtk_bar_gauge_draw_simple (GtkBarGauge * bg, gint index, gdouble x_b
     
   bar_box.x = x_bar;
   bar_box.y = y_bar;
-  bar_box.width = 0.3 * radius;
-  bar_box.height = 1.5 * radius;
+  bar_box.width = width;
+  bar_box.height = 1.1 * radius;
   
-  rec_x0 = bar_box.x-0.05*radius;
-  rec_y0 = bar_box.y-0.05*radius;
-  rec_width = bar_box.width+0.1*radius;
-  rec_height = bar_box.height+0.35*radius;
-  rec_aspect = 1.0;
-  rec_corner_radius = rec_height / 20.0;
-
-  rec_radius = rec_corner_radius / rec_aspect;
-  rec_degrees = M_PI / 180.0;
-
-  cairo_new_sub_path (priv->cr);
-  cairo_arc (priv->cr, rec_x0 + rec_width - rec_radius, rec_y0 + rec_radius,
-             rec_radius, -90 * rec_degrees, 0 * rec_degrees);
-  cairo_arc (priv->cr, rec_x0 + rec_width - rec_radius, rec_y0 + rec_height - rec_radius,
-             rec_radius, 0 * rec_degrees, 90 * rec_degrees);
-  cairo_arc (priv->cr, rec_x0 + rec_radius, rec_y0 + rec_height - rec_radius,
-             rec_radius, 90 * rec_degrees, 180 * rec_degrees);
-  cairo_arc (priv->cr, rec_x0 + rec_radius, rec_y0 + rec_radius, rec_radius, 180 * rec_degrees, 270 * rec_degrees);
-  cairo_close_path (priv->cr);
-
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
-  {
-    if (!priv->color_mode_inv)
-        cairo_set_source_rgb(priv->cr,0.55,0.55,0.55);
-    else
-        cairo_set_source_rgb(priv->cr,1-0.55,1-0.55,1-0.55);
-  }
-  else
-  {
-    pat = cairo_pattern_create_radial (x - 0.392 * radius, y - 0.967 * radius, 0.167 * radius,
-                                       x - 0.477 * radius, y - 0.967 * radius, 0.836 * radius);
-    cairo_pattern_add_color_stop_rgba (pat, 0, 0.9,0.9,0.9, 0.8);
-    cairo_pattern_add_color_stop_rgba (pat, 1, 0.45,0.45,0.45, 0.8);
-    cairo_set_source (priv->cr, pat);
-  }
-  cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);
- 
   switch(index)
   {
 	  case 1:
@@ -1027,6 +1033,7 @@ static void gtk_bar_gauge_draw_simple (GtkBarGauge * bg, gint index, gdouble x_b
 		start_value_bar=priv->start_value1;
 		end_value_bar=priv->end_value1;
 		name=priv->name_bar1;
+		alert=priv->alert1;
 	
 		if ((priv->green_strip_start1 == -1) || (priv->yellow_strip_start1 == -1))
 		{
@@ -1041,6 +1048,7 @@ static void gtk_bar_gauge_draw_simple (GtkBarGauge * bg, gint index, gdouble x_b
 		start_value_bar=priv->start_value2;
 		end_value_bar=priv->end_value2;		
 		name=priv->name_bar2;
+		alert=priv->alert2;		
 		
 		if ((priv->green_strip_start2 == -1) || (priv->yellow_strip_start2 == -1))
 		{
@@ -1055,6 +1063,7 @@ static void gtk_bar_gauge_draw_simple (GtkBarGauge * bg, gint index, gdouble x_b
 		start_value_bar=priv->start_value3;
 		end_value_bar=priv->end_value3;		
 		name=priv->name_bar3;		
+		alert=priv->alert3;		
 		
 		if ((priv->green_strip_start3 == -1) || (priv->yellow_strip_start3 == -1))
 		{
@@ -1069,7 +1078,8 @@ static void gtk_bar_gauge_draw_simple (GtkBarGauge * bg, gint index, gdouble x_b
 		start_value_bar=priv->start_value4;
 		end_value_bar=priv->end_value4;		
 		name=priv->name_bar4;		
-		
+		alert=priv->alert4;
+
 		if ((priv->green_strip_start4 == -1) || (priv->yellow_strip_start4 == -1))
 		{
 			priv->green_strip_start4 = priv->end_value4- priv->end_value4 / 3;
@@ -1083,27 +1093,27 @@ static void gtk_bar_gauge_draw_simple (GtkBarGauge * bg, gint index, gdouble x_b
   bar_y = bar_box.y + ((((gdouble)end_value_bar-(gdouble)value_bar) / (gdouble)end_value_bar)*bar_box.height);
   bar_height = bar_box.height - ((((gdouble)end_value_bar-(gdouble)value_bar) / (gdouble)end_value_bar)*bar_box.height);
    
-  if(!priv->color_mode_inv)
+  if(!priv->grayscale_color)
   {
 	  if(value_bar>=green_strip_start)
 	  {
 			cairo_rectangle(priv->cr,bar_box.x,bar_y,bar_box.width,bar_height);
 			cairo_set_source_rgba (priv->cr,0,1,0, 1);
-			cairo_fill_preserve (priv->cr);
+			cairo_fill (priv->cr);
 			cairo_stroke(priv->cr);
 	  }
 	  else  if((value_bar<green_strip_start)&&(value_bar>=yellow_strip_start))
 	  {
 			cairo_rectangle(priv->cr,bar_box.x,bar_y,bar_box.width,bar_height);
 			cairo_set_source_rgba (priv->cr,1,1,0, 1);
-			cairo_fill_preserve (priv->cr);
+			cairo_fill (priv->cr);
 			cairo_stroke(priv->cr);
 	  }
 	  else  if(value_bar<=yellow_strip_start)
 	  {
 			cairo_rectangle(priv->cr,bar_box.x,bar_y,bar_box.width,bar_height);
 			cairo_set_source_rgba (priv->cr,1,0,0, 1);
-			cairo_fill_preserve (priv->cr);
+			cairo_fill (priv->cr);
 			cairo_stroke(priv->cr);
 	  }
   }
@@ -1112,43 +1122,321 @@ static void gtk_bar_gauge_draw_simple (GtkBarGauge * bg, gint index, gdouble x_b
 	  if(value_bar>=green_strip_start)
 	  {
 			cairo_rectangle(priv->cr,bar_box.x,bar_y,bar_box.width,bar_height);
-			cairo_set_source_rgba (priv->cr,0.2,0.2,0.2, 1);
-			cairo_fill_preserve (priv->cr);
+			cairo_set_source_rgba (priv->cr,1,1,1, 1);			
+			cairo_fill (priv->cr);
 			cairo_stroke(priv->cr);
 	  }
 	  else  if((value_bar<green_strip_start)&&(value_bar>=yellow_strip_start))
 	  {
 			cairo_rectangle(priv->cr,bar_box.x,bar_y,bar_box.width,bar_height);
-			cairo_set_source_rgba (priv->cr,0.7,0.7,0.7, 1);
+			cairo_set_source_rgba (priv->cr,0.5,0.5,0.5, 1);
 			
-			cairo_fill_preserve (priv->cr);
+			cairo_fill (priv->cr);
 			cairo_stroke(priv->cr);
 	  }
 	  else  if(value_bar<=yellow_strip_start)
 	  {
 			cairo_rectangle(priv->cr,bar_box.x,bar_y,bar_box.width,bar_height);
-			cairo_set_source_rgba (priv->cr,1,1,1, 1);			
-			cairo_fill_preserve (priv->cr);
+			if(alert) 
+			{
+				cairo_set_source_rgba (priv->cr,0.,0.,0., 1);
+				alert=FALSE;
+			}
+			else 
+			{	
+				cairo_set_source_rgba (priv->cr,1.,1.,1., 1);
+				alert=TRUE;
+			}
+			cairo_fill (priv->cr);
 			cairo_stroke(priv->cr);
 	  }
   }
+  
+  // **** alpha rect
+  if((priv->radial_color) && (!priv->grayscale_color)) 
+  {
+		pat = cairo_pattern_create_linear (bar_box.x,bar_box.y,bar_box.x+bar_box.width,bar_box.y);
+		cairo_pattern_add_color_stop_rgba (pat, 0, 0, 0, 0, 0.4);
+		cairo_pattern_add_color_stop_rgba (pat, 0.3, 1, 1, 1, 0.4);
+		cairo_pattern_add_color_stop_rgba (pat, 0.5, 0.2, 0.2, 0.2, 0.4);
+		cairo_pattern_add_color_stop_rgba (pat, 1, 0, 0, 0, 0.4);
+		cairo_rectangle(priv->cr,  bar_box.x, bar_box.y, bar_box.width, bar_box.height);
+		cairo_set_source (priv->cr, pat);
+		cairo_fill (priv->cr);
+		cairo_stroke(priv->cr);
+  }
+  
+  // **** alpha perimeter up
+  pat = cairo_pattern_create_linear (bar_box.x,bar_box.y-0.13*radius,bar_box.x,bar_box.y-0.06*radius-0.13*radius);
+  cairo_pattern_add_color_stop_rgba (pat, 0, 0.6, 0.6, 0.6, 0.4);
+  cairo_pattern_add_color_stop_rgba (pat, 1, 0.1, 0.1, 0.1, 0.4);  
+  cairo_rectangle(priv->cr, bar_box.x, bar_box.y-0.06*radius-0.13*radius, bar_box.width, 0.06*radius);
+  cairo_set_source (priv->cr, pat);
+  cairo_fill (priv->cr);
+  cairo_stroke(priv->cr);
+  
+  cairo_new_sub_path (priv->cr);
+  cairo_move_to (priv->cr,bar_box.x,bar_box.y-0.06*radius-0.13*radius);
+  cairo_line_to (priv->cr,bar_box.x-0.06*radius,bar_box.y-0.06*radius-0.13*radius);
+  cairo_line_to (priv->cr,bar_box.x,bar_box.y-0.13*radius);  
+  cairo_line_to (priv->cr,bar_box.x,bar_box.y-0.06*radius-0.13*radius);  
+  cairo_close_path (priv->cr);
+  cairo_set_source (priv->cr, pat);
+  cairo_fill (priv->cr);
+  cairo_stroke(priv->cr);
+  
+  cairo_new_sub_path (priv->cr);
+  cairo_move_to (priv->cr,bar_box.x+bar_box.width,bar_box.y-0.06*radius-0.13*radius);
+  cairo_line_to (priv->cr,bar_box.x+bar_box.width+0.06*radius,bar_box.y-0.06*radius-0.13*radius);
+  cairo_line_to (priv->cr,bar_box.x+bar_box.width,bar_box.y-0.13*radius);  
+  cairo_line_to (priv->cr,bar_box.x+bar_box.width,bar_box.y-0.06*radius-0.13*radius);  
+  cairo_close_path (priv->cr);
+  cairo_set_source (priv->cr, pat);
+  cairo_fill (priv->cr);
+  cairo_stroke(priv->cr);  
+  
+  // **** alpha perimeter down
+  pat = cairo_pattern_create_linear (bar_box.x,bar_box.y+bar_box.height, bar_box.x,bar_box.y+bar_box.height+0.06*radius);
+  cairo_pattern_add_color_stop_rgba (pat, 0, 0.6, 0.6, 0.6, 0.4);
+  cairo_pattern_add_color_stop_rgba (pat, 1, 0.1, 0.1, 0.1, 0.4);
+  cairo_rectangle(priv->cr, bar_box.x, bar_box.y+bar_box.height, bar_box.width, 0.06*radius);
+  cairo_set_source (priv->cr, pat);
+  cairo_fill (priv->cr);
+  cairo_stroke(priv->cr);
+  
+  cairo_new_sub_path (priv->cr);
+  cairo_move_to (priv->cr,bar_box.x,bar_box.y+bar_box.height+0.06*radius);
+  cairo_line_to (priv->cr,bar_box.x-0.06*radius,bar_box.y+bar_box.height+0.06*radius);
+  cairo_line_to (priv->cr,bar_box.x,bar_box.y+bar_box.height);  
+  cairo_line_to (priv->cr,bar_box.x,bar_box.y+bar_box.height+0.06*radius);  
+  cairo_close_path (priv->cr);
+  cairo_set_source (priv->cr, pat);
+  cairo_fill (priv->cr);
+  cairo_stroke(priv->cr);
+  
+  cairo_new_sub_path (priv->cr);
+  cairo_move_to (priv->cr,bar_box.x+bar_box.width,bar_box.y+bar_box.height+0.06*radius);
+  cairo_line_to (priv->cr,bar_box.x+bar_box.width+0.06*radius,bar_box.y+bar_box.height+0.06*radius);
+  cairo_line_to (priv->cr,bar_box.x+bar_box.width,bar_box.y+bar_box.height);  
+  cairo_line_to (priv->cr,bar_box.x+bar_box.width,bar_box.y+bar_box.height+0.06*radius);  
+  cairo_close_path (priv->cr);
+  cairo_set_source (priv->cr, pat);
+  cairo_fill (priv->cr);
+  cairo_stroke(priv->cr);  
+  
+  // **** alpha perimeter left
+  pat = cairo_pattern_create_linear (bar_box.x-0.06*radius,bar_box.y,bar_box.x,bar_box.y);
+  cairo_pattern_add_color_stop_rgba (pat, 0, 0.1, 0.1, 0.1, 0.4);
+  cairo_pattern_add_color_stop_rgba (pat, 1, 0.6, 0.6, 0.6, 0.4);
+  cairo_rectangle(priv->cr,  bar_box.x-0.06*radius, bar_box.y-0.13*radius, 0.06*radius, bar_box.height+0.13*radius);
+  cairo_set_source (priv->cr, pat);
+  cairo_fill (priv->cr);
+  cairo_stroke(priv->cr);
+  
+  cairo_new_sub_path (priv->cr);
+  cairo_move_to (priv->cr,bar_box.x-0.06*radius,bar_box.y-0.13*radius);
+  cairo_line_to (priv->cr,bar_box.x-0.06*radius,bar_box.y-0.06*radius-0.13*radius);
+  cairo_line_to (priv->cr,bar_box.x,bar_box.y-0.13*radius);  
+  cairo_line_to (priv->cr,bar_box.x-0.06*radius,bar_box.y-0.13*radius);  
+  cairo_close_path (priv->cr);
+  cairo_set_source (priv->cr, pat);
+  cairo_fill (priv->cr);
+  cairo_stroke(priv->cr);
+  
+  cairo_new_sub_path (priv->cr);
+  cairo_move_to (priv->cr,bar_box.x-0.06*radius,bar_box.y+bar_box.height);
+  cairo_line_to (priv->cr,bar_box.x-0.06*radius,bar_box.y+bar_box.height+0.06*radius);
+  cairo_line_to (priv->cr,bar_box.x,bar_box.y+bar_box.height);  
+  cairo_line_to (priv->cr,bar_box.x-0.06*radius,bar_box.y+bar_box.height);  
+  cairo_close_path (priv->cr);
+  cairo_set_source (priv->cr, pat);
+  cairo_fill (priv->cr);
+  cairo_stroke(priv->cr);
+  
+  // **** alpha perimeter right
+  pat = cairo_pattern_create_linear ( bar_box.x+bar_box.width,bar_box.y, bar_box.x+bar_box.width+0.06*radius,bar_box.y);
+  cairo_pattern_add_color_stop_rgba (pat, 0, 0.6, 0.6, 0.6, 0.4);
+  cairo_pattern_add_color_stop_rgba (pat, 1, 0.1, 0.1, 0.1, 0.4);
+  cairo_rectangle(priv->cr,  bar_box.x+bar_box.width, bar_box.y-0.13*radius, 0.06*radius, bar_box.height+0.13*radius);
+  cairo_set_source (priv->cr, pat);
+  cairo_fill (priv->cr);
+  cairo_stroke(priv->cr);
+  
+  cairo_new_sub_path (priv->cr);
+  cairo_move_to (priv->cr,bar_box.x+bar_box.width+0.06*radius,bar_box.y-0.13*radius);
+  cairo_line_to (priv->cr,bar_box.x+bar_box.width+0.06*radius,bar_box.y-0.06*radius-0.13*radius);
+  cairo_line_to (priv->cr,bar_box.x+bar_box.width,bar_box.y-0.13*radius);  
+  cairo_line_to (priv->cr,bar_box.x+bar_box.width+0.06*radius,bar_box.y-0.13*radius);  
+  cairo_close_path (priv->cr);
+  cairo_set_source (priv->cr, pat);
+  cairo_fill (priv->cr);
+  cairo_stroke(priv->cr);
+  
+  cairo_new_sub_path (priv->cr);
+  cairo_move_to (priv->cr,bar_box.x+bar_box.width+0.06*radius,bar_box.y+bar_box.height);
+  cairo_line_to (priv->cr,bar_box.x+bar_box.width+0.06*radius,bar_box.y+bar_box.height+0.06*radius);
+  cairo_line_to (priv->cr,bar_box.x+bar_box.width,bar_box.y+bar_box.height);  
+  cairo_line_to (priv->cr,bar_box.x+bar_box.width+0.06*radius,bar_box.y+bar_box.height);  
+  cairo_close_path (priv->cr);
+  cairo_set_source (priv->cr, pat);
+  cairo_fill (priv->cr);
+  cairo_stroke(priv->cr);
+       
+	// **** draw gauge value
+  name_box.x = bar_box.x+0.025*radius;
+  name_box.y = bar_box.y-0.11*radius;
+  name_box.width = bar_box.width-0.04*radius;
+  name_box.height = 0.11*radius;
+  cairo_rectangle(priv->cr, bar_box.x, bar_box.y-0.13*radius, bar_box.width, 0.13*radius);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb(priv->cr,0.8,0.8,0.8);
+  else
+    cairo_set_source_rgb(priv->cr,1-0.8,1-0.8,1-0.8);
+  cairo_fill (priv->cr);
+  cairo_stroke(priv->cr);
    
+  cairo_set_line_width (priv->cr, 0.015 * radius);
+  cairo_rectangle(priv->cr, bar_box.x, bar_box.y-0.13*radius, bar_box.width, 0.13*radius);
+  cairo_set_source_rgb(priv->cr,0.2,0.2,0.2);
+  cairo_stroke(priv->cr); 
+  
+  int val = value_bar *100;
+  if (!priv->grayscale_color)
+		sprintf (str, "<span foreground=\"black\">%d,%d</span>", (int)(value_bar),(int)(val/10%10)*10+(val%10));
+  else
+		sprintf (str, "<span foreground=\"white\">%d,%d</span>", (int)(value_bar),(int)(val/10%10)*10+(val%10));
+  gtk_bar_gauge_draw_name (GTK_BAR_GAUGE (bg), (gchar *)&str, &name_box);
+  
+  // **** bar perimeter     
   cairo_set_line_width (priv->cr, 0.015 * radius);
   cairo_rectangle(priv->cr,  bar_box.x, bar_box.y, bar_box.width, bar_box.height);
   cairo_set_source_rgb(priv->cr,0.2,0.2,0.2);
   cairo_stroke(priv->cr);
-  
+
   // **** draw gauge name
   name_box.x = bar_box.x-0.03*radius;
-  name_box.y = bar_box.y+bar_box.height+0.02*radius;
-  name_box.width = bar_box.width+0.06*radius;
+  name_box.y = bar_box.y+bar_box.height+0.1*radius;
+  name_box.width = bar_box.width+0.07*radius;
   name_box.height = 0.26 * radius;
-  gtk_bar_gauge_draw_name (GTK_BAR_GAUGE (bg), name, &name_box);
+
+  cairo_set_line_width (priv->cr, 0.015 * radius);
+  cairo_rectangle(priv->cr, name_box.x, name_box.y, name_box.width,name_box.height);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
+  {
+    if (!priv->grayscale_color)
+      cairo_set_source_rgb(priv->cr, 0.6,0.6,0.6);
+    else
+      cairo_set_source_rgb(priv->cr, 0.4,0.4,0.4);
+  }
+  else
+  {
+    pat = cairo_pattern_create_radial (x - 0.392 * radius, y - 0.967 * radius, 0.167 * radius,
+                                       x - 0.477 * radius, y - 0.967 * radius, 0.836 * radius);
+    cairo_pattern_add_color_stop_rgba (pat, 0, 0.9,0.9,0.9, 0.8);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.7,0.7,0.7, 0.8);
+    cairo_set_source (priv->cr, pat);
+  }
+  cairo_fill (priv->cr);
+  cairo_stroke (priv->cr);
+  
+  cairo_rectangle(priv->cr,name_box.x,name_box.y,name_box.width,name_box.height);
+  cairo_stroke(priv->cr);
+  
+  cairo_arc (priv->cr, name_box.x+0.035*radius, name_box.y+name_box.height-0.035*radius, 0.025 * radius, 0, 2*M_PI);
+  pat = cairo_pattern_create_radial (name_box.x+0.035*radius, name_box.y+name_box.height-0.035*radius, 0.07*radius,
+                                     name_box.x+0.035*radius, name_box.y+name_box.height-0.035*radius, 0.025*radius);
+  cairo_pattern_add_color_stop_rgba (pat,0, 0.6, 0.6, 0.6,0.4);
+  cairo_pattern_add_color_stop_rgba (pat,1, 0.2, 0.2, 0.2,0.4);
+  cairo_set_source (priv->cr, pat);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);
+    
+  cairo_arc (priv->cr, name_box.x+0.035*radius, name_box.y+name_box.height-0.035*radius, 0.019 * radius, 0, 2*M_PI);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
+  {
+    if (!priv->grayscale_color)
+      cairo_set_source_rgb(priv->cr, 0.5,0.5,0.5);
+    else
+      cairo_pattern_add_color_stop_rgba (pat, 0, 1-0.7,1-0.7,1-0.7, 1);
+  }
+  else
+  {
+    pat = cairo_pattern_create_radial (x - 0.392 * radius, y - 0.967 * radius, 0.167 * radius,
+                                       x - 0.477 * radius, y - 0.967 * radius, 0.836 * radius);
+    cairo_pattern_add_color_stop_rgba (pat, 0, 0.7,0.7,0.7, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.5,0.5,0.5, 1);
+    cairo_set_source (priv->cr, pat);
+  }
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);
+  
+ cairo_arc (priv->cr, name_box.x+name_box.width-0.035*radius, name_box.y+0.035*radius, 0.025 * radius, 0, 2*M_PI);
+  pat = cairo_pattern_create_radial (name_box.x+name_box.width-0.035*radius, name_box.y+0.035*radius, 0.07*radius,
+                                     name_box.x+name_box.width-0.035*radius, name_box.y+0.035*radius, 0.025*radius);
+  cairo_pattern_add_color_stop_rgba (pat,0, 0.6, 0.6, 0.6,0.4);
+  cairo_pattern_add_color_stop_rgba (pat,1, 0.2, 0.2, 0.2,0.4);
+  cairo_set_source (priv->cr, pat);
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);
+    
+  cairo_arc (priv->cr, name_box.x+name_box.width-0.035*radius, name_box.y+0.035*radius, 0.019 * radius, 0, 2*M_PI);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
+  {
+    if (!priv->grayscale_color)
+      cairo_set_source_rgb(priv->cr, 0.5,0.5,0.5);
+    else
+      cairo_pattern_add_color_stop_rgba (pat, 0, 1-0.7,1-0.7,1-0.7, 1);
+  }
+  else
+  {
+    pat = cairo_pattern_create_radial (x - 0.392 * radius, y - 0.967 * radius, 0.167 * radius,
+                                       x - 0.477 * radius, y - 0.967 * radius, 0.836 * radius);
+    cairo_pattern_add_color_stop_rgba (pat, 0, 0.7,0.7,0.7, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.5,0.5,0.5, 1);
+    cairo_set_source (priv->cr, pat);
+  }
+  cairo_fill_preserve (priv->cr);
+  cairo_stroke (priv->cr);
+  
+  name_box.x = bar_box.x;
+  name_box.y = bar_box.y+bar_box.height+0.12*radius;
+  name_box.width = bar_box.width;
+  name_box.height = 0.2 * radius;
+  cairo_stroke(priv->cr);
+  
+  if (!priv->grayscale_color)
+		sprintf (str, "<span foreground=\"black\">%s</span>", name);
+  else
+		sprintf (str, "<span foreground=\"white\">%s</span>", name);
+  gtk_bar_gauge_draw_name (GTK_BAR_GAUGE (bg), (gchar *)&str, &name_box);
+    
+  switch(index)
+  {
+	  case 1:
+		priv->alert1=alert;
+		break;
+	  case 2:
+		priv->alert2=alert;
+		break;
+	  case 3:
+		priv->alert3=alert;
+		break;
+	  case 4:
+		priv->alert4=alert;
+		break;
+  }
+    
   cairo_pattern_destroy (pat);    
   return;
 }
 
-
+/**
+ * @fn static void gtk_bar_gauge_draw_screws (GtkWidget * bg)
+ * @brief Private widget's function that draw the widget's screws using cairo.
+ */
 static void gtk_bar_gauge_draw_screws (GtkWidget * bg)
 {
   GtkBarGaugePrivate *priv;
@@ -1166,7 +1454,6 @@ static void gtk_bar_gauge_draw_screws (GtkWidget * bg)
   radius=priv->radius;
   x=priv->x;
   y=priv->y;
-  radius = radius+0.12*radius;
   
   // **** top left screw
   cairo_arc (priv->cr, x-0.82*radius, y-0.82*radius, 0.1 * radius, 0, 2*M_PI);
@@ -1179,12 +1466,12 @@ static void gtk_bar_gauge_draw_screws (GtkWidget * bg)
   cairo_stroke (priv->cr);
     
   cairo_arc (priv->cr, x-0.82*radius, y-0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
-                            (gdouble) priv->bg_color_bounderie.green / 65535,
+                          (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
     else
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_inv.red / 65535,
@@ -1204,7 +1491,7 @@ static void gtk_bar_gauge_draw_screws (GtkWidget * bg)
   cairo_stroke (priv->cr);
   
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
        cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
        cairo_set_source_rgb (priv->cr, 1., 1., 1.);
@@ -1217,7 +1504,7 @@ static void gtk_bar_gauge_draw_screws (GtkWidget * bg)
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
 		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
       cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
@@ -1241,10 +1528,10 @@ static void gtk_bar_gauge_draw_screws (GtkWidget * bg)
   cairo_stroke (priv->cr);
     
   cairo_arc (priv->cr, x+0.82*radius, y-0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -1266,7 +1553,7 @@ static void gtk_bar_gauge_draw_screws (GtkWidget * bg)
   cairo_stroke (priv->cr);
   
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
        cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
        cairo_set_source_rgb (priv->cr, 1., 1., 1.);
@@ -1279,7 +1566,7 @@ static void gtk_bar_gauge_draw_screws (GtkWidget * bg)
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
 		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
       cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
@@ -1303,10 +1590,10 @@ static void gtk_bar_gauge_draw_screws (GtkWidget * bg)
   cairo_stroke (priv->cr);
     
   cairo_arc (priv->cr, x-0.82*radius, y+0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -1328,7 +1615,7 @@ static void gtk_bar_gauge_draw_screws (GtkWidget * bg)
   cairo_stroke (priv->cr);
   
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
        cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
        cairo_set_source_rgb (priv->cr, 1., 1., 1.);
@@ -1341,7 +1628,7 @@ static void gtk_bar_gauge_draw_screws (GtkWidget * bg)
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
 		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
       cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
@@ -1365,10 +1652,10 @@ static void gtk_bar_gauge_draw_screws (GtkWidget * bg)
   cairo_stroke (priv->cr);
     
   cairo_arc (priv->cr, x+0.82*radius, y+0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -1390,7 +1677,7 @@ static void gtk_bar_gauge_draw_screws (GtkWidget * bg)
   cairo_stroke (priv->cr);
   
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
        cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
        cairo_set_source_rgb (priv->cr, 1., 1., 1.);
@@ -1403,7 +1690,7 @@ static void gtk_bar_gauge_draw_screws (GtkWidget * bg)
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
 		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
       cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
@@ -1419,6 +1706,10 @@ static void gtk_bar_gauge_draw_screws (GtkWidget * bg)
   return;
 }
 
+/**
+ * @fn static void gtk_gauge_draw_name (GtkGauge * gauge, gchar * pch_text, GdkRectangle * rect)
+ * @brief Private widget's function that draw the gauge name using pango.
+ */
 static void gtk_bar_gauge_draw_name (GtkBarGauge * bg, gchar * pch_text, GdkRectangle * rect)
 {
   GtkBarGaugePrivate *priv;
@@ -1486,7 +1777,7 @@ static void gtk_bar_gauge_draw_name (GtkBarGauge * bg, gchar * pch_text, GdkRect
   x_pos = rect->x + (gint) ((rect->width - width) / 2);
   y_pos = rect->y + (gint) ((rect->height - height) / 2);
 
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 1, 1, 1);
   else
     cairo_set_source_rgb (priv->cr, 0., 0., 0.);
@@ -1499,6 +1790,18 @@ static void gtk_bar_gauge_draw_name (GtkBarGauge * bg, gchar * pch_text, GdkRect
   return;
 }
 
+/**
+ * @fn static gboolean gtk_bar_gauge_button_press_event (GtkWidget * widget, GdkEventButton * ev)
+ * @brief Special Gtk API function. Override the _button_press_event<br>
+ * handler. Perform mouse button press events. 
+ * 
+ * Here, the mouse events are not used for the widget (maybe<br>
+ * in future released) but to allow the user to enable/disable<br>
+ * the debug messages.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static gboolean gtk_bar_gauge_button_press_event (GtkWidget * widget, GdkEventButton * ev)
 {
   GtkBarGaugePrivate *priv;
@@ -1533,6 +1836,16 @@ static gboolean gtk_bar_gauge_button_press_event (GtkWidget * widget, GdkEventBu
   return FALSE;
 }
 
+/**
+ * @fn static gboolean gtk_bar_gauge_motion_notify_event (GtkWidget * widget, GdkEventMotion * ev)
+ * @brief Special Gtk API function. Override the _motion_notify_event<br>
+ * handler. Perform mouse motion events. 
+ * 
+ * Here, the mouse events are not used (maybe in future released).
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static gboolean gtk_bar_gauge_motion_notify_event (GtkWidget * widget, GdkEventMotion * ev)
 {
   GtkBarGaugePrivate *priv;
@@ -1571,6 +1884,14 @@ static gboolean gtk_bar_gauge_motion_notify_event (GtkWidget * widget, GdkEventM
   return TRUE;
 }
 
+/**
+ * @fn static void gtk_bar_gauge_destroy (GtkObject * object)
+ * @brief Special Gtk API function. Override the _destroy handler.<br>
+ * Allow the destruction of all widget's pointer.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static void gtk_bar_gauge_destroy (GtkObject * object)
 {
   GtkBarGaugePrivate *priv = NULL;
@@ -1593,6 +1914,7 @@ static void gtk_bar_gauge_destroy (GtkObject * object)
   if (priv->cr)
   {
     g_free (priv->cr);
+    g_free (priv->widget_name);
     g_free (priv->name_bar1);
     g_free (priv->name_bar2);
     g_free (priv->name_bar3);
@@ -1611,6 +1933,14 @@ static void gtk_bar_gauge_destroy (GtkObject * object)
   return;
 }
 
+/**
+ * @fn static void gtk_bar_gauge_set_property (GObject * object, guint prop_id, const GValue * value, GParamSpec * pspec)
+ * @brief Special Gtk API function. Override the _set_property handler <br>
+ * in order to set the object parameters.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 static void gtk_bar_gauge_set_property (GObject * object, guint prop_id, const GValue * value, GParamSpec * pspec)
 {
   GtkBarGaugePrivate *priv = NULL;
@@ -1633,6 +1963,9 @@ static void gtk_bar_gauge_set_property (GObject * object, guint prop_id, const G
 	 case PROP_BAR_NUMBER:
       priv->bar_number= g_value_get_int (value);
       break;
+   case PROP_NAME:
+      priv->widget_name = g_strdup (g_value_get_string (value));
+      break;      
 	  
     case PROP_NAME1:
       priv->name_bar1 = g_strdup (g_value_get_string (value));
@@ -1698,8 +2031,8 @@ static void gtk_bar_gauge_set_property (GObject * object, guint prop_id, const G
       priv->yellow_strip_start4 = g_value_get_int (value);
       break;      
 
-    case PROP_INVERSED_COLOR:
-      priv->color_mode_inv = g_value_get_boolean (value);
+    case PROP_GRAYSCALE_COLOR:
+      priv->grayscale_color = g_value_get_boolean (value);
       break;
     case PROP_RADIAL_COLOR:
       priv->radial_color = g_value_get_boolean (value);

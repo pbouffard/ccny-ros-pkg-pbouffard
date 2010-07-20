@@ -29,7 +29,18 @@
  * Copyright (C) 2010, CCNY Robotics Lab <br>
  * http://robotics.ccny.cuny.edu <br>
  * 
- * \b Example: Add Variometer widget to an gtkvbox and set some params <br>
+ * This widget provide an easy to read variometer instrument. <br>
+ * The design is volontary based on a real variometer flight instrument <br>
+ * in order to be familiar to aircraft and helicopter pilots.<br>
+ * 
+ * @b Pictures:<br>
+ * <table><tr>
+ * <th><IMG SRC="file:///home/gaitt/Bureau/gtkvariometer.png"></th>
+ * <th><IMG SRC="file:///home/gaitt/Bureau/gtkvariometer_g.png"></th>
+ * </tr></table>
+ * 
+ * @b Example: <br>
+ * Add variometer widget to an gtkvbox and set some params <br>
  * @code
  * window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
  * vbox = gtk_vbox_new(TRUE, 1);
@@ -37,21 +48,43 @@
  * 
  * vario = gtk_variometer_new();
  * g_object_set(GTK_VARIOMETER (vario),
- *					"inverse-color", false,
- *					"unit-is-feet", true,
- *					"unit-step-value", 1000,
- *					"radial-color", true, NULL);
+ *		"grayscale-color", false,
+ *		"unit-is-feet", true,
+ *		"unit-step-value", 1000,
+ *		"radial-color", true, NULL);
  * 
  * gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(vario), TRUE, TRUE, 0);
  * gtk_widget_show_all(window);
  * @endcode
+ * 
+ * The following code show how to change widget's values and redraw it:<br>
+ * Note that here tc's type is "GtkWidget *".<br>
+ * @code
+ * if (IS_GTK_VARIOMETER (vario))
+ * {
+ *	gtk_variometer_set_alti (GTK_VARIOMETER (vario),altitude);
+ *	gtk_variometer_redraw(GTK_VARIOMETER(vario));
+ * }		
+ * @endcode
+ * 
+  @b Widget @b Parameters:<br>
+ * - "grayscale-colors": boolean, if TRUE, draw the widget with grayscale colors (outdoor use)<br>
+ * - "radial-color": boolean, if TRUE, draw a fake light reflexion<br>
+ * - "unit-is-feet": boolean, if TRUE, the widget display FEET values else display METER<br>
+ * - "unit-step-value", int, define the step value of the altimeter can be 100,1000<br>
+ * 
+ * @b Widget @b values:<br>
+ * - "altitude": double, define the altitude you want to display by the widget - the value is<br>
+ * from 0 to 999999.
+ * Note that this value need to be the same as the altimeter widget.
  */
 
 #include <ground_station/gui/gtkvariometer.h>
 
 /**
  * @typedef struct GtkVariometerPrivate 
- * @brief Special Gtk API strucure which contains the widget's data.
+ * @brief Special Gtk API strucure. Allow to add a private data<br>
+ * for the widget. Defined in the C file in order to be private.
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
@@ -65,11 +98,11 @@ typedef struct _GtkVariometerPrivate
   /* widget data */
   gint unit_value;
   gboolean unit_is_feet;
-  gboolean color_mode_inv;
+  gboolean grayscale_color;
   gboolean radial_color;
-  gdouble value;
+  gdouble altitude;
   gdouble l_time;
-  gdouble l_value;  
+  gdouble l_altitude;
 
   /* drawing data */
   gdouble x;
@@ -90,7 +123,7 @@ typedef struct _GtkVariometerPrivate
 
 /**
  * @enum _GTK_VARIOMETER_PROPERTY_ID
- * @brief Special Gtk API enum that allow to set widget's properties
+ * @brief Special Gtk API enum. Allow to identify widget's properties.
  *
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
@@ -98,7 +131,7 @@ typedef struct _GtkVariometerPrivate
 enum _GTK_VARIOMETER_PROPERTY_ID
 {
   PROP_0,
-  PROP_INVERSED_COLOR,
+  PROP_GRAYSCALE_COLOR,
   PROP_UNIT_IS_FEET,
   PROP_UNIT_STEP_VALUE,
   PROP_RADIAL_COLOR,
@@ -106,14 +139,23 @@ enum _GTK_VARIOMETER_PROPERTY_ID
 
 /**
  * @fn G_DEFINE_TYPE (GtkVariometer, gtk_variometer, GTK_TYPE_DRAWING_AREA);
- * @brief Special Gtk API function that permit to define the current
- * widget as an GTK_TYPE_DRAWING_AREA. 
+ * @brief Special Gtk API function. Define a new object type named GtkVariometer <br>
+ * and all preface of the widget's functions calls with gtk_variometer.<br>
+ * We are inheriting the type of GtkDrawingArea.<br>
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
  */
 G_DEFINE_TYPE (GtkVariometer, gtk_variometer, GTK_TYPE_DRAWING_AREA);
 
+/**
+ * @def GTK_VARIOMETER_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GTK_VARIOMETER_TYPE, GtkVariometerPrivate))
+ * @brief Special Gtk API define. Add a macro for easy access to the private<br>
+ * data struct.
+ * 
+ * See GObject and GTK+ references for
+ * more informations: http://library.gnome.org/devel/references.html.en
+ */
 #define GTK_VARIOMETER_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GTK_VARIOMETER_TYPE, GtkVariometerPrivate))
 
 static void gtk_variometer_class_init (GtkVariometerClass * klass);
@@ -134,12 +176,22 @@ static gboolean gtk_variometer_debug = FALSE;
 
 /**
  * @fn static void gtk_variometer_class_init (GtkVariometerClass * klass)
- * @brief Special Gtk API function that perform the initilization step of
- * the widget's class. 
+ * @brief Special Gtk API function. Function called when the class is<br>
+ * initialised. Allow to set certain class wide functions and<br>
+ * properties<br>.
+ * Allow to override some parent’s expose handler like :<br>
+ * - set_property handler<br>
+ * - destroy handler<br>
+ * - configure_event handler<br>
+ * - motion_notify_event handler (not use in this widget)
+ * - button_press_event handler (not use in this widget)
+ * 
+ * Also register the private struct GtkVariometerPrivate with<br>
+ * the class and install widget properties.
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
- */ 
+ */
 static void gtk_variometer_class_init (GtkVariometerClass * klass)
 {
   GObjectClass *obj_class = G_OBJECT_CLASS (klass);
@@ -166,10 +218,11 @@ static void gtk_variometer_class_init (GtkVariometerClass * klass)
   g_type_class_add_private (obj_class, sizeof (GtkVariometerPrivate));
 
   g_object_class_install_property (obj_class,
-                                   PROP_INVERSED_COLOR,
-                                   g_param_spec_boolean ("inverse-color",
-                                                         "inverse or not the widget color",
-                                                         "inverse or not the widget color", FALSE, G_PARAM_WRITABLE));
+                                   PROP_GRAYSCALE_COLOR,
+                                   g_param_spec_boolean ("grayscale-color",
+                                                         "use grayscale for the widget color",
+                                                         "use grayscale for the widget color", FALSE,
+                                                         G_PARAM_WRITABLE));
   g_object_class_install_property (obj_class,
                                    PROP_UNIT_IS_FEET,
                                    g_param_spec_boolean ("unit-is-feet",
@@ -192,12 +245,13 @@ static void gtk_variometer_class_init (GtkVariometerClass * klass)
 
 /**
  * @fn static void gtk_variometer_init (GtkVariometer * vario)
- * @brief Special Gtk API function that initialize the widget and 
- * widget's data. 
+ * @brief Special Gtk API function. Function called when the creating a<br>
+ * new GtkVariometer. Allow to initialize some private variables of<br>
+ * widget.
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
- */ 
+ */
 static void gtk_variometer_init (GtkVariometer * vario)
 {
   GtkVariometerPrivate *priv = NULL;
@@ -213,16 +267,18 @@ static void gtk_variometer_init (GtkVariometer * vario)
   gtk_widget_add_events (GTK_WIDGET (vario), GDK_BUTTON_PRESS_MASK |
                          GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK);
   priv->b_mouse_onoff = FALSE;
-  priv->color_mode_inv = FALSE;
+  priv->grayscale_color = FALSE;
   priv->radial_color = TRUE;
   priv->unit_value = 1000;
-  priv->value=0;
-  priv->l_time=0;
+  priv->altitude = 0;
+  priv->l_time = 0;
+  priv->altitude = 0;
+  priv->l_altitude = 0;
 
   priv->bg_color_bounderie.red = 6553.5;        // 0.1 cairo
   priv->bg_color_bounderie.green = 6553.5;
   priv->bg_color_bounderie.blue = 6553.5;
-  priv->bg_color_variometer.red = 3276.75;       // 0.05 cairo
+  priv->bg_color_variometer.red = 3276.75;      // 0.05 cairo
   priv->bg_color_variometer.green = 3276.75;
   priv->bg_color_variometer.blue = 3276.75;
   priv->bg_color_inv.red = 45874.5;     // 0.7 cairo
@@ -231,7 +287,7 @@ static void gtk_variometer_init (GtkVariometer * vario)
   priv->bg_radial_color_begin_bounderie.red = 13107;    // 0.2 cairo
   priv->bg_radial_color_begin_bounderie.green = 13107;
   priv->bg_radial_color_begin_bounderie.blue = 13107;
-  priv->bg_radial_color_begin_variometer.red = 45874.5;  // 0.7 cairo
+  priv->bg_radial_color_begin_variometer.red = 45874.5; // 0.7 cairo
   priv->bg_radial_color_begin_variometer.green = 45874.5;
   priv->bg_radial_color_begin_variometer.blue = 45874.5;
   return;
@@ -239,11 +295,12 @@ static void gtk_variometer_init (GtkVariometer * vario)
 
 /**
  * @fn static gboolean gtk_variometer_configure_event (GtkWidget * widget, GdkEventConfigure * event)
- * @brief Special Gtk API function. 
+ * @brief Special Gtk API function. Override the _configure_event handler<br>
+ * in order to resize the widget when the main window is resized.
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
- */ 
+ */
 static gboolean gtk_variometer_configure_event (GtkWidget * widget, GdkEventConfigure * event)
 {
   GtkVariometerPrivate *priv;
@@ -275,7 +332,7 @@ static gboolean gtk_variometer_configure_event (GtkWidget * widget, GdkEventConf
     priv->plot_box.width = event->width;
     priv->plot_box.height = event->height;
   }
-  
+
   priv->l_time = 0;
 
   if (gtk_variometer_debug)
@@ -287,11 +344,13 @@ static gboolean gtk_variometer_configure_event (GtkWidget * widget, GdkEventConf
 
 /**
  * @fn static gboolean gtk_variometer_expose (GtkWidget * vario, GdkEventExpose * event)
- * @brief Special Gtk API function. 
+ * @brief Special Gtk API function. Override of the expose handler.<br>
+ * An “expose-event” signal is emitted when the widget need to be drawn.<br>
+ * A Cairo context is created for the parent's GdkWindow.
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
- */ 
+ */
 static gboolean gtk_variometer_expose (GtkWidget * vario, GdkEventExpose * event)
 {
   GtkVariometerPrivate *priv;
@@ -339,9 +398,15 @@ static gboolean gtk_variometer_expose (GtkWidget * vario, GdkEventExpose * event
  * @fn extern void gtk_variometer_redraw (GtkVariometer * vario)
  * @brief Special Gtk API function. Redraw the widget when called.
  * 
+ * This function will redraw the widget canvas. In order to reexpose the canvas<br>
+ * (and cause it to redraw) of our parent class(GtkDrawingArea), it is needed to<br>
+ * use gdk_window_invalidate_rect(). The function gdk_window_invalidate_region()<br>
+ * need to be called as well. And finaly, in order to make all events happen, it<br>
+ * is needed to call gdk_window_process_all_updates().
+ * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
- */ 
+ */
 extern void gtk_variometer_redraw (GtkVariometer * vario)
 {
   GtkWidget *widget;
@@ -367,69 +432,77 @@ extern void gtk_variometer_redraw (GtkVariometer * vario)
 }
 
 /**
- * @fn static inline double Now() 
- * @brief Time function, return the current time.
+ * @fn static inline double getTime() 
+ * @brief Private widget's function allow to get the current time.
  * @return (double) current time
- */ 
-static inline double getTime() 
-{ 	
-	struct timeval tp;	
-	gettimeofday(&tp,NULL); 
-	return (double)tp.tv_sec+tp.tv_usec*1e-6; 
-} 
+ */
+static inline double getTime ()
+{
+  struct timeval tp;
+  gettimeofday (&tp, NULL);
+  return (double) tp.tv_sec + tp.tv_usec * 1e-6;
+}
 
 /**
- * @fn extern void gtk_variometer_set_value (GtkVariometer * vario, gdouble val)
- * @brief Gtk Variometer function that permit to set the internal value
- * variable of the widget. 
+ * @fn extern void gtk_variometer_set_alti (GtkVariometer * vario, gdouble alti)
+ * @brief Public widget's function that allow the main program/user to<br>
+ * set the internal value variable of the widget. 
  * 
- * See GObject and GTK+ references for
- * more informations: http://library.gnome.org/devel/references.html.en
- */ 
-extern void gtk_variometer_set_value (GtkVariometer * vario, gdouble val)
+ * "alti": double, define the altitude you want to display by the widget - the value is<br>
+ * from 0 to 999999.
+ * Note that this value need to be the same as the altimeter widget.
+ */
+extern void gtk_variometer_set_alti (GtkVariometer * vario, gdouble alti)
 {
   GtkVariometerPrivate *priv;
 
   if (gtk_variometer_debug)
   {
-    g_debug ("===> gtk_variometer_set_value()");
+    g_debug ("===> gtk_variometer_set_alti()");
   }
   g_return_if_fail (IS_GTK_VARIOMETER (vario));
 
   priv = GTK_VARIOMETER_GET_PRIVATE (vario);
-  
-  if(priv->l_time==0)
+
+  if ((alti >= 0) && (alti <= 999999))
   {
-	  priv->l_time = getTime();
-	  priv->l_value = val;
-	  return;
+    if (priv->l_time == 0)
+    {
+      priv->l_time = getTime ();
+      priv->l_altitude = alti;
+      return;
+    }
+
+    double unit_per_min, now = getTime ();
+
+    unit_per_min = (60 * (alti - priv->l_altitude)) / (now - priv->l_time);
+    if (unit_per_min < 6 * priv->unit_value)
+    {
+      priv->altitude = (60 * (alti - priv->l_altitude)) / (now - priv->l_time);
+    }
+    else
+    {
+      priv->l_time = 0;
+      return;
+    }
+
+    priv->l_time = now;
+    priv->l_altitude = alti;
   }
-  
-  double unit_per_min,now = getTime();
-  
-  unit_per_min = (60*(val-priv->l_value))/(now-priv->l_time); 
-  if(unit_per_min<6*priv->unit_value)
-  {
-		priv->value = (60*(val-priv->l_value))/(now-priv->l_time);   
-  }
-  else 
-  {
-		priv->l_time = 0;
-		return;
-  }
-  
-  priv->l_time = now;
-  priv->l_value = val;
+  else
+    g_warning ("GtkVariometer : gtk_variometer_set_alti : value out of range");
+
   return;
 }
 
 /**
  * @fn extern GtkWidget *gtk_variometer_new (void)
- * @brief Special Gtk API function. 
+ * @brief Special Gtk API function. This function is simply a wrapper<br>
+ * for convienience.
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
- */ 
+ */
 extern GtkWidget *gtk_variometer_new (void)
 {
   if (gtk_variometer_debug)
@@ -441,11 +514,13 @@ extern GtkWidget *gtk_variometer_new (void)
 
 /**
  * @fn static void gtk_variometer_draw (GtkWidget * vario)
- * @brief Special Gtk API function that draw the widget by using cairo.
+ * @brief Special Gtk API function. Override the _draw handler of the<br>
+ * parent class GtkDrawingArea. This function use the cairo context<br>
+ * created before in order to draw scalable graphics. 
  * 
  * See GObject,Cairo and GTK+ references for more informations: 
  * http://library.gnome.org/devel/references.html.en
- */ 
+ */
 static void gtk_variometer_draw (GtkWidget * vario)
 {
   GtkVariometerPrivate *priv;
@@ -488,10 +563,10 @@ static void gtk_variometer_draw (GtkWidget * vario)
   cairo_arc (priv->cr, rec_x0 + rec_radius, rec_y0 + rec_radius, rec_radius, 180 * rec_degrees, 270 * rec_degrees);
   cairo_close_path (priv->cr);
 
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -515,7 +590,7 @@ static void gtk_variometer_draw (GtkWidget * vario)
   cairo_stroke (priv->cr);
 
   cairo_arc (priv->cr, x, y, radius, 0, 2 * M_PI);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
     cairo_set_source_rgb (priv->cr, 1., 1., 1.);
@@ -523,7 +598,7 @@ static void gtk_variometer_draw (GtkWidget * vario)
   cairo_stroke (priv->cr);
 
   cairo_arc (priv->cr, x, y, radius - 0.04 * radius, 0, 2 * M_PI);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 0.6, 0.5, 0.5);
   else
     cairo_set_source_rgb (priv->cr, 1 - 0.6, 1 - 0.5, 1 - 0.5);
@@ -532,10 +607,10 @@ static void gtk_variometer_draw (GtkWidget * vario)
   cairo_set_line_width (priv->cr, 0.01 * radius);
   radius = radius - 0.1 * radius;
   cairo_arc (priv->cr, x, y, radius, 0, 2 * M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_variometer.red / 65535,
                             (gdouble) priv->bg_color_variometer.green / 65535,
                             (gdouble) priv->bg_color_variometer.blue / 65535);
@@ -559,10 +634,10 @@ static void gtk_variometer_draw (GtkWidget * vario)
   cairo_stroke (priv->cr);
 
   cairo_arc (priv->cr, x, y, radius, 0, 2 * M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_variometer.red / 65535,
                             (gdouble) priv->bg_color_variometer.green / 65535,
                             (gdouble) priv->bg_color_variometer.blue / 65535);
@@ -587,85 +662,87 @@ static void gtk_variometer_draw (GtkWidget * vario)
 
 
   // **** Variometer ticks
-    if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 1, 1, 1);
   else
     cairo_set_source_rgb (priv->cr, 0., 0., 0.);
-  cairo_set_line_width (priv->cr, 0.023 * radius);    
+  cairo_set_line_width (priv->cr, 0.023 * radius);
   for (i = -7; i <= 7; i++)
   {
     int inset = 0.12 * radius;
     cairo_save (priv->cr);
 
-    cairo_move_to (priv->cr, x + (radius - inset) * cos (M_PI + i * (M_PI / 9 + M_PI/38)),
-                   y + (radius - inset) * sin (M_PI + i * (M_PI / 9+ M_PI/38)));
-    cairo_line_to (priv->cr, x + radius * cos (M_PI + i * (M_PI / 9+ M_PI/38)), y + radius * sin (M_PI+ i * (M_PI /9+ M_PI/38)));
+    cairo_move_to (priv->cr, x + (radius - inset) * cos (M_PI + i * (M_PI / 9 + M_PI / 38)),
+                   y + (radius - inset) * sin (M_PI + i * (M_PI / 9 + M_PI / 38)));
+    cairo_line_to (priv->cr, x + radius * cos (M_PI + i * (M_PI / 9 + M_PI / 38)),
+                   y + radius * sin (M_PI + i * (M_PI / 9 + M_PI / 38)));
     cairo_stroke (priv->cr);
     cairo_restore (priv->cr);
-  }  
+  }
 
-  cairo_set_line_width (priv->cr, 0.015 * radius); 
+  cairo_set_line_width (priv->cr, 0.015 * radius);
   for (i = -10; i <= 10; i++)
   {
-    int inset = 0.12 * radius/3;	  
+    int inset = 0.12 * radius / 3;
     cairo_save (priv->cr);
 
-    cairo_move_to (priv->cr, x + (radius - 2*inset) * cos (M_PI + i * (M_PI / 9 + M_PI/38)/5),
-                   y + (radius - 2*inset) * sin (M_PI + i * (M_PI / 9+ M_PI/38)/5));
-    cairo_line_to (priv->cr, x + (radius - inset) * cos (M_PI + i * (M_PI / 9+ M_PI/38)/5), 
-										y + (radius - inset) * sin (M_PI+ i * (M_PI /9+ M_PI/38)/5));
+    cairo_move_to (priv->cr, x + (radius - 2 * inset) * cos (M_PI + i * (M_PI / 9 + M_PI / 38) / 5),
+                   y + (radius - 2 * inset) * sin (M_PI + i * (M_PI / 9 + M_PI / 38) / 5));
+    cairo_line_to (priv->cr, x + (radius - inset) * cos (M_PI + i * (M_PI / 9 + M_PI / 38) / 5),
+                   y + (radius - inset) * sin (M_PI + i * (M_PI / 9 + M_PI / 38) / 5));
     cairo_stroke (priv->cr);
     cairo_restore (priv->cr);
-  }  
+  }
   for (i = 4; i <= 14; i++)
   {
-    int inset = 0.12 * radius/3;	  
+    int inset = 0.12 * radius / 3;
     cairo_save (priv->cr);
 
-    cairo_move_to (priv->cr, x + (radius - 2*inset) * cos (M_PI + i * (M_PI / 9 + M_PI/38)/2),
-                   y + (radius - 2*inset) * sin (M_PI + i * (M_PI / 9+ M_PI/38)/2));
-    cairo_line_to (priv->cr, x + (radius - inset) * cos (M_PI + i * (M_PI / 9+ M_PI/38)/2), 
-										y + (radius - inset) * sin (M_PI+ i * (M_PI /9+ M_PI/38)/2));
+    cairo_move_to (priv->cr, x + (radius - 2 * inset) * cos (M_PI + i * (M_PI / 9 + M_PI / 38) / 2),
+                   y + (radius - 2 * inset) * sin (M_PI + i * (M_PI / 9 + M_PI / 38) / 2));
+    cairo_line_to (priv->cr, x + (radius - inset) * cos (M_PI + i * (M_PI / 9 + M_PI / 38) / 2),
+                   y + (radius - inset) * sin (M_PI + i * (M_PI / 9 + M_PI / 38) / 2));
     cairo_stroke (priv->cr);
     cairo_restore (priv->cr);
-  }  
+  }
   for (i = -4; i >= -14; i--)
   {
-    int inset = 0.12 * radius/3;	  
+    int inset = 0.12 * radius / 3;
     cairo_save (priv->cr);
 
-    cairo_move_to (priv->cr, x + (radius - 2*inset) * cos (M_PI + i * (M_PI / 9 + M_PI/38)/2),
-                   y + (radius - 2*inset) * sin (M_PI + i * (M_PI / 9+ M_PI/38)/2));
-    cairo_line_to (priv->cr, x + (radius - inset) * cos (M_PI + i * (M_PI / 9+ M_PI/38)/2), 
-										y + (radius - inset) * sin (M_PI+ i * (M_PI /9+ M_PI/38)/2));
+    cairo_move_to (priv->cr, x + (radius - 2 * inset) * cos (M_PI + i * (M_PI / 9 + M_PI / 38) / 2),
+                   y + (radius - 2 * inset) * sin (M_PI + i * (M_PI / 9 + M_PI / 38) / 2));
+    cairo_line_to (priv->cr, x + (radius - inset) * cos (M_PI + i * (M_PI / 9 + M_PI / 38) / 2),
+                   y + (radius - inset) * sin (M_PI + i * (M_PI / 9 + M_PI / 38) / 2));
     cairo_stroke (priv->cr);
     cairo_restore (priv->cr);
-  }    
+  }
 
-  cairo_set_line_width (priv->cr, 0.08 * radius);    
-  cairo_arc (priv->cr, x, y, radius-0.05*radius, M_PI+ 7 * (M_PI /9+ M_PI/38), M_PI- 7* (M_PI /9+ M_PI/38));
-  if (!priv->color_mode_inv)
-    cairo_set_source_rgb (priv->cr, 1., 1.,1.);
+  cairo_set_line_width (priv->cr, 0.08 * radius);
+  cairo_arc (priv->cr, x, y, radius - 0.05 * radius, M_PI + 7 * (M_PI / 9 + M_PI / 38),
+             M_PI - 7 * (M_PI / 9 + M_PI / 38));
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 1., 1., 1.);
   else
-    cairo_set_source_rgb (priv->cr, 0., 0.,0.);
+    cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   cairo_stroke (priv->cr);
-  
+
   // **** "up" drawing
   cairo_select_font_face (priv->cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
   cairo_set_font_size (priv->cr, 0.08 * radius);
   cairo_move_to (priv->cr, x - 0.55 * radius, y - 0.12 * radius);
   cairo_show_text (priv->cr, "UP");
   cairo_stroke (priv->cr);
-  
+
   // **** "down" drawing
   cairo_move_to (priv->cr, x - 0.55 * radius, y + 0.17 * radius);
   cairo_show_text (priv->cr, "DOWN");
   cairo_stroke (priv->cr);
 
   // **** up/down arrow
-  cairo_set_line_width (priv->cr, 0.01 * radius);      
-  cairo_new_sub_path (priv->cr);  
-  cairo_move_to (priv->cr,x - 0.6 * radius, y + 0.05 * radius);
+  cairo_set_line_width (priv->cr, 0.01 * radius);
+  cairo_new_sub_path (priv->cr);
+  cairo_move_to (priv->cr, x - 0.6 * radius, y + 0.05 * radius);
   cairo_line_to (priv->cr, x - 0.6 * radius, y + 0.23 * radius);
   cairo_line_to (priv->cr, x - 0.62 * radius, y + 0.23 * radius);
   cairo_line_to (priv->cr, x - 0.6 * radius, y + 0.25 * radius);
@@ -674,9 +751,9 @@ static void gtk_variometer_draw (GtkWidget * vario)
   cairo_fill_preserve (priv->cr);
   cairo_close_path (priv->cr);
   cairo_stroke (priv->cr);
-   
-  cairo_new_sub_path (priv->cr);  
-  cairo_move_to (priv->cr,x - 0.6 * radius, y - 0.05 * radius);
+
+  cairo_new_sub_path (priv->cr);
+  cairo_move_to (priv->cr, x - 0.6 * radius, y - 0.05 * radius);
   cairo_line_to (priv->cr, x - 0.6 * radius, y - 0.23 * radius);
   cairo_line_to (priv->cr, x - 0.62 * radius, y - 0.23 * radius);
   cairo_line_to (priv->cr, x - 0.6 * radius, y - 0.25 * radius);
@@ -689,101 +766,101 @@ static void gtk_variometer_draw (GtkWidget * vario)
   // **** "Variometer" drawing
   cairo_select_font_face (priv->cr, "Sans", CAIRO_FONT_SLANT_OBLIQUE, CAIRO_FONT_WEIGHT_NORMAL);
   cairo_set_font_size (priv->cr, 0.13 * radius);
-  cairo_move_to (priv->cr, x - 0.34 * radius, y - 0.3	 * radius);
+  cairo_move_to (priv->cr, x - 0.34 * radius, y - 0.3 * radius);
   cairo_show_text (priv->cr, "Variometer");
   cairo_stroke (priv->cr);
-  
+
   // **** infos drawing
   cairo_select_font_face (priv->cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
-  cairo_set_font_size (priv->cr, 0.08 * radius);  
+  cairo_set_font_size (priv->cr, 0.08 * radius);
   switch (priv->unit_value)
   {
     case 100:
-		cairo_move_to (priv->cr, x - 0.35 * radius,y+0.4 * radius);
+      cairo_move_to (priv->cr, x - 0.35 * radius, y + 0.4 * radius);
       if (priv->unit_is_feet)
-			cairo_show_text (priv->cr, "100 FEET PER MIN");
-		else
-			cairo_show_text (priv->cr, "100 METER PER MIN");
+        cairo_show_text (priv->cr, "100 FEET PER MIN");
+      else
+        cairo_show_text (priv->cr, "100 METER PER MIN");
       break;
       cairo_stroke (priv->cr);
     case 1000:
-		cairo_move_to (priv->cr, x - 0.35 * radius,y+0.4 * radius);
-		if (priv->unit_is_feet)
-			cairo_show_text (priv->cr, "1000 FEET PER MIN");
-		else
-			cairo_show_text (priv->cr, "1000 METER PER MIN");
-		cairo_stroke (priv->cr);
-		break;
+      cairo_move_to (priv->cr, x - 0.35 * radius, y + 0.4 * radius);
+      if (priv->unit_is_feet)
+        cairo_show_text (priv->cr, "1000 FEET PER MIN");
+      else
+        cairo_show_text (priv->cr, "1000 METER PER MIN");
+      cairo_stroke (priv->cr);
+      break;
   }
 
   // Number drawing
-  cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 1, 1, 1);
+  else
+    cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   int inset = 0.25 * radius;
   cairo_select_font_face (priv->cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
   cairo_set_font_size (priv->cr, 0.2 * radius);
-  
+
   cairo_move_to (priv->cr, x - 0.065 * radius + (radius - inset) * cos (M_PI),
-									y + 0.07 * radius + (radius - inset) * sin (M_PI));
+                 y + 0.07 * radius + (radius - inset) * sin (M_PI));
   cairo_show_text (priv->cr, "0");
   cairo_stroke (priv->cr);
-  cairo_set_font_size (priv->cr, 0.1 * radius);  
-  cairo_move_to (priv->cr, x - 0.065 * radius + (radius - inset) * cos (M_PI + M_PI / 9+ M_PI/38),
-									y + 0.03 * radius + (radius - inset) * sin (M_PI + M_PI / 9+ M_PI/38));
+  cairo_set_font_size (priv->cr, 0.1 * radius);
+  cairo_move_to (priv->cr, x - 0.065 * radius + (radius - inset) * cos (M_PI + M_PI / 9 + M_PI / 38),
+                 y + 0.03 * radius + (radius - inset) * sin (M_PI + M_PI / 9 + M_PI / 38));
   cairo_show_text (priv->cr, ".5");
   cairo_stroke (priv->cr);
-  cairo_move_to (priv->cr, x - 0.065 * radius + (radius - inset) * cos (M_PI - (M_PI / 9+ M_PI/38)),
-									y + 0.065 * radius + (radius - inset) * sin (M_PI - (M_PI / 9+ M_PI/38)));
+  cairo_move_to (priv->cr, x - 0.065 * radius + (radius - inset) * cos (M_PI - (M_PI / 9 + M_PI / 38)),
+                 y + 0.065 * radius + (radius - inset) * sin (M_PI - (M_PI / 9 + M_PI / 38)));
   cairo_show_text (priv->cr, ".5");
-  cairo_stroke (priv->cr);  
-  cairo_set_font_size (priv->cr, 0.2 * radius);  
-  cairo_move_to (priv->cr, x - 0.065 * radius + (radius - inset) * cos (M_PI + 2*(M_PI / 9+ M_PI/38)),
-									y + 0.07 * radius + (radius - inset) * sin (M_PI + 2*(M_PI / 9+ M_PI/38)));
+  cairo_stroke (priv->cr);
+  cairo_set_font_size (priv->cr, 0.2 * radius);
+  cairo_move_to (priv->cr, x - 0.065 * radius + (radius - inset) * cos (M_PI + 2 * (M_PI / 9 + M_PI / 38)),
+                 y + 0.07 * radius + (radius - inset) * sin (M_PI + 2 * (M_PI / 9 + M_PI / 38)));
   cairo_show_text (priv->cr, "1");
   cairo_stroke (priv->cr);
-  cairo_move_to (priv->cr, x - 0.065 * radius + (radius - inset) * cos (M_PI - 2*(M_PI / 9+ M_PI/38)),
-									y + 0.07 * radius + (radius - inset) * sin (M_PI - 2*(M_PI / 9+ M_PI/38)));
+  cairo_move_to (priv->cr, x - 0.065 * radius + (radius - inset) * cos (M_PI - 2 * (M_PI / 9 + M_PI / 38)),
+                 y + 0.07 * radius + (radius - inset) * sin (M_PI - 2 * (M_PI / 9 + M_PI / 38)));
   cairo_show_text (priv->cr, "1");
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x - 0.065 * radius + (radius - inset) * cos (M_PI + 3*(M_PI / 9+ M_PI/38)),
-									y + 0.07 * radius + (radius - inset) * sin (M_PI + 3*(M_PI / 9+ M_PI/38)));
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x - 0.065 * radius + (radius - inset) * cos (M_PI + 3 * (M_PI / 9 + M_PI / 38)),
+                 y + 0.07 * radius + (radius - inset) * sin (M_PI + 3 * (M_PI / 9 + M_PI / 38)));
   cairo_show_text (priv->cr, "2");
   cairo_stroke (priv->cr);
-  cairo_move_to (priv->cr, x - 0.065 * radius + (radius - inset) * cos (M_PI - 3*(M_PI / 9+ M_PI/38)),
-									y + 0.07 * radius + (radius - inset) * sin (M_PI - 3*(M_PI / 9+ M_PI/38)));
+  cairo_move_to (priv->cr, x - 0.065 * radius + (radius - inset) * cos (M_PI - 3 * (M_PI / 9 + M_PI / 38)),
+                 y + 0.07 * radius + (radius - inset) * sin (M_PI - 3 * (M_PI / 9 + M_PI / 38)));
   cairo_show_text (priv->cr, "2");
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x - 0.065 * radius + (radius - inset) * cos (M_PI + 5*(M_PI / 9+ M_PI/38)),
-									y + 0.07 * radius + (radius - inset) * sin (M_PI + 5*(M_PI / 9+ M_PI/38)));
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x - 0.065 * radius + (radius - inset) * cos (M_PI + 5 * (M_PI / 9 + M_PI / 38)),
+                 y + 0.07 * radius + (radius - inset) * sin (M_PI + 5 * (M_PI / 9 + M_PI / 38)));
   cairo_show_text (priv->cr, "4");
   cairo_stroke (priv->cr);
-  cairo_move_to (priv->cr, x - 0.065 * radius + (radius - inset) * cos (M_PI - 5*(M_PI / 9+ M_PI/38)),
-									y + 0.07 * radius + (radius - inset) * sin (M_PI - 5*(M_PI / 9+ M_PI/38)));
+  cairo_move_to (priv->cr, x - 0.065 * radius + (radius - inset) * cos (M_PI - 5 * (M_PI / 9 + M_PI / 38)),
+                 y + 0.07 * radius + (radius - inset) * sin (M_PI - 5 * (M_PI / 9 + M_PI / 38)));
   cairo_show_text (priv->cr, "4");
-  cairo_stroke (priv->cr);  
+  cairo_stroke (priv->cr);
   cairo_move_to (priv->cr, x - 0.065 * radius + (radius - inset) * cos (0),
-									y + 0.07 * radius + (radius - inset) * sin (0));
+                 y + 0.07 * radius + (radius - inset) * sin (0));
   cairo_show_text (priv->cr, "6");
   cairo_stroke (priv->cr);
 
   priv->radius = radius;
   priv->x = x;
   priv->y = y;
-  gtk_variometer_draw_screws(vario);
+  gtk_variometer_draw_screws (vario);
 
   // draw hands
-  gtk_variometer_draw_hand(vario);
-  
-  cairo_pattern_destroy (pat);  
+  gtk_variometer_draw_hand (vario);
+
+  cairo_pattern_destroy (pat);
   return;
 }
 
 /**
  * @fn static void gtk_variometer_draw_screws (GtkWidget * vario)
- * @brief Widget function that draw the widget screws using cairo.
- * 
- * See GObject,Cairo and GTK+ references for more informations: 
- * http://library.gnome.org/devel/references.html.en
- */ 
+ * @brief Private widget's function that draw the widget's screws using cairo.
+ */
 static void gtk_variometer_draw_screws (GtkWidget * vario)
 {
   GtkVariometerPrivate *priv;
@@ -795,29 +872,29 @@ static void gtk_variometer_draw_screws (GtkWidget * vario)
   g_return_if_fail (IS_GTK_VARIOMETER (vario));
 
   priv = GTK_VARIOMETER_GET_PRIVATE (vario);
-  
-  cairo_pattern_t *pat=NULL;
+
+  cairo_pattern_t *pat = NULL;
   double x, y, radius;
-  radius=priv->radius;
-  x=priv->x;
-  y=priv->y;
-  radius = radius+0.12*radius;
-  
+  radius = priv->radius;
+  x = priv->x;
+  y = priv->y;
+  radius = radius + 0.12 * radius;
+
   // **** top left screw
-  cairo_arc (priv->cr, x-0.82*radius, y-0.82*radius, 0.1 * radius, 0, 2*M_PI);
-  pat = cairo_pattern_create_radial (x-0.82*radius, y-0.82*radius, 0.07*radius,
-                                     x-0.82*radius, y-0.82*radius, 0.1*radius);
-  cairo_pattern_add_color_stop_rgba (pat,0, 0, 0, 0,0.7);
-  cairo_pattern_add_color_stop_rgba (pat,1, 0, 0, 0,0.1);
+  cairo_arc (priv->cr, x - 0.82 * radius, y - 0.82 * radius, 0.1 * radius, 0, 2 * M_PI);
+  pat = cairo_pattern_create_radial (x - 0.82 * radius, y - 0.82 * radius, 0.07 * radius,
+                                     x - 0.82 * radius, y - 0.82 * radius, 0.1 * radius);
+  cairo_pattern_add_color_stop_rgba (pat, 0, 0, 0, 0, 0.7);
+  cairo_pattern_add_color_stop_rgba (pat, 1, 0, 0, 0, 0.1);
   cairo_set_source (priv->cr, pat);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-    
-  cairo_arc (priv->cr, x-0.82*radius, y-0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+
+  cairo_arc (priv->cr, x - 0.82 * radius, y - 0.82 * radius, 0.07 * radius, 0, 2 * M_PI);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -832,54 +909,54 @@ static void gtk_variometer_draw_screws (GtkWidget * vario)
     cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_bounderie.red / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.green / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.blue / 65535, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15,0.15,0.15, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15, 0.15, 0.15, 1);
     cairo_set_source (priv->cr, pat);
   }
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-  
+
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
-       cairo_set_source_rgb (priv->cr, 0., 0., 0.);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
-       cairo_set_source_rgb (priv->cr, 1., 1., 1.);
-  cairo_move_to (priv->cr, x-0.88*radius, y-0.82*radius);
-  cairo_line_to (priv->cr, x-0.76*radius, y-0.82*radius);
+    cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+  cairo_move_to (priv->cr, x - 0.88 * radius, y - 0.82 * radius);
+  cairo_line_to (priv->cr, x - 0.76 * radius, y - 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x-0.82*radius, y-0.88*radius);
-  cairo_line_to (priv->cr, x-0.82*radius, y-0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x - 0.82 * radius, y - 0.88 * radius);
+  cairo_line_to (priv->cr, x - 0.82 * radius, y - 0.76 * radius);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
-		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
-      cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
-  cairo_move_to (priv->cr, x-0.88*radius, y-0.82*radius);
-  cairo_line_to (priv->cr, x-0.76*radius, y-0.82*radius);
+    cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);
+  cairo_move_to (priv->cr, x - 0.88 * radius, y - 0.82 * radius);
+  cairo_line_to (priv->cr, x - 0.76 * radius, y - 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x-0.82*radius, y-0.88*radius);
-  cairo_line_to (priv->cr, x-0.82*radius, y-0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x - 0.82 * radius, y - 0.88 * radius);
+  cairo_line_to (priv->cr, x - 0.82 * radius, y - 0.76 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);      
-  
-   // **** top right screw
-  cairo_arc (priv->cr, x+0.82*radius, y-0.82*radius, 0.1 * radius, 0, 2*M_PI);
-  pat = cairo_pattern_create_radial (x+0.82*radius, y-0.82*radius, 0.07*radius,
-                                     x+0.82*radius, y-0.82*radius, 0.1*radius);
-  cairo_pattern_add_color_stop_rgba (pat,0, 0, 0, 0,0.7);
-  cairo_pattern_add_color_stop_rgba (pat,1, 0, 0, 0,0.1);
+  cairo_stroke (priv->cr);
+
+  // **** top right screw
+  cairo_arc (priv->cr, x + 0.82 * radius, y - 0.82 * radius, 0.1 * radius, 0, 2 * M_PI);
+  pat = cairo_pattern_create_radial (x + 0.82 * radius, y - 0.82 * radius, 0.07 * radius,
+                                     x + 0.82 * radius, y - 0.82 * radius, 0.1 * radius);
+  cairo_pattern_add_color_stop_rgba (pat, 0, 0, 0, 0, 0.7);
+  cairo_pattern_add_color_stop_rgba (pat, 1, 0, 0, 0, 0.1);
   cairo_set_source (priv->cr, pat);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-    
-  cairo_arc (priv->cr, x+0.82*radius, y-0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+
+  cairo_arc (priv->cr, x + 0.82 * radius, y - 0.82 * radius, 0.07 * radius, 0, 2 * M_PI);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -894,54 +971,54 @@ static void gtk_variometer_draw_screws (GtkWidget * vario)
     cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_bounderie.red / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.green / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.blue / 65535, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15,0.15,0.15, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15, 0.15, 0.15, 1);
     cairo_set_source (priv->cr, pat);
   }
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-  
+
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
-       cairo_set_source_rgb (priv->cr, 0., 0., 0.);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
-       cairo_set_source_rgb (priv->cr, 1., 1., 1.);
-  cairo_move_to (priv->cr, x+0.88*radius, y-0.82*radius);
-  cairo_line_to (priv->cr, x+0.76*radius, y-0.82*radius);
+    cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+  cairo_move_to (priv->cr, x + 0.88 * radius, y - 0.82 * radius);
+  cairo_line_to (priv->cr, x + 0.76 * radius, y - 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x+0.82*radius, y-0.88*radius);
-  cairo_line_to (priv->cr, x+0.82*radius, y-0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x + 0.82 * radius, y - 0.88 * radius);
+  cairo_line_to (priv->cr, x + 0.82 * radius, y - 0.76 * radius);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
-		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
-      cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
-  cairo_move_to (priv->cr, x+0.88*radius, y-0.82*radius);
-  cairo_line_to (priv->cr, x+0.76*radius, y-0.82*radius);
+    cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);
+  cairo_move_to (priv->cr, x + 0.88 * radius, y - 0.82 * radius);
+  cairo_line_to (priv->cr, x + 0.76 * radius, y - 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x+0.82*radius, y-0.88*radius);
-  cairo_line_to (priv->cr, x+0.82*radius, y-0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x + 0.82 * radius, y - 0.88 * radius);
+  cairo_line_to (priv->cr, x + 0.82 * radius, y - 0.76 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);     
-  
-   // **** bottom left screw
-  cairo_arc (priv->cr, x-0.82*radius, y+0.82*radius, 0.1 * radius, 0, 2*M_PI);
-  pat = cairo_pattern_create_radial (x-0.82*radius, y+0.82*radius, 0.07*radius,
-                                     x-0.82*radius, y+0.82*radius, 0.1*radius);
-  cairo_pattern_add_color_stop_rgba (pat,0, 0, 0, 0,0.7);
-  cairo_pattern_add_color_stop_rgba (pat,1, 0, 0, 0,0.1);
+  cairo_stroke (priv->cr);
+
+  // **** bottom left screw
+  cairo_arc (priv->cr, x - 0.82 * radius, y + 0.82 * radius, 0.1 * radius, 0, 2 * M_PI);
+  pat = cairo_pattern_create_radial (x - 0.82 * radius, y + 0.82 * radius, 0.07 * radius,
+                                     x - 0.82 * radius, y + 0.82 * radius, 0.1 * radius);
+  cairo_pattern_add_color_stop_rgba (pat, 0, 0, 0, 0, 0.7);
+  cairo_pattern_add_color_stop_rgba (pat, 1, 0, 0, 0, 0.1);
   cairo_set_source (priv->cr, pat);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-    
-  cairo_arc (priv->cr, x-0.82*radius, y+0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+
+  cairo_arc (priv->cr, x - 0.82 * radius, y + 0.82 * radius, 0.07 * radius, 0, 2 * M_PI);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -956,54 +1033,54 @@ static void gtk_variometer_draw_screws (GtkWidget * vario)
     cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_bounderie.red / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.green / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.blue / 65535, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15,0.15,0.15, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15, 0.15, 0.15, 1);
     cairo_set_source (priv->cr, pat);
   }
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-  
+
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
-       cairo_set_source_rgb (priv->cr, 0., 0., 0.);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
-       cairo_set_source_rgb (priv->cr, 1., 1., 1.);
-  cairo_move_to (priv->cr, x-0.88*radius, y+0.82*radius);
-  cairo_line_to (priv->cr, x-0.76*radius, y+0.82*radius);
+    cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+  cairo_move_to (priv->cr, x - 0.88 * radius, y + 0.82 * radius);
+  cairo_line_to (priv->cr, x - 0.76 * radius, y + 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x-0.82*radius, y+0.88*radius);
-  cairo_line_to (priv->cr, x-0.82*radius, y+0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x - 0.82 * radius, y + 0.88 * radius);
+  cairo_line_to (priv->cr, x - 0.82 * radius, y + 0.76 * radius);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
-		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
-      cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
-  cairo_move_to (priv->cr, x-0.88*radius, y+0.82*radius);
-  cairo_line_to (priv->cr, x-0.76*radius, y+0.82*radius);
+    cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);
+  cairo_move_to (priv->cr, x - 0.88 * radius, y + 0.82 * radius);
+  cairo_line_to (priv->cr, x - 0.76 * radius, y + 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x-0.82*radius, y+0.88*radius);
-  cairo_line_to (priv->cr, x-0.82*radius, y+0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x - 0.82 * radius, y + 0.88 * radius);
+  cairo_line_to (priv->cr, x - 0.82 * radius, y + 0.76 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);     
-  
-   // **** bottom right screw
-  cairo_arc (priv->cr, x+0.82*radius, y+0.82*radius, 0.1 * radius, 0, 2*M_PI);
-  pat = cairo_pattern_create_radial (x+0.82*radius, y+0.82*radius, 0.07*radius,
-                                     x+0.82*radius, y+0.82*radius, 0.1*radius);
-  cairo_pattern_add_color_stop_rgba (pat,0, 0, 0, 0,0.7);
-  cairo_pattern_add_color_stop_rgba (pat,1, 0, 0, 0,0.1);
+  cairo_stroke (priv->cr);
+
+  // **** bottom right screw
+  cairo_arc (priv->cr, x + 0.82 * radius, y + 0.82 * radius, 0.1 * radius, 0, 2 * M_PI);
+  pat = cairo_pattern_create_radial (x + 0.82 * radius, y + 0.82 * radius, 0.07 * radius,
+                                     x + 0.82 * radius, y + 0.82 * radius, 0.1 * radius);
+  cairo_pattern_add_color_stop_rgba (pat, 0, 0, 0, 0, 0.7);
+  cairo_pattern_add_color_stop_rgba (pat, 1, 0, 0, 0, 0.1);
   cairo_set_source (priv->cr, pat);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-    
-  cairo_arc (priv->cr, x+0.82*radius, y+0.82*radius, 0.07 * radius, 0, 2*M_PI);
-  if (((priv->radial_color) && (priv->color_mode_inv)) || ((!priv->radial_color) && (priv->color_mode_inv))
-      || ((!priv->radial_color) && (!priv->color_mode_inv)))
+
+  cairo_arc (priv->cr, x + 0.82 * radius, y + 0.82 * radius, 0.07 * radius, 0, 2 * M_PI);
+  if (((priv->radial_color) && (priv->grayscale_color)) || ((!priv->radial_color) && (priv->grayscale_color))
+      || ((!priv->radial_color) && (!priv->grayscale_color)))
   {
-    if (!priv->color_mode_inv)
+    if (!priv->grayscale_color)
       cairo_set_source_rgb (priv->cr, (gdouble) priv->bg_color_bounderie.red / 65535,
                             (gdouble) priv->bg_color_bounderie.green / 65535,
                             (gdouble) priv->bg_color_bounderie.blue / 65535);
@@ -1018,48 +1095,45 @@ static void gtk_variometer_draw_screws (GtkWidget * vario)
     cairo_pattern_add_color_stop_rgba (pat, 0, (gdouble) priv->bg_radial_color_begin_bounderie.red / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.green / 65535,
                                        (gdouble) priv->bg_radial_color_begin_bounderie.blue / 65535, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15,0.15,0.15, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0.15, 0.15, 0.15, 1);
     cairo_set_source (priv->cr, pat);
   }
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-  
+
   cairo_set_line_width (priv->cr, 0.02 * radius);
-  if (!priv->color_mode_inv)
-       cairo_set_source_rgb (priv->cr, 0., 0., 0.);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0., 0., 0.);
   else
-       cairo_set_source_rgb (priv->cr, 1., 1., 1.);
-  cairo_move_to (priv->cr, x+0.88*radius, y+0.82*radius);
-  cairo_line_to (priv->cr, x+0.76*radius, y+0.82*radius);
+    cairo_set_source_rgb (priv->cr, 1., 1., 1.);
+  cairo_move_to (priv->cr, x + 0.88 * radius, y + 0.82 * radius);
+  cairo_line_to (priv->cr, x + 0.76 * radius, y + 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x+0.82*radius, y+0.88*radius);
-  cairo_line_to (priv->cr, x+0.82*radius, y+0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x + 0.82 * radius, y + 0.88 * radius);
+  cairo_line_to (priv->cr, x + 0.82 * radius, y + 0.76 * radius);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
   cairo_set_line_width (priv->cr, 0.01 * radius);
-  if (!priv->color_mode_inv)
-		cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
+  if (!priv->grayscale_color)
+    cairo_set_source_rgb (priv->cr, 0.1, 0.1, 0.1);
   else
-      cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);  
-  cairo_move_to (priv->cr, x+0.88*radius, y+0.82*radius);
-  cairo_line_to (priv->cr, x+0.76*radius, y+0.82*radius);
+    cairo_set_source_rgb (priv->cr, 0.9, 0.9, 0.9);
+  cairo_move_to (priv->cr, x + 0.88 * radius, y + 0.82 * radius);
+  cairo_line_to (priv->cr, x + 0.76 * radius, y + 0.82 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr);  
-  cairo_move_to (priv->cr, x+0.82*radius, y+0.88*radius);
-  cairo_line_to (priv->cr, x+0.82*radius, y+0.76*radius);
+  cairo_stroke (priv->cr);
+  cairo_move_to (priv->cr, x + 0.82 * radius, y + 0.88 * radius);
+  cairo_line_to (priv->cr, x + 0.82 * radius, y + 0.76 * radius);
   cairo_fill_preserve (priv->cr);
-  cairo_stroke (priv->cr); 
+  cairo_stroke (priv->cr);
   cairo_pattern_destroy (pat);
   return;
 }
 
 /**
  * @fn static void gtk_variometer_draw_hand (GtkWidget * vario)
- * @brief Widget function that draw the variometer hands using cairo.
- * 
- * See GObject,Cairo and GTK+ references for more informations: 
- * http://library.gnome.org/devel/references.html.en
+ * @brief Private widget's function that draw the variometer hand using cairo.
  */
 static void gtk_variometer_draw_hand (GtkWidget * vario)
 {
@@ -1075,18 +1149,18 @@ static void gtk_variometer_draw_hand (GtkWidget * vario)
   double x = priv->x;
   double y = priv->y;
   double radius = priv->radius;
-  int value = priv->value;
+  int altitude = priv->altitude;
 
   // **** centre cercle 
   cairo_save (priv->cr);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 0, 0, 0);
   else
     cairo_set_source_rgb (priv->cr, 1, 1, 1);
   cairo_arc (priv->cr, x, y, radius - 0.9 * radius, 0, 2 * M_PI);
   cairo_fill_preserve (priv->cr);
   cairo_stroke (priv->cr);
-  if (!priv->color_mode_inv)
+  if (!priv->grayscale_color)
     cairo_set_source_rgb (priv->cr, 0.2, 0.2, 0.2);
   else
     cairo_set_source_rgb (priv->cr, 0.8, 0.8, 0.8);
@@ -1095,72 +1169,78 @@ static void gtk_variometer_draw_hand (GtkWidget * vario)
   cairo_restore (priv->cr);
 
   // **** gauge hand
-  if(priv->value>=1000)
-		value+=1000;
-  else if(priv->value<=-1000)
-		value-=1000;
-		
-  if((priv->value>=1000)||(priv->value<=-1000)){
-		cairo_save (priv->cr);
-		if (!priv->color_mode_inv)
-			cairo_set_source_rgb (priv->cr, 1, 1, 1);
-		else
-			cairo_set_source_rgb (priv->cr, 0, 0, 0);
-		cairo_set_line_width (priv->cr, 0.02 * radius);
-		cairo_move_to (priv->cr, x, y);
-		cairo_line_to (priv->cr,
-							x + (radius - 0.2 * radius) * cos (M_PI + value * ((M_PI / 9+ M_PI/38)/1000)),
-							y + (radius - 0.2 * radius) * sin (M_PI + value * ((M_PI / 9+ M_PI/38)/1000)));
-		cairo_stroke (priv->cr);
-		cairo_restore (priv->cr);
-	
-		cairo_save (priv->cr);
-		if (!priv->color_mode_inv)
-			cairo_set_source_rgb (priv->cr, 1, 1, 1);
-		else
-			cairo_set_source_rgb (priv->cr, 0, 0, 0);
-		cairo_set_line_width (priv->cr, 0.02 * radius);
-		cairo_move_to (priv->cr, x, y);
-		cairo_line_to (priv->cr,
-							x - (radius - 0.9 * radius) * cos (M_PI + value * ((M_PI / 9+ M_PI/38)/1000)),
-							y - (radius - 0.9 * radius) * sin (M_PI + value * ((M_PI / 9+ M_PI/38)/1000)));
-		cairo_stroke (priv->cr);
-		cairo_restore (priv->cr);
-	}
-	else
-	{
-		cairo_save (priv->cr);
-		if (!priv->color_mode_inv)
-			cairo_set_source_rgb (priv->cr, 1, 1, 1);
-		else
-			cairo_set_source_rgb (priv->cr, 0, 0, 0);
-		cairo_set_line_width (priv->cr, 0.02 * radius);
-		cairo_move_to (priv->cr, x, y);
-		cairo_line_to (priv->cr,
-							x + (radius - 0.2 * radius) * cos (M_PI + value * ((M_PI / (9/2)+ M_PI/38)/1000)),
-							y + (radius - 0.2 * radius) * sin (M_PI + value * ((M_PI / (9/2)+ M_PI/38)/1000)));
-		cairo_stroke (priv->cr);
-		cairo_restore (priv->cr);
-	
-		cairo_save (priv->cr);
-		if (!priv->color_mode_inv)
-			cairo_set_source_rgb (priv->cr, 1, 1, 1);
-		else
-			cairo_set_source_rgb (priv->cr, 0, 0, 0);
-		cairo_set_line_width (priv->cr, 0.02 * radius);
-		cairo_move_to (priv->cr, x, y);
-		cairo_line_to (priv->cr,
-							x - (radius - 0.9 * radius) * cos (M_PI + value * ((M_PI / (9/2)+ M_PI/38)/1000)),
-							y - (radius - 0.9 * radius) * sin (M_PI + value * ((M_PI / (9/2)+ M_PI/38)/1000)));
-		cairo_stroke (priv->cr);
-		cairo_restore (priv->cr);
-	}
+  if (priv->altitude >= 1000)
+    altitude += 1000;
+  else if (priv->altitude <= -1000)
+    altitude -= 1000;
+
+  if ((priv->altitude >= 1000) || (priv->altitude <= -1000))
+  {
+    cairo_save (priv->cr);
+    if (!priv->grayscale_color)
+      cairo_set_source_rgb (priv->cr, 1, 1, 1);
+    else
+      cairo_set_source_rgb (priv->cr, 0, 0, 0);
+    cairo_set_line_width (priv->cr, 0.02 * radius);
+    cairo_move_to (priv->cr, x, y);
+    cairo_line_to (priv->cr,
+                   x + (radius - 0.2 * radius) * cos (M_PI + altitude * ((M_PI / 9 + M_PI / 38) / 1000)),
+                   y + (radius - 0.2 * radius) * sin (M_PI + altitude * ((M_PI / 9 + M_PI / 38) / 1000)));
+    cairo_stroke (priv->cr);
+    cairo_restore (priv->cr);
+
+    cairo_save (priv->cr);
+    if (!priv->grayscale_color)
+      cairo_set_source_rgb (priv->cr, 1, 1, 1);
+    else
+      cairo_set_source_rgb (priv->cr, 0, 0, 0);
+    cairo_set_line_width (priv->cr, 0.02 * radius);
+    cairo_move_to (priv->cr, x, y);
+    cairo_line_to (priv->cr,
+                   x - (radius - 0.9 * radius) * cos (M_PI + altitude * ((M_PI / 9 + M_PI / 38) / 1000)),
+                   y - (radius - 0.9 * radius) * sin (M_PI + altitude * ((M_PI / 9 + M_PI / 38) / 1000)));
+    cairo_stroke (priv->cr);
+    cairo_restore (priv->cr);
+  }
+  else
+  {
+    cairo_save (priv->cr);
+    if (!priv->grayscale_color)
+      cairo_set_source_rgb (priv->cr, 1, 1, 1);
+    else
+      cairo_set_source_rgb (priv->cr, 0, 0, 0);
+    cairo_set_line_width (priv->cr, 0.02 * radius);
+    cairo_move_to (priv->cr, x, y);
+    cairo_line_to (priv->cr,
+                   x + (radius - 0.2 * radius) * cos (M_PI + altitude * ((M_PI / (9 / 2) + M_PI / 38) / 1000)),
+                   y + (radius - 0.2 * radius) * sin (M_PI + altitude * ((M_PI / (9 / 2) + M_PI / 38) / 1000)));
+    cairo_stroke (priv->cr);
+    cairo_restore (priv->cr);
+
+    cairo_save (priv->cr);
+    if (!priv->grayscale_color)
+      cairo_set_source_rgb (priv->cr, 1, 1, 1);
+    else
+      cairo_set_source_rgb (priv->cr, 0, 0, 0);
+    cairo_set_line_width (priv->cr, 0.02 * radius);
+    cairo_move_to (priv->cr, x, y);
+    cairo_line_to (priv->cr,
+                   x - (radius - 0.9 * radius) * cos (M_PI + altitude * ((M_PI / (9 / 2) + M_PI / 38) / 1000)),
+                   y - (radius - 0.9 * radius) * sin (M_PI + altitude * ((M_PI / (9 / 2) + M_PI / 38) / 1000)));
+    cairo_stroke (priv->cr);
+    cairo_restore (priv->cr);
+  }
   return;
 }
 
 /**
  * @fn static gboolean gtk_variometer_button_press_event (GtkWidget * widget, GdkEventButton * ev)
- * @brief Special Gtk API function. Perform mouse button press events. 
+ * @brief Special Gtk API function. Override the _button_press_event<br>
+ * handler. Perform mouse button press events. 
+ * 
+ * Here, the mouse events are not used for the widget (maybe<br>
+ * in future released) but to allow the user to enable/disable<br>
+ * the debug messages.
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
@@ -1201,7 +1281,10 @@ static gboolean gtk_variometer_button_press_event (GtkWidget * widget, GdkEventB
 
 /**
  * @fn static gboolean gtk_variometer_motion_notify_event (GtkWidget * widget, GdkEventMotion * ev)
- * @brief Special Gtk API function. Perform mouse motion events. 
+ * @brief Special Gtk API function. Override the _motion_notify_event<br>
+ * handler. Perform mouse motion events. 
+ * 
+ * Here, the mouse events are not used (maybe in future released).
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
@@ -1246,7 +1329,8 @@ static gboolean gtk_variometer_motion_notify_event (GtkWidget * widget, GdkEvent
 
 /**
  * @fn static void gtk_variometer_destroy (GtkObject * object)
- * @brief Special Gtk API function. 
+ * @brief Special Gtk API function. Override the _destroy handler.<br>
+ * Allow the destruction of all widget's pointer.
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
@@ -1289,7 +1373,8 @@ static void gtk_variometer_destroy (GtkObject * object)
 
 /**
  * @fn static void gtk_variometer_set_property (GObject * object, guint prop_id, const GValue * value, GParamSpec * pspec)
- * @brief Special Gtk API function. 
+ * @brief Special Gtk API function. Override the _set_property handler <br>
+ * in order to set the object parameters.
  * 
  * See GObject and GTK+ references for
  * more informations: http://library.gnome.org/devel/references.html.en
@@ -1313,14 +1398,19 @@ static void gtk_variometer_set_property (GObject * object, guint prop_id, const 
 
   switch (prop_id)
   {
-    case PROP_INVERSED_COLOR:
-      priv->color_mode_inv = g_value_get_boolean (value);
+    case PROP_GRAYSCALE_COLOR:
+      priv->grayscale_color = g_value_get_boolean (value);
       break;
     case PROP_UNIT_IS_FEET:
       priv->unit_is_feet = g_value_get_boolean (value);
       break;
     case PROP_UNIT_STEP_VALUE:
       priv->unit_value = g_value_get_int (value);
+      if ((priv->unit_value != 100) && (priv->unit_value != 1000))
+      {
+        priv->unit_value = 100;
+        g_warning ("GtkVariometer: gtk_variometer_set_property: unit-step-value out of range");
+      }
       break;
     case PROP_RADIAL_COLOR:
       priv->radial_color = g_value_get_boolean (value);
