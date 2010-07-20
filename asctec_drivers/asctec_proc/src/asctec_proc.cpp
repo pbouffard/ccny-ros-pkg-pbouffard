@@ -39,8 +39,6 @@ void AsctecProc::imuCalcDataCallback(const asctec_msgs::IMUCalcDataConstPtr& imu
   createImuMsg (imuCalcDataMsg, imuMsg);
   imuPublisher_.publish(imuMsg);
 
-
-
 }
 
 void AsctecProc::createImuMsg(const asctec_msgs::IMUCalcDataConstPtr& imuCalcDataMsg,

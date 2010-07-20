@@ -6,7 +6,7 @@
 #include <sensor_msgs/Imu.h>
 #include <tf/transform_datatypes.h>
 
-const std::string imuCalcDataTopic_ = "/autopilot/IMU_CALCDATA";
+const std::string imuCalcDataTopic_ = "IMU_CALCDATA";
 const std::string imuTopic_         = "imu";
 
 const double ASC_TO_ROS_ANGLE  = (1.0 /  1000.0) * 3.14159265 / 180.0; // converts to rad
