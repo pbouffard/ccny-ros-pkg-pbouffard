@@ -95,7 +95,7 @@ void LaserScanSplitter::scanCallback (const sensor_msgs::LaserScanConstPtr & sca
 
   if (sizeSum_ != scan->ranges.size ())
   {
-    ROS_WARN ("LaserScanSplitter: Received a laser scan with size incompatible to input parameters. Skipping scan.");
+    ROS_WARN ("LaserScanSplitter: Received a laser scan with size (%d) incompatible to input parameters. Skipping scan.", scan->ranges.size();
     return;
   }
 

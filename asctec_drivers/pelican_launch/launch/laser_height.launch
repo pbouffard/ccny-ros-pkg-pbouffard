@@ -18,7 +18,7 @@
   </node>
 
   <node pkg="laser_scan_splitter" type="laser_scan_splitter" name="splitter" output="screen">
-    <param name="sizes" value="20 472 21"/>
+    <param name="sizes" value="20 472 20"/>
     <param name="topics" value="/virtual_scan_up /virtual_scan_mid /virtual_scan_down"/>
     <param name="frames" value="/virtual_laser_up /laser /virtual_laser_down"/>
   </node>
