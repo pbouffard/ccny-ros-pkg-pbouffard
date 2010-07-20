@@ -4,9 +4,15 @@
 #include <ros/ros.h>
 #include <asctec_msgs/IMUCalcData.h>
 #include <sensor_msgs/Imu.h>
+#include <tf/transform_datatypes.h>
 
 const std::string imuCalcDataTopic_ = "/autopilot/IMU_CALCDATA";
 const std::string imuTopic_         = "imu";
+
+const double ASC_TO_ROS_ANGLE  = (1.0 /  1000.0) * 3.14159265 / 180.0; // converts to rad
+const double ASC_TO_ROS_ANGVEL = (1.0 /    64.8) * 3.14159265 / 180.0; // convetts to rad/s
+const double ASC_TO_ROS_ACC    = (1.0 / 10000.0) * 9.81;               // converts to m/s^s
+const double ASC_TO_ROS_HEIGHT = (1.0 /  1000.0);                      // converts to m
 
 namespace asctec
 {
@@ -18,6 +24,9 @@ class AsctecProc
     ros::Publisher  imuPublisher_;
 
     void imuCalcDataCallback(const asctec_msgs::IMUCalcDataConstPtr& imuCalcDataMsg);
+
+    void createImuMsg(const asctec_msgs::IMUCalcDataConstPtr& imuCalcDataMsg,
+                            sensor_msgs::Imu& imuMsg);
 
   public:
 
