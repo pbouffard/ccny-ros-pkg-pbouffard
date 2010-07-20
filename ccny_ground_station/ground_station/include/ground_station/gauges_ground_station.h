@@ -54,6 +54,7 @@
 #include <ros/ros.h>
 #include <ros/package.h>
 #include <geometry_msgs/Pose.h>
+#include <sensor_msgs/Imu.h>
 
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
@@ -67,6 +68,8 @@
 #include <ground_station/gui/gtkturncoordinator.h>
 #include <ground_station/gui/gtkartificialhorizon.h>
 
+const std::string imuTopic = "/imu";
+
 /**
  * @struct arg
  * @brief Allow to pass the arguments of the program to a pthread.<br>
@@ -78,8 +81,10 @@ struct arg
   char **argv;
 };
 
+sensor_msgs::Imu imuData_;
+
 void *startROS (void *);
 void updateAltitudeCallback (const geometry_msgs::PoseConstPtr &);
-gboolean window_update(gpointer dat);
+gboolean window_update (gpointer dat);
 
 #endif
