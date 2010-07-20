@@ -10,6 +10,6 @@
     <param name="freq" value="40.0"/>
   </node>
 
-  <node name="asctec_proc" pkg="asctec_proc" type="asctec_proc" respawn="false" required="true" output="screen">
+  <node name="asctec_proc" pkg="asctec_proc" type="asctec_proc" respawn="false" required="true" output="screen"/>
 
 </launch>
