@@ -51,7 +51,7 @@ void AsctecProc::imuCalcDataCallback(const asctec_msgs::IMUCalcDataConstPtr& imu
   t.setRotation (orientation);
   t.setOrigin (btVector3(0,0,0));
 
-  tf::StampedTransform worldToOdomTf (t, ros::Time::now(), "world", "imu");
+  tf::StampedTransform worldToOdomTf (t, ros::Time::now(), "navigation", "imu");
   tfBroadcaster_.sendTransform (worldToOdomTf);
 
 }
