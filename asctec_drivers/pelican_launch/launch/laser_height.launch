@@ -6,7 +6,7 @@
   ####################################################################
 
   <node pkg="tf" type="static_transform_publisher" name="rvl_0_pub" 
-   args=" 0.00  0.00  0.00   -0.35  0.000  0.000 /laser /rvl_0 20" />
+   args=" 0.00  0.00  0.00   -0.123  0.000  0.000 /laser /rvl_0 20" />
 
   <node pkg="tf" type="static_transform_publisher" name="rvl_1_pub" 
    args=" 0.00 -0.07  0.00    0.000  0.000  0.000 /rvl_0 /rvl_1 20" />
@@ -18,12 +18,12 @@
    args=" 0.00 -0.07  0.00    0.000  0.000  0.000 /rvl_2 /rvl_3 20" />
 
   <node pkg="tf" type="static_transform_publisher" name="rvl_4_pub" 
-   args=" 0.00  0.00  0.00    3.492  0.000  0.000 /rvl_3 /rvl 20" />
+   args=" 0.00  0.00  0.00    3.265 0.000  0.000 /rvl_3 /rvl 20" />
 
   ####################################################################
 
   <node pkg="tf" type="static_transform_publisher" name="lvl_0_pub" 
-   args=" 0.00  0.00  0.00    0.350  0.000  0.000 /laser /lvl_0 20" />
+   args=" 0.00  0.00  0.00    0.123  0.000  0.000 /laser /lvl_0 20" />
 
   <node pkg="tf" type="static_transform_publisher" name="lvl_1_pub" 
    args=" 0.00  0.07  0.00    0.000  0.000  0.000 /lvl_0 /lvl_1 20" />
@@ -35,7 +35,7 @@
    args=" 0.00  0.07  0.00    0.000  0.000  0.000 /lvl_2 /lvl_3 20" />
 
   <node pkg="tf" type="static_transform_publisher" name="lvl_4_pub" 
-   args=" 0.00  0.00  0.00   -3.491  0.000  0.000 /lvl_3 /lvl 20" />
+   args=" 0.00  0.00  0.00   -3.265  0.000  0.000 /lvl_3 /lvl 20" />
 
   ####################################################################
 
