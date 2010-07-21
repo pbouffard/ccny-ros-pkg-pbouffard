@@ -1,5 +1,8 @@
 <launch>
 
+  <node pkg="tf" type="static_transform_publisher" name="imu_to_base_link" 
+   args="0.00 0.00 0.0  0.000 0.000 3.14159 /imu /base_link 20" />
+
   <node name="autopilot" pkg="asctec_autopilot" type="autopilot" respawn="false" required="true" output="screen">
     <param name="serial_port" type="string" value="/dev/ttyUSB0"/>
     <param name="serial_speed" type="int" value="57600"/>
