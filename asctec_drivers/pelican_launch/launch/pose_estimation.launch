@@ -1,7 +1,7 @@
 <launch>
   <node name="pose_estimation" pkg="pose_estimation" type="pose_estimation" respawn="false" required="true" output="screen">
     <remap from="imu" to="asctec_proc/imu"/>
-    <remap from="height" to="/height_estimation/floor_right"/>
+    <remap from="height" to="/right_floor_altimeter/height"/>
     <param name="freq" value="40.0"/>
   </node>
 </launch>
