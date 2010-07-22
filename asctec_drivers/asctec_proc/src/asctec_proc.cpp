@@ -101,11 +101,6 @@ void AsctecProc::createImuMsg(const asctec_msgs::IMUCalcDataConstPtr& imuCalcDat
                      imuCalcDataMsg->angle_nick * ASC_TO_ROS_ANGLE,
                      imuCalcDataMsg->angle_yaw  * ASC_TO_ROS_ANGLE);
 
-  printf("AP: ROLL: %f, PITCH: %f, YAW: %f\n", imuCalcDataMsg->angle_roll * ASC_TO_ROS_ANGLE,
-                     imuCalcDataMsg->angle_nick * ASC_TO_ROS_ANGLE,
-                     imuCalcDataMsg->angle_yaw  * ASC_TO_ROS_ANGLE);  
-
-
   imuMsg.orientation.x = orientation.getX();
   imuMsg.orientation.y = orientation.getY();
   imuMsg.orientation.z = orientation.getZ();
