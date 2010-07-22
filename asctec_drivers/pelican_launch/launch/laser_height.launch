@@ -47,10 +47,10 @@
 
   ####################################################################
 
-  <node pkg="laser_height_estimation" type="laser_height_estimation" name="floor_height_estimation" output="screen">
+  <node pkg="laser_height_estimation" type="laser_height_estimation" name="height_estimation" output="screen">
     <param name="base_frame" value="/base_link"/>
     <remap from="/scan"   to="splitter/rvs"/>
-    <remap from="/height" to="floor_height_right"/>
+    <remap from="height"  to="floor_right"/>
     <remap from="/imu"    to="asctec_proc/imu"/>
   </node>
 
