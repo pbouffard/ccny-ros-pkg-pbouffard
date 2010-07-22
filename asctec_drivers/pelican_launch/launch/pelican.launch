@@ -6,5 +6,7 @@
 
   <include file="$(find pelican_launch)/launch/laser_height.launch"/>
 
+  <include file="$(find pelican_launch)/launch/pose_estimation.launch"/>
+
 </launch>
 
