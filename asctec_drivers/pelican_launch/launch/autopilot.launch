@@ -4,7 +4,7 @@
    args="0.00 0.00 0.0  0.000 0.000 3.14159 /world /navigation 20" />
 
   <node pkg="tf" type="static_transform_publisher" name="base_link_to_imu" 
-   args="0.00 0.00 0.0  0.000 0.000 3.14159 /base_link /imu 20" />
+   args="0.00 0.00 0.0 0.000 3.14159 0.000 /base_link /imu 20" />
 
   <node name="autopilot" pkg="asctec_autopilot" type="autopilot" respawn="false" required="true" output="screen">
     <param name="serial_port" type="string" value="/dev/ttyUSB0"/>
