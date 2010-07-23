@@ -33,6 +33,8 @@ LaserOrthoProjector::LaserOrthoProjector ()
 {
   ROS_INFO ("Starting LaserOrthoProjector");
 
+  useImu_ = true;
+
   ros::NodeHandle nh;
   ros::NodeHandle nh_private ("~");
 
@@ -49,10 +51,17 @@ LaserOrthoProjector::LaserOrthoProjector ()
 
   // **** subscribe to laser scan messages
 
-  scanFilterSub_ = new message_filters::Subscriber < sensor_msgs::LaserScan > (nh, scanTopic_, 10);
-  scanFilter_ = new tf::MessageFilter < sensor_msgs::LaserScan > (*scanFilterSub_, tfListener_, worldFrame_, 10);
-  scanFilter_->registerCallback (boost::bind (&LaserOrthoProjector::scanCallback, this, _1));
-  scanFilter_->setTolerance (ros::Duration (tfTolerance_));
+  if (!useImu_)
+  {
+    scanFilterSub_ = new message_filters::Subscriber < sensor_msgs::LaserScan > (nh, scanTopic_, 10);
+    scanFilter_ = new tf::MessageFilter < sensor_msgs::LaserScan > (*scanFilterSub_, tfListener_, worldFrame_, 10);
+    scanFilter_->registerCallback (boost::bind (&LaserOrthoProjector::scanCallback, this, _1));
+    scanFilter_->setTolerance (ros::Duration (tfTolerance_));
+  }
+  else
+  {
+    scanSubscriber_ = nh.subscribe (scanTopic_, 100, &LaserOrthoProjector::scanCallback, this);
+  }
 
   // **** advertise orthogonal scan & pointcloud
   scanPublisher_ = nh_private.advertise < laser_ortho_projector::LaserScanWithAngles > (scanOrthoTopic_, 10);
@@ -71,15 +80,23 @@ void LaserOrthoProjector::scanCallback (const sensor_msgs::LaserScanConstPtr & s
 
   // **** obtain transform between world and laser frame
 
-  try
+  if (!useImu)
   {
-    tfListener_.lookupTransform (worldFrame_, scan->header.frame_id, scan->header.stamp, worldToLaser_);
+    try
+    {
+      tfListener_.lookupTransform (worldFrame_, scan->header.frame_id, scan->header.stamp, worldToLaser_);
+    }
+    catch (tf::TransformException ex)
+    {
+      // transform unavailable - skip scan
+      ROS_WARN ("Skipping scan (%s)", ex.what ());
+      return;
+    }
   }
-  catch (tf::TransformException ex)
+  else
   {
-    // transform unavailable - skip scan
-    ROS_WARN ("Skipping scan (%s)", ex.what ());
-    return;
+        
+
   }
 
   btMatrix3x3 m (worldToLaser_.getRotation ());

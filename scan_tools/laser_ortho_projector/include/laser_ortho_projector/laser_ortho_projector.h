@@ -45,6 +45,9 @@ public:
 
 private:
 
+  bool useImu_;
+  ros::Subscirber scanSubscriber_;
+
   // paramaters
 
   std::string worldFrame_;
