@@ -1,0 +1,56 @@
+<launch>
+  ##########################################################################
+
+  <node pkg="laser_ortho_projector" type="laser_ortho_projector" name="laser_ortho_projector" output="screen">
+    <remap from="/scan" to="/splitter/mvs"/>
+    <param name="world_frame" value="world"/>
+    <param name="laser_frame" value="laser"/>
+    <param name="laser_ortho_frame" value="laser_ortho"/>
+    <param name="publish_cloud" value="true"/>
+    <param name="tf_tolerance" value="0.10"/>
+  </node>
+
+  ##########################################################################
+
+  <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" output="screen">
+
+    <param name="maxUrange" value="5.5"/>
+    <param name="sigma" value="0.05"/>
+    <param name="kernelSize" value="1"/>
+    <param name="lstep" value="0.15"/>
+    <param name="astep" value="0.15"/>
+    <param name="iterations" value="20"/>
+    <param name="lsigma" value="0.075"/>
+    <param name="ogain" value="10.0"/>
+    <param name="lskip" value="0"/>
+    <param name="srr" value="0.1"/>
+    <param name="srt" value="0.1"/>/home/idryanov/ros/stacks/gmapping_3d/gmapping_3d_bagged.vcg
+    <param name="str" value="0.1"/>
+    <param name="stt" value="0.1"/>
+    <param name="linearUpdate" value="0.5"/>
+    <param name="angularUpdate" value="0.5"/>
+    <param name="temporalUpdate" value="0.10"/>
+    <param name="resampleThreshold" value="0.5"/>
+    <param name="particles" value="1"/>
+    <param name="xmin" value="-40.0"/>
+    <param name="ymin" value="-40.0"/>
+    <param name="xmax" value="40.0"/>
+    <param name="ymax" value="40.0"/>
+    <param name="delta" value="0.05"/>
+    <param name="llsamplerange" value="0.01"/>
+    <param name="llsamplestep" value="0.01"/>
+    <param name="lasamplerange" value="0.005"/>
+    <param name="lasamplestep" value="0.005"/>
+
+    <param name="throttle_scans" value="-1"/>
+    <param name="base_frame" value="/laser_ortho"/>
+    <param name="map_frame" value="/map"/>
+    <param name="odom_frame" value="/world"/>
+    <param name="laser_frame" value="/laser_ortho"/>
+
+    <param name="map_update_interval" value="0.1"/>
+  </node>
+
+
+</launch>
+
