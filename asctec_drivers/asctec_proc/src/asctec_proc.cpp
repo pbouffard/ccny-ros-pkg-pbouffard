@@ -40,7 +40,7 @@ void AsctecProc::imuCalcDataCallback(const asctec_msgs::IMUCalcDataConstPtr& imu
   imuPublisher_.publish(imuMsg);
 
   // publish tf for testing
-/*
+
   btTransform t;
 
   btQuaternion orientation;
@@ -51,9 +51,9 @@ void AsctecProc::imuCalcDataCallback(const asctec_msgs::IMUCalcDataConstPtr& imu
   t.setRotation (orientation);
   t.setOrigin (btVector3(0,0,0));
 
-  tf::StampedTransform worldToOdomTf (t, ros::Time::now(), "navigation", "imu");
+  tf::StampedTransform worldToOdomTf (t, ros::Time::now(), "navigation", "imu_raw");
   tfBroadcaster_.sendTransform (worldToOdomTf);
-*/
+
 }
 
 void AsctecProc::createImuMsg(const asctec_msgs::IMUCalcDataConstPtr& imuCalcDataMsg,
