@@ -40,7 +40,7 @@
   ####################################################################
 
   <node pkg="laser_scan_splitter" type="laser_scan_splitter" name="splitter" output="screen">
-    <param name="sizes" value="9 22 17 593 23 17"/>
+    <param name="sizes" value="9 17 22 593 23 17"/>
     <param name="topics" value="m1 rvs m2 mvs m3 lvs"/>
     <param name="frames" value="/laser /rvl /laser /laser /laser /lvl"/>
   </node>
