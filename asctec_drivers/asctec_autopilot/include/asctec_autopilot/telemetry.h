@@ -24,6 +24,7 @@
 
 #include "asctec_msgs/IMUCalcData.h"
 #include "asctec_msgs/LLStatus.h"
+#include "asctec_msgs/GPSData.h"
 
 namespace asctec
 {
@@ -112,11 +113,13 @@ namespace asctec
     void dumpIMU_RAWDATA();
     void dumpIMU_CALCDATA();
     void dumpRC_DATA();
+    void dumpGPS_DATA();
 
     void copyLL_STATUS();
 //    void copyIMU_RAWDATA();
     void copyIMU_CALCDATA();
 //    void copyRC_DATA();
+    void copyGPS_DATA();
     
     bool pollingEnabled_;
     uint16_t requestCount_;
@@ -245,23 +248,23 @@ namespace asctec
     struct GPS_DATA
     {
       //latitude/longitude in deg * 10ˆ7
-      int latitude;
-      int longitude;
+      int32_t latitude;
+      int32_t longitude;
       //GPS height in mm
-      int height;
+      int32_t height;
       //speed in x (E/W) and y(N/S) in mm/s
-      int speed_x;
-      int speed_y;
+      int32_t speed_x;
+      int32_t speed_y;
       //GPS heading in deg * 1000
-      int heading;
+      int32_t heading;
       //accuracy estimates in mm and mm/s
-      unsigned int horizontal_accuracy;
-      unsigned int vertical_accuracy;
-      unsigned int speed_accuracy;
+      uint32_t horizontal_accuracy;
+      uint32_t vertical_accuracy;
+      uint32_t speed_accuracy;
       //number of satellite vehicles used in NAV solution
-      unsigned int numSV;
+      uint32_t numSV;
       // GPS status information; 0x03 = valid GPS fix
-      int status;
+      int32_t status;
     };
 
     struct GPS_DATA_ADVANCED
@@ -377,6 +380,7 @@ You will receive an acknowledge if a command or a waypoint was received correctl
     struct GPS_DATA_ADVANCED GPS_DATA_ADVANCED_;
     asctec_msgs::LLStatus LLStatus_;
     asctec_msgs::IMUCalcData IMUCalcData_;
+    asctec_msgs::GPSData GPSData_;
     
   };                            // end class Telemetry
 }                               //end namespace asctec

@@ -288,6 +288,16 @@ namespace asctec
           }
           //telemetry->dumpRC_DATA();
         }
+        else if (packet_type == Telemetry::PD_GPSDATA)
+        {
+          ROS_DEBUG ("Packet type is GPS_DATA");
+          memcpy (&telemetry->GPS_DATA_, spacket, packet_size);
+          if (crc_valid (packet_crc,&telemetry->GPS_DATA_, packet_size)) {
+            result = true;
+            ROS_DEBUG ("Valid CRC!!");
+          }
+          telemetry->dumpGPS_DATA();
+        }
         else
         {
           ROS_ERROR("Packet type is UNKNOWN");
