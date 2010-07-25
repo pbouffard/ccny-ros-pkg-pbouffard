@@ -302,7 +302,12 @@ namespace asctec
     }
     stall (false);
     i = fread (spacket, sizeof (char), 1, dev_);
-    ROS_ASSERT_MSG (i == 0, "Unexpected Data: Flush boffers?!");
+    //FIXME~!!
+    // If we receive unexpected data then log a warning
+    if (i != 0) {
+      drain();
+      ROS_ERROR("Unexpected Data: Flushing receive buffer");
+    }
     return result;
   }
 
