@@ -275,13 +275,13 @@ def gps_callback(data):
     gpswin.border(0)
     gpswin.addstr(0, 2, "GPS", curses.color_pair(1)|curses.A_BOLD)
     lat_val = float(data.latitude)/float(10**7)
-    gpswin.addstr(1, 2, 'Latitude: {0:+012.7f}'.format(lat_val))
+    gpswin.addstr(1, 2, 'Lat: {0:+012.7f}'.format(lat_val))
     lon_val = float(data.longitude)/float(10**7)
-    gpswin.addstr(1, 26, 'Longitude: {0:+012.7f}'.format(lon_val))
+    gpswin.addstr(1, 21, 'Lon: {0:+012.7f}'.format(lon_val))
     height_val = float(data.height)/1000.0
-    gpswin.addstr(1, 51, 'Height: {0: 7.3f}m'.format(height_val))
+    gpswin.addstr(1, 40, 'Height: {0: 7.3f}m'.format(height_val))
     heading_val = float(data.heading)/1000.0
-    gpswin.addstr(1, 69, 'Heading: {0: 7.3f}'.format(heading_val))
+    gpswin.addstr(1, 58, 'Heading: {0: 7.3f}'.format(heading_val))
     gps_lock = 0
 
 def imu_callback(data):
