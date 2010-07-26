@@ -8,6 +8,7 @@ import curses
 
 from asctec_msgs.msg import LLStatus
 from asctec_msgs.msg import IMUCalcData
+from asctec_msgs.msg import GPSData
 
 myscreen = curses.initscr()
 curses.start_color()
@@ -16,7 +17,8 @@ curses.noecho()
 curses.curs_set(0)
 (maxx,maxy) = myscreen.getmaxyx()
 llwin = curses.newwin(11, maxy, maxx-11, 0)
-imuwin = curses.newwin(maxx-11, maxy, 0, 0)
+gpswin = curses.newwin(3, maxy, maxx-14, 0)
+imuwin = curses.newwin(maxx-14, maxy, 0, 0)
 alarm = 0;
 alarm_count = 0;
 alarm_interval = 10;
@@ -49,7 +51,6 @@ def drawSignedVal(r,c,w,val,val_max,val_min,big):
     else:
         imuwin.addstr(r, c+center+bar+1, " "*(-1*bar), curses.color_pair(4))
         imuwin.addch(r, c+center, curses.ACS_VLINE,curses.color_pair(4))
-    imuwin.addstr(r, c+1, str(bar))
     imuwin.addch(r, c+w, curses.ACS_VLINE)
     r = r + 1
 
@@ -202,13 +203,29 @@ def drawFlightMode(r,c,w,flightMode):
           llwin.addch(r, n, curses.ACS_BTEE)
     llwin.addch(r, c+w, curses.ACS_LRCORNER)
 
+def gps_callback(data):
+    gpswin.clear()
+    (gps_maxx,gps_maxy) = imuwin.getmaxyx()
+    gps_maxy = gps_maxy - 2 # remove space for left and right border
+    gcol = 25
+    gpswin.border(0)
+    gpswin.addstr(0, 2, "GPS", curses.color_pair(1)|curses.A_BOLD)
+    lat_val = float(data.latitude)/float(10**7)
+    gpswin.addstr(1, 2, 'Latitude: {0:+012.7f}'.format(lat_val))
+    lon_val = float(data.longitude)/float(10**7)
+    gpswin.addstr(1, 26, 'Longitude: {0:+012.7f}'.format(lon_val))
+    height_val = float(data.height)/1000.0
+    gpswin.addstr(1, 51, 'Height: {0: 7.3f}m'.format(height_val))
+    heading_val = float(data.heading)/1000.0
+    gpswin.addstr(1, 69, 'Heading: {0: 7.3f}'.format(heading_val))
+
 def imu_callback(data):
     imuwin.clear()
     (imu_maxx,imu_maxy) = imuwin.getmaxyx()
     imu_maxy = imu_maxy - 2 # remove space for left and right border
     gcol = 25
     imuwin.border(0)
-    imuwin.addstr(0, 1, "AscTec Quadrotor Console Monitor", curses.color_pair(1)|curses.A_BOLD)
+    imuwin.addstr(0, 2, "AscTec Quadrotor Console Monitor", curses.color_pair(1)|curses.A_BOLD)
 
     pos = 1
     if (imu_maxx > 16):
@@ -228,28 +245,32 @@ def imu_callback(data):
     # Roll Graph
     ################################
     roll = float(data.angle_roll)/1000.0
-    imuwin.addstr(pos+big, 2, 'Roll: {0:.3f}deg'.format(roll))
+    imuwin.addstr(pos+big, 2, "Roll:      %+08.3f"%roll)
+    imuwin.addch(pos+big, 21, curses.ACS_DEGREE)
     drawSignedVal(pos,gcol,imu_maxy-(gcol+1),roll,90.0,-90.0,big)
     pos = pos + pos_inc
 
     # Pitch Graph
     ################################
     pitch = float(data.angle_nick)/1000.0
-    imuwin.addstr(pos+big, 2, 'Pitch: {0:.3f}deg'.format(pitch))
+    imuwin.addstr(pos+big, 2, "Pitch:     %+08.3f"%pitch)
+    imuwin.addch(pos+big, 21, curses.ACS_DEGREE)
     drawSignedVal(pos,gcol,imu_maxy-(gcol+1),pitch,180.0,-180.0,big)
     pos = pos + pos_inc
 
     # Yaw Graph
     ################################
     yaw = float(data.angle_yaw)/1000.0 -180
-    imuwin.addstr(pos+big, 2, 'Fused Yaw: {0:.3f}deg'.format(yaw))
+    imuwin.addstr(pos+big, 2, "Fused Yaw: %+08.3f"%yaw)
+    imuwin.addch(pos+big, 21, curses.ACS_DEGREE)
     drawSignedVal(pos,gcol,imu_maxy-(gcol+1),yaw,180.0,-180.0,big)
     pos = pos + pos_inc
 
     # Compass Graph
     ################################
     mag = float(data.mag_heading)/1000.0 -180
-    imuwin.addstr(pos+big, 2, 'Compass: {0:.3f}deg'.format(mag))
+    imuwin.addstr(pos+big, 2, "Compass:   %+08.3f"%mag)
+    imuwin.addch(pos+big, 21, curses.ACS_DEGREE)
     drawSignedVal(pos,gcol,imu_maxy-(gcol+1),mag,180.0,-180.0,big)
     pos = pos + pos_inc
 
@@ -259,6 +280,7 @@ def callback(data):
     maxy = maxy - 2 # remove space for left and right border
     gcol = 20
     llwin.border(0)
+    llwin.addstr(0, 2, "Status", curses.color_pair(1)|curses.A_BOLD)
 
     # Battery Monitor
     ################################
@@ -281,6 +303,7 @@ def listener():
     rospy.init_node('cursed_controller', anonymous=True)
     rospy.Subscriber("/autopilot/LL_STATUS", LLStatus, callback)
     rospy.Subscriber("/autopilot/IMU_CALCDATA", IMUCalcData, imu_callback)
+    rospy.Subscriber("/autopilot/GPS_DATA", GPSData, gps_callback)
     curses.init_pair(1, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
     curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
     curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)
@@ -297,8 +320,9 @@ def listener():
         (current_maxx,current_maxy) = myscreen.getmaxyx()
         if (current_maxx != maxx or current_maxy != maxy):
             (maxx,maxy) = myscreen.getmaxyx()
+            gpswin.mvwin(maxx-14, 0)
             llwin.mvwin(maxx-11, 0)
-            imuwin = curses.newwin(maxx-11, maxy, 0, 0)
+            imuwin = curses.newwin(maxx-14, maxy, 0, 0)
         if (alarm):
 	    alarm_count = alarm_count + 1
             if (alarm_count == alarm_interval):
@@ -308,6 +332,7 @@ def listener():
          
         imuwin.refresh()
         llwin.refresh()
+        gpswin.refresh()
         r.sleep()
     curses.nocbreak(); myscreen.keypad(0); curses.echo(); curses.curs_set(1)
     curses.endwin()
