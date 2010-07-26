@@ -296,7 +296,7 @@ namespace asctec
             result = true;
             ROS_DEBUG ("Valid CRC!!");
           }
-          telemetry->dumpGPS_DATA();
+          //telemetry->dumpGPS_DATA();
         }
         else
         {
