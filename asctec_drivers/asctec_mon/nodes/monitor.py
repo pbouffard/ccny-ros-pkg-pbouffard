@@ -19,9 +19,12 @@ curses.curs_set(0)
 llwin = curses.newwin(11, maxy, maxx-11, 0)
 gpswin = curses.newwin(3, maxy, maxx-14, 0)
 imuwin = curses.newwin(maxx-14, maxy, 0, 0)
-alarm = 0;
-alarm_count = 0;
-alarm_interval = 10;
+alarm = 0
+alarm_count = 0
+alarm_interval = 10
+gps_lock = 1
+imu_lock = 1
+ll_lock = 1
 
 def drawSignedVal(r,c,w,val,val_max,val_min,big):
     center = int(w/2)
@@ -141,10 +144,10 @@ def drawStatusMode(r,c,w,data):
 
 def drawFlightMode(r,c,w,flightMode):
     # Draw Top
-    size = int(w / 5)-1
+    size = int(w / 5)-2
     llwin.addch(r, c, curses.ACS_ULCORNER)
     for n in range(c+1, c+w):
-        if ((n%(size+c))-2):
+        if (((n%(size+c))-2) or (n/size+c) > 6):
           llwin.addch(r, n, curses.ACS_HLINE)
         else:
           llwin.addch(r, n, curses.ACS_TTEE)
@@ -194,16 +197,18 @@ def drawFlightMode(r,c,w,flightMode):
     r = r + 1
 
     # Draw Bottom
-    size = int(w / 5)-1
+    size = int(w / 5)-2
     llwin.addch(r, c, curses.ACS_LLCORNER)
     for n in range(c+1, c+w):
-        if ((n%(size+c))-2):
+        if (((n%(size+c))-2) or (n/size+c) > 6):
           llwin.addch(r, n, curses.ACS_HLINE)
         else:
           llwin.addch(r, n, curses.ACS_BTEE)
     llwin.addch(r, c+w, curses.ACS_LRCORNER)
 
 def gps_callback(data):
+    global gps_lock
+    gps_lock = 1
     gpswin.clear()
     (gps_maxx,gps_maxy) = imuwin.getmaxyx()
     gps_maxy = gps_maxy - 2 # remove space for left and right border
@@ -218,8 +223,11 @@ def gps_callback(data):
     gpswin.addstr(1, 51, 'Height: {0: 7.3f}m'.format(height_val))
     heading_val = float(data.heading)/1000.0
     gpswin.addstr(1, 69, 'Heading: {0: 7.3f}'.format(heading_val))
+    gps_lock = 0
 
 def imu_callback(data):
+    global imu_lock
+    imu_lock = 1
     imuwin.clear()
     (imu_maxx,imu_maxy) = imuwin.getmaxyx()
     imu_maxy = imu_maxy - 2 # remove space for left and right border
@@ -238,7 +246,7 @@ def imu_callback(data):
     # Height Graph
     ################################
     height = float(data.height)/1000.0
-    imuwin.addstr(pos+big, 2, 'Height: {0:.3f}m'.format(height))
+    imuwin.addstr(pos+big, 2, 'Height:    {0: 8.3f}m'.format(height))
     drawSignedVal(pos,gcol,imu_maxy-(gcol+1),height,10.0,-10.0,big)
     pos = pos + pos_inc
     
@@ -274,7 +282,11 @@ def imu_callback(data):
     drawSignedVal(pos,gcol,imu_maxy-(gcol+1),mag,180.0,-180.0,big)
     pos = pos + pos_inc
 
+    imu_lock = 0
+
 def callback(data):
+    global ll_lock
+    ll_lock = 1
     llwin.clear()
     (maxx,maxy) = llwin.getmaxyx()
     maxy = maxy - 2 # remove space for left and right border
@@ -295,6 +307,8 @@ def callback(data):
     # Status Monitor
     ################################
     drawStatusMode(7,2,maxy-3,data)
+
+    ll_lock = 0
 
 def listener():
     global imuwin, maxx, maxy
@@ -323,16 +337,21 @@ def listener():
             gpswin.mvwin(maxx-14, 0)
             llwin.mvwin(maxx-11, 0)
             imuwin = curses.newwin(maxx-14, maxy, 0, 0)
+            #imuwin.refresh()
+            #llwin.refresh()
+            #gpswin.refresh()
         if (alarm):
 	    alarm_count = alarm_count + 1
             if (alarm_count == alarm_interval):
                 alarm_count = 0
                 curses.flash()
                 curses.beep()
-         
-        imuwin.refresh()
-        llwin.refresh()
-        gpswin.refresh()
+        if (not gps_lock):
+            gpswin.refresh()
+        if (not imu_lock):
+            imuwin.refresh()
+        if (not ll_lock):
+            llwin.refresh()
         r.sleep()
     curses.nocbreak(); myscreen.keypad(0); curses.echo(); curses.curs_set(1)
     curses.endwin()
