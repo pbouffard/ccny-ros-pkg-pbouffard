@@ -84,9 +84,9 @@ void AsctecProc::createImuMsg(const asctec_msgs::IMUCalcDataConstPtr& imuCalcDat
   imuMsg.linear_acceleration_covariance[8] = 1.0;
 
   // copy over angular_velocity
-  imuMsg.angular_velocity.x = imuCalcDataMsg->angvel_roll * ASC_TO_ROS_ANGVEL;
+  imuMsg.angular_velocity.x = imuCalcDataMsg->angvel_roll * ASC_TO_ROS_ANGVEL * -1.0;
   imuMsg.angular_velocity.y = imuCalcDataMsg->angvel_nick * ASC_TO_ROS_ANGVEL;
-  imuMsg.angular_velocity.z = imuCalcDataMsg->angvel_yaw  * ASC_TO_ROS_ANGVEL; 
+  imuMsg.angular_velocity.z = imuCalcDataMsg->angvel_yaw  * ASC_TO_ROS_ANGVEL * -1.0; 
 
   // define angular_velocity variance
   imuMsg.angular_velocity_covariance[0] = 1.0;
@@ -101,9 +101,9 @@ void AsctecProc::createImuMsg(const asctec_msgs::IMUCalcDataConstPtr& imuCalcDat
 
   // calculate quaternion orientation
   btQuaternion orientation;
-  orientation.setRPY(imuCalcDataMsg->angle_roll * ASC_TO_ROS_ANGLE * (-1.0),
+  orientation.setRPY(imuCalcDataMsg->angle_roll * ASC_TO_ROS_ANGLE * -1.0,
                      imuCalcDataMsg->angle_nick * ASC_TO_ROS_ANGLE,
-                     imuCalcDataMsg->angle_yaw  * ASC_TO_ROS_ANGLE * (-1.0));
+                     imuCalcDataMsg->angle_yaw  * ASC_TO_ROS_ANGLE * -1.0);
 
   imuMsg.orientation.x = orientation.getX();
   imuMsg.orientation.y = orientation.getY();
