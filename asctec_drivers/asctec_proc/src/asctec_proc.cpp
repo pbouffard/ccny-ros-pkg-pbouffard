@@ -39,10 +39,9 @@ void AsctecProc::imuCalcDataCallback(const asctec_msgs::IMUCalcDataConstPtr& imu
   createImuMsg (imuCalcDataMsg, imuMsg);
   imuPublisher_.publish(imuMsg);
 
-  printf("%f %f %f\n", imuMsg.linear_acceleration.x, 
-                       imuMsg.linear_acceleration.y, 
-                       imuMsg.linear_acceleration.z);
-
+  printf("%f %f %f\n", imuCalcDataMsg->angle_roll * ASC_TO_ROS_ANGLE,
+                       imuCalcDataMsg->angle_nick * ASC_TO_ROS_ANGLE,
+                       imuCalcDataMsg->angle_yaw  * ASC_TO_ROS_ANGLE);
   // publish tf for testing
 
 /*
