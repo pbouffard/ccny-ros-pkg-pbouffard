@@ -2,9 +2,18 @@
 # AscTec Console Monitor
 ################################
 # This code may not be pretty but is seems to work.
+# Commands
+# q = Quit
+# r = Record Bag File
+# f = Test flashing the screen
+# b = Test the terminal bell
+
 import roslib; roslib.load_manifest('asctec_mon')
 import rospy
 import curses
+import subprocess
+import os
+import signal
 
 from asctec_msgs.msg import LLStatus
 from asctec_msgs.msg import IMUCalcData
@@ -18,13 +27,20 @@ curses.curs_set(0)
 (maxx,maxy) = myscreen.getmaxyx()
 llwin = curses.newwin(11, maxy, maxx-11, 0)
 gpswin = curses.newwin(3, maxy, maxx-14, 0)
-imuwin = curses.newwin(maxx-14, maxy, 0, 0)
+recwin = curses.newwin(3, maxy, maxx-17, 0)
+imuwin = curses.newwin(maxx-17, maxy, 0, 0)
 alarm = 0
 alarm_count = 0
 alarm_interval = 10
 gps_lock = 1
 imu_lock = 1
 ll_lock = 1
+rec_status = 0
+rec_enable = 0
+rec_cmd = ["rosbag", "record", "-a", "-o","asctec"]
+rec_dir = str(os.environ['HOME'])+"/ros/bags"
+rec_process = None
+bag_name = None
 
 def drawSignedVal(r,c,w,val,val_max,val_min,big):
     center = int(w/2)
@@ -206,6 +222,49 @@ def drawFlightMode(r,c,w,flightMode):
           llwin.addch(r, n, curses.ACS_BTEE)
     llwin.addch(r, c+w, curses.ACS_LRCORNER)
 
+def record_update():
+    global rec_status
+    global rec_cmd
+    global rec_dir
+    global rec_process
+    global rec_enable
+    global bag_name
+
+    recwin.clear()
+    if rec_status:
+        recattr = curses.color_pair(2)
+    else:
+        recattr = curses.color_pair(0)
+    recwin.attrset(recattr)
+    (rec_maxx,rec_maxy) = recwin.getmaxyx()
+    rec_maxy = rec_maxy - 2 # remove space for left and right border
+    recwin.border(0)
+    
+    if rec_enable != rec_status:
+        if rec_enable:
+            rec_process = subprocess.Popen(rec_cmd, shell=False, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=rec_dir)
+        else:
+            bag_name = None
+        rec_status = rec_enable
+          
+    if rec_status:
+        if (bag_name == None or bag_name == ''):
+            process = subprocess.Popen(['lsof -c record -Fn -- | grep active | cut -c2-'], shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=rec_dir)
+            bag_name = process.stdout.readline().rstrip()
+        recwin.addstr(0,2,"Flight Data Recording",curses.color_pair(2)|curses.A_BOLD)
+        recwin.attrset(curses.color_pair(0))
+        recwin.addstr(1, 2, "Filename: ")
+        recwin.addstr(1,12,bag_name)
+    else:
+        if (rec_process != None):
+            rec_process.send_signal(signal.SIGINT)
+        recwin.addstr(0,2,"Flight Data Recorder",curses.color_pair(1)|curses.A_BOLD)
+        recwin.attrset(curses.color_pair(0))
+        recwin.addstr(1, 2, "Command: ")
+        recwin.addstr(1,11,' '.join(rec_cmd))
+    if rec_process != None:
+      if rec_process.poll() == 0:
+        rec_process = None
 def gps_callback(data):
     global gps_lock
     gps_lock = 1
@@ -313,6 +372,7 @@ def callback(data):
 def listener():
     global imuwin, maxx, maxy
     global alarm, alarm_count, alarm_interval
+    global rec_enable
 
     rospy.init_node('cursed_controller', anonymous=True)
     rospy.Subscriber("/autopilot/LL_STATUS", LLStatus, callback)
@@ -323,12 +383,13 @@ def listener():
     curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)
     curses.init_pair(4, curses.COLOR_BLACK, curses.COLOR_WHITE)
     curses.init_pair(5, curses.COLOR_BLACK, curses.COLOR_RED)
-    r = rospy.Rate(10) # 10hz
+    r = rospy.Rate(5) # 10hz
     (maxx,maxy) = myscreen.getmaxyx()
     while not rospy.is_shutdown():
         c = myscreen.getch()
         if c == ord('f'): curses.flash()
         elif c == ord('b'): curses.beep()
+        elif c == ord('r'): rec_enable = not rec_enable
         elif c == ord('q'): break  # Exit the while()
         elif c == curses.KEY_HOME: x = y = 0
         (current_maxx,current_maxy) = myscreen.getmaxyx()
@@ -352,6 +413,8 @@ def listener():
             imuwin.refresh()
         if (not ll_lock):
             llwin.refresh()
+        record_update()
+        recwin.refresh()
         r.sleep()
     curses.nocbreak(); myscreen.keypad(0); curses.echo(); curses.curs_set(1)
     curses.endwin()
