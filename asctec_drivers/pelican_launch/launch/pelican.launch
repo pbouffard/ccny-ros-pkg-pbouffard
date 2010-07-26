@@ -8,7 +8,5 @@
 
   <include file="$(find pelican_launch)/launch/pose_estimation.launch"/>
 
-  <include file="$(find pelican_launch)/launch/gmapping.launch"/>
-
 </launch>
 
