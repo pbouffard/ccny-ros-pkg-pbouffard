@@ -39,8 +39,13 @@ void AsctecProc::imuCalcDataCallback(const asctec_msgs::IMUCalcDataConstPtr& imu
   createImuMsg (imuCalcDataMsg, imuMsg);
   imuPublisher_.publish(imuMsg);
 
+  printf("%f %f %f\n", imuMsg.linear_acceleration.x, 
+                       imuMsg.linear_acceleration.y, 
+                       imuMsg.linear_acceleration.z);
+
   // publish tf for testing
 
+/*
   btTransform t;
 
   btQuaternion orientation;
@@ -53,7 +58,7 @@ void AsctecProc::imuCalcDataCallback(const asctec_msgs::IMUCalcDataConstPtr& imu
 
   tf::StampedTransform worldToOdomTf (t, ros::Time::now(), "navigation", "imu_raw");
   tfBroadcaster_.sendTransform (worldToOdomTf);
-
+*/
 }
 
 void AsctecProc::createImuMsg(const asctec_msgs::IMUCalcDataConstPtr& imuCalcDataMsg,
