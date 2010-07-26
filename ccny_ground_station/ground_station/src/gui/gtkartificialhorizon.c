@@ -60,8 +60,8 @@
  * @code
  * if (IS_GTK_ARTIFICIAL_HORIZON (art_hor))
  * {
- *	gtk_turn_coordinator_set_value (GTK_ARTIFICIAL_HORIZON (art_hor), rotation_angle,trans_y);
- *	gtk_turn_coordinator_redraw(GTK_ARTIFICIAL_HORIZON(art_hor));
+ *	gtk_artificial_horizon_set_value (GTK_ARTIFICIAL_HORIZON (art_hor), rotation_angle,trans_y);
+ *	gtk_artificial_horizon_redraw(GTK_ARTIFICIAL_HORIZON(art_hor));
  * }		
  * @endcode
  * 

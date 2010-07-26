@@ -62,8 +62,9 @@ namespace asctec
 
     telemetry_->enablePolling(asctec::RequestTypes::IMU_CALCDATA, 1);
     //telemetry_->enablePolling(asctec::RequestTypes::IMU_RAWDATA,  2, 0);
-    //telemetry_->enablePolling(asctec::RequestTypes::LL_STATUS,    2, 1);
-    //telemetry_->enablePolling(asctec::RequestTypes::RC_DATA,      5);
+    telemetry_->enablePolling(asctec::RequestTypes::LL_STATUS, 10, 0);
+    telemetry_->enablePolling(asctec::RequestTypes::RC_DATA, 20, 3);
+    telemetry_->enablePolling(asctec::RequestTypes::GPS_DATA, 10, 5);
 
     timer_ = nh_private.createTimer (d, &AutoPilot::spin, this);
   }

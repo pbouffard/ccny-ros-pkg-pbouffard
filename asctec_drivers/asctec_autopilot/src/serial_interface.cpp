@@ -288,6 +288,16 @@ namespace asctec
           }
           //telemetry->dumpRC_DATA();
         }
+        else if (packet_type == Telemetry::PD_GPSDATA)
+        {
+          ROS_DEBUG ("Packet type is GPS_DATA");
+          memcpy (&telemetry->GPS_DATA_, spacket, packet_size);
+          if (crc_valid (packet_crc,&telemetry->GPS_DATA_, packet_size)) {
+            result = true;
+            ROS_DEBUG ("Valid CRC!!");
+          }
+          telemetry->dumpGPS_DATA();
+        }
         else
         {
           ROS_ERROR("Packet type is UNKNOWN");
@@ -302,7 +312,12 @@ namespace asctec
     }
     stall (false);
     i = fread (spacket, sizeof (char), 1, dev_);
-    ROS_ASSERT_MSG (i == 0, "Unexpected Data: Flush boffers?!");
+    //FIXME~!!
+    // If we receive unexpected data then log a warning
+    if (i != 0) {
+      drain();
+      ROS_ERROR("Unexpected Data: Flushing receive buffer");
+    }
     return result;
   }
 
