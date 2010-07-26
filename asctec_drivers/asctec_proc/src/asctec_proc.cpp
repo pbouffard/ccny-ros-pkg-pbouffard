@@ -101,9 +101,9 @@ void AsctecProc::createImuMsg(const asctec_msgs::IMUCalcDataConstPtr& imuCalcDat
 
   // calculate quaternion orientation
   btQuaternion orientation;
-  orientation.setRPY(imuCalcDataMsg->angle_roll * ASC_TO_ROS_ANGLE,
+  orientation.setRPY(imuCalcDataMsg->angle_roll * ASC_TO_ROS_ANGLE * (-1.0),
                      imuCalcDataMsg->angle_nick * ASC_TO_ROS_ANGLE,
-                     imuCalcDataMsg->angle_yaw  * ASC_TO_ROS_ANGLE);
+                     imuCalcDataMsg->angle_yaw  * ASC_TO_ROS_ANGLE * (-1.0));
 
   imuMsg.orientation.x = orientation.getX();
   imuMsg.orientation.y = orientation.getY();
