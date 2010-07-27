@@ -196,7 +196,7 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
 
   geometry_msgs::Pose2D estimatedPose = matcher_->scanMatch(scanMsg, guessPose, scansHistoryVect_).first;
 
-  ROS_INFO("%f, %f, %f", dur, estimatedPose.x, estimatedPose.y, estimatedPose.theta);
+  ROS_INFO("%f, %f, %f", estimatedPose.x, estimatedPose.y, estimatedPose.theta);
 
   lastScanPose_     = estimatedPose;
 
