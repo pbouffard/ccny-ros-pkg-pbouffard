@@ -26,6 +26,7 @@
 #include "asctec_msgs/LLStatus.h"
 #include "asctec_msgs/GPSData.h"
 #include "asctec_msgs/RCData.h"
+#include "asctec_msgs/CTRLOut.h"
 
 namespace asctec
 {
@@ -121,6 +122,7 @@ namespace asctec
     void copyIMU_CALCDATA();
     void copyRC_DATA();
     void copyGPS_DATA();
+    void copyCONTROLLER_OUTPUT();
     
     bool pollingEnabled_;
     uint16_t requestCount_;
@@ -289,7 +291,7 @@ namespace asctec
 
       //GPS status information; 0x03 = valid GPS fix
       int status;
-      //coordinates of current origin in deg * 10ˆ7
+      //coordinates of current origin in deg * 10ˆ7RCData_
       int latitude_best_estimate;
       int longitude_best_estimate;
       //velocities in X (E/W) and Y (N/S) after data fusion
@@ -383,6 +385,7 @@ You will receive an acknowledge if a command or a waypoint was received correctl
     asctec_msgs::IMUCalcData IMUCalcData_;
     asctec_msgs::GPSData GPSData_;
     asctec_msgs::RCData RCData_;
+    asctec_msgs::CTRLOut CTRLOut_;
     
   };                            // end class Telemetry
 }                               //end namespace asctec

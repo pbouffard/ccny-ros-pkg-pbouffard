@@ -92,6 +92,10 @@ namespace asctec
             copyRC_DATA();
             requestPublisher_[i].publish(RCData_);
             break;
+          case RequestTypes::CONTROLLER_OUTPUT:
+            copyCONTROLLER_OUTPUT();
+            requestPublisher_[i].publish(CTRLOut_);
+            break;
           default:
             ROS_DEBUG("Unable to publish unknown type");
         }
@@ -117,6 +121,9 @@ namespace asctec
       case RequestTypes::GPS_DATA:
         requestPublisher_[msg] = nh_private.advertise<asctec_msgs::GPSData>(requestToString(msg).c_str(), 10);
         break;
+      case RequestTypes::CONTROLLER_OUTPUT:
+        requestPublisher_[msg] = nh_private.advertise<asctec_msgs::CTRLOut>(requestToString(msg).c_str(), 10);
+        break;
     }
 
     ROS_INFO("Publishing %s data on topic: %s", requestToString(msg).c_str(),requestToString(msg).c_str ());
@@ -135,6 +142,7 @@ std::string Telemetry::requestToString(RequestTypes::RequestType t)
       case RequestTypes::IMU_CALCDATA:    { return "IMU_CALCDATA";    }
       case RequestTypes::RC_DATA:    { return "RC_DATA";    }
       case RequestTypes::GPS_DATA:    { return "GPS_DATA";    }
+      case RequestTypes::CONTROLLER_OUTPUT:    { return "CONTROLLER_OUTPUT";    }
    }
    return "Unknown";
 }
@@ -286,5 +294,11 @@ std::string Telemetry::requestToString(RequestTypes::RequestType t)
     GPSData_.speed_accuracy = GPS_DATA_.speed_accuracy;
     GPSData_.numSV = GPS_DATA_.numSV;
     GPSData_.status = GPS_DATA_.status;
+  }
+  void Telemetry::copyCONTROLLER_OUTPUT() {
+    CTRLOut_.pitch = CONTROLLER_OUTPUT_.nick;
+    CTRLOut_.yaw = CONTROLLER_OUTPUT_.yaw;
+    CTRLOut_.roll = CONTROLLER_OUTPUT_.roll;
+    CTRLOut_.thrust = CONTROLLER_OUTPUT_.thrust;
   }
 }

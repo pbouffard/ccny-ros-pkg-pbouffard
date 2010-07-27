@@ -298,9 +298,19 @@ namespace asctec
           }
           //telemetry->dumpGPS_DATA();
         }
+        else if (packet_type == Telemetry::PD_CTRLOUT)
+        {
+          ROS_DEBUG ("Packet type is CTRLOUT");
+          memcpy (&telemetry->CONTROLLER_OUTPUT_, spacket, packet_size);
+          if (crc_valid (packet_crc,&telemetry->CONTROLLER_OUTPUT_, packet_size)) {
+            result = true;
+            ROS_DEBUG ("Valid CRC!!");
+          }
+          //telemetry->dumpGPS_DATA();
+        }
         else
         {
-          ROS_ERROR("Packet type is UNKNOWN");
+          ROS_ERROR("Packet type (%#2x) is UNKNOWN", packet_type);
         }
       }
       else
