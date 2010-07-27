@@ -101,6 +101,7 @@ ScanMatcherNode::ScanMatcherNode()
   scansHistory_ = new ScanBuffer(historyLength_);
   scansReceived_ = 0;
 
+
   lastScanPose_.x     = 0.0;
   lastScanPose_.y     = 0.0;
   lastScanPose_.theta = 0.0;
@@ -117,31 +118,8 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
   // **** If this is the first scan, initialize the matcher
   if (!matcher_.get()) 
   {
-    tf::StampedTransform worldToBaseTf;
-    try
-    {
-       tfListener_.lookupTransform (worldFrame_, baseFrame_, scanMsg.header.stamp, worldToBaseTf);
-    }
-    catch (tf::TransformException ex)
-    {
-      // transform unavailable - skip scan
-      ROS_WARN("Transform unavailable, skipping scan (%s)", ex.what());
-      return;
-    }
-    btTransform worldToBase = worldToBaseTf;
-
-    geometry_msgs::Pose2D initPose;
-    initPose.x = worldToBase.getOrigin().getX();
-    initPose.y = worldToBase.getOrigin().getY();
-    btMatrix3x3 m(worldToBase.getRotation());
-    double roll, pitch, yaw;
-    m.getRPY(roll, pitch, yaw);
-    initPose.theta = yaw;
-
     matcher_.reset(new KartoScanMatcher(scanMsg, lastScanPose_, searchSizes_, resolutions_));
     ROS_INFO ("Initialized matcher");
-
-    lastScanPose_ = initPose;
   }
 
   if (scansHistory_->size() < historyLength_)
@@ -161,38 +139,11 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
 
   std::vector<ScanWithPose> referenceScans(scansHistory_->begin(), scansHistory_->end());
 
-  // **********************
-/*
-  tf::StampedTransform worldToBaseTf;
-  try
-  {
-     tfListener_.lookupTransform (worldFrame_, baseFrame_, scanMsg.header.stamp, worldToBaseTf);
-  }
-  catch (tf::TransformException ex)
-  {
-    // transform unavailable - skip scan
-    ROS_WARN("Transform unavailable, skipping scan (%s)", ex.what());
-    return;
-  }
-  btTransform worldToBase = worldToBaseTf;
-
-  geometry_msgs::Pose2D guessedPose;
-  guessedPose.x = worldToBase.getOrigin().getX();
-  guessedPose.y = worldToBase.getOrigin().getY();
-  btMatrix3x3 m(worldToBase.getRotation());
-  double roll, pitch, yaw;
-  m.getRPY(roll, pitch, yaw);
-  guessedPose.theta = yaw;
-
-  //lastScanPose_.theta = yaw;
-*/
-  //ROS_INFO("[gg] (%f, %f, %f)", guessedPose.x, 
-   //                             guessedPose.y, 
-   //                             guessedPose.theta);
 
   //**************
 
   long start = clock();
+  printf("matching\n");
   geometry_msgs::Pose2D estimatedPose = matcher_->scanMatch(scanMsg, lastScanPose_, referenceScans).first;
   int dur = (clock()-start) / 1000;
 
@@ -219,22 +170,24 @@ void ScanMatcherNode::addToHistory(const sensor_msgs::LaserScan& scanMsg, const 
 
 void ScanMatcherNode::publishMapToOdomTf(const geometry_msgs::Pose2D& estimatedPose, const ros::Time& time)
 {
+  ROS_INFO("Publishing tf");
+
   btTransform transform;
 
   btQuaternion rotation;
-  rotation.setRPY (0.0, 0.0, estimatedPose.theta);
+  rotation.setRPY (0.0, 0.0, 0.0);
   transform.setRotation (rotation);
 
   btVector3 origin;
   origin.setValue (estimatedPose.x, estimatedPose.y, 0.0);
   transform.setOrigin (origin);
 
-  tf::StampedTransform transformMsg (transform, time, worldFrame_, "test");
+  tf::StampedTransform transformMsg (transform, time, worldFrame_, odomFrame_);
   tfBroadcaster_.sendTransform (transformMsg);
 
   // publish pose2D
 
-  posePublisher_.publish(estimatedPose);
+  //posePublisher_.publish(estimatedPose);
 }
 
 void ScanMatcherNode::tokenize(const std::string& str, std::vector<std::string>& tokens)
