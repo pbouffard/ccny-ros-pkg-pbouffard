@@ -160,7 +160,6 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
 
   publishMapToOdomTf(estimatedPose, scanMsg.header.stamp);
 
-
   gettimeofday(&end, NULL);
 
   double dur = (end.tv_sec * 1000000 + end.tv_usec)
@@ -199,10 +198,10 @@ void ScanMatcherNode::publishMapToOdomTf(const geometry_msgs::Pose2D& estimatedP
   transform.setRotation (rotation);
 
   btVector3 origin;
-  origin.setValue (-estimatedPose.x, -estimatedPose.y, 0.0);
+  origin.setValue (estimatedPose.x, estimatedPose.y, 0.0);
   transform.setOrigin (origin);
 
-  //transform = transform.inverse();
+  transform = transform.inverse();
 
   tf::StampedTransform transformMsg (transform, time, worldFrame_, odomFrame_);
   tfBroadcaster_.sendTransform (transformMsg);
