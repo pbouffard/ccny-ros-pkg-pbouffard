@@ -131,25 +131,25 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
       Lock lock(mutex_);
       addToHistory(scanMsg, lastScanPose_);
     }
-
     return;
   }
-
-  Lock lock(mutex_);
+  long start = clock();
+  boost::mutex::scoped_lock lock(mutex_);
 
   std::vector<ScanWithPose> referenceScans(scansHistory_->begin(), scansHistory_->end());
 
-
   //**************
 
-  long start = clock();
-  printf("matching\n");
+
+//  printf("matching\n");
   geometry_msgs::Pose2D estimatedPose = matcher_->scanMatch(scanMsg, lastScanPose_, referenceScans).first;
   int dur = (clock()-start) / 1000;
 
-  ROS_INFO("[[%d]] (%f, %f, %f)", dur, estimatedPose.x, 
+  printf("dur %d\n", dur);
+
+/*  ROS_INFO("[[%d]] (%f, %f, %f)", dur, estimatedPose.x, 
                                      estimatedPose.y, 
-                                     estimatedPose.theta);
+                                     estimatedPose.theta);*/
   lastScanPose_     = estimatedPose;
 
   addToHistory(scanMsg, estimatedPose);
@@ -170,8 +170,6 @@ void ScanMatcherNode::addToHistory(const sensor_msgs::LaserScan& scanMsg, const 
 
 void ScanMatcherNode::publishMapToOdomTf(const geometry_msgs::Pose2D& estimatedPose, const ros::Time& time)
 {
-  ROS_INFO("Publishing tf");
-
   btTransform transform;
 
   btQuaternion rotation;
