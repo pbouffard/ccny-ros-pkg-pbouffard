@@ -169,7 +169,34 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
 
   //std::vector<ScanWithPose> referenceScans(scansHistory_->begin(), scansHistory_->end());
 
-  geometry_msgs::Pose2D estimatedPose = matcher_->scanMatch(scanMsg, lastScanPose_, scansHistoryVect_).first;
+  // ***************************
+
+  tf::StampedTransform odomToBaseTf;
+  try
+  {
+     tfListener_.lookupTransform (odomFrame_, baseFrame_, scanMsg.header.stamp, odomToBaseTf);
+  }
+  catch (tf::TransformException ex)
+  {
+    // transform unavailable - skip scan
+    ROS_WARN("Transform unavailable, skipping scan (%s)", ex.what());
+    return;
+  }
+  btTransform odomToBase = odomToBase;
+
+  btMatrix3x3 m(odomToBase.getRotation());
+  double roll, pitch, yaw;
+  m.getRPY(roll, pitch, yaw);
+
+  geometry_msgs::Pose2D guessPose;
+
+  guessPose.x = odomToBase.getOrigin().getX();
+  guessPose.y = odomToBase.getOrigin().getY();
+  guessPose.theta = yaw;
+  // ************
+
+
+  geometry_msgs::Pose2D estimatedPose = matcher_->scanMatch(scanMsg, guessPose, scansHistoryVect_).first;
 
 /*  ROS_INFO("[[%d]] (%f, %f, %f)", dur, estimatedPose.x, 
                                      estimatedPose.y, 
@@ -214,7 +241,7 @@ void ScanMatcherNode::publishMapToOdomTf(const geometry_msgs::Pose2D& estimatedP
   btTransform transform;
 
   btQuaternion rotation;
-  rotation.setRPY (0.0, 0.0, estimatedPose.theta);
+  rotation.setRPY (0.0, 0.0, 0.0);
   transform.setRotation (rotation);
 
   btVector3 origin;
