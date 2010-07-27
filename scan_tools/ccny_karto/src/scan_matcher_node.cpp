@@ -147,7 +147,6 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
     double roll, pitch, yaw;
     m.getRPY(roll, pitch, yaw);
 
-
     matcher_.reset(new KartoScanMatcher(scanMsg, lastScanPose_, searchSizes_, resolutions_));
     ROS_INFO ("Initialized matcher");
 
@@ -215,7 +214,7 @@ void ScanMatcherNode::publishMapToOdomTf(const geometry_msgs::Pose2D& estimatedP
   btTransform transform;
 
   btQuaternion rotation;
-  rotation.setRPY (0.0, 0.0, 0.0);
+  rotation.setRPY (0.0, 0.0, estimatedPose.theta);
   transform.setRotation (rotation);
 
   btVector3 origin;
