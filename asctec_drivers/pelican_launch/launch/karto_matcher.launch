@@ -5,9 +5,9 @@
     <param name="world_frame" value="world"/>
     <param name="odom_frame" value="odom"/>
 
-    <param name="history_length" value="10"/>
+    <param name="history_length" value="20"/>
     <param name="search_sizes" type="string" value="0.50 0.10"/>
-    <param name="resolutions" type="string"  value="0.05 0.01"/>
+    <param name="resolutions" type="string"  value="0.05 0.005"/>
     <param name="history_skip" value="5"/>
 
     <remap from="/scan" to="/splitter/mvs"/>    
