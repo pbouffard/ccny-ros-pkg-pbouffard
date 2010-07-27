@@ -146,10 +146,12 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
     btMatrix3x3 m(odomToBase.getRotation());
     double roll, pitch, yaw;
     m.getRPY(roll, pitch, yaw);
-    lastScanPose_.theta = yaw;
+
 
     matcher_.reset(new KartoScanMatcher(scanMsg, lastScanPose_, searchSizes_, resolutions_));
     ROS_INFO ("Initialized matcher");
+
+    lastScanPose_.theta = yaw;
   }
 
   if (scansHistoryVect_.size() < historyLength_)
