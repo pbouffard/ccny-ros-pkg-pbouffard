@@ -40,6 +40,7 @@ class ScanMatcherNode
 
     std::vector<ScanWithPose> scansHistoryVect_;
     int historyIndex_;
+    bool historyReady_;
 
     int scansReceived_;
     geometry_msgs::Pose2D lastScanPose_; 
@@ -112,6 +113,7 @@ ScanMatcherNode::ScanMatcherNode()
   lastScanPose_.theta = 0.0;
 
   historyIndex_ = 0;
+  historyReady_ = false;
 
   scan_sub_ = nh_.subscribe("scan", 10, &ScanMatcherNode::scanCallback, this);
 
@@ -129,9 +131,10 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
     ROS_INFO ("Initialized matcher");
   }
 
-  if (scansHistory_->size() < historyLength_)
+  if (historyIndex_ < historyLength_ && !historyReady_)
   {
     ROS_INFO("Received %d/%d.", scansHistory_->size(), historyLength_);
+    historyReady_ = true;
     if(scansReceived_ % historySkip_ == 0)
     {
       // create a scan
