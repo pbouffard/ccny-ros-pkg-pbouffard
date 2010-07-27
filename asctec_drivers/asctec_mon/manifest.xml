@@ -1,0 +1,16 @@
+<package>
+  <description brief="asctec_ctrl">
+
+     asctec_mon
+
+  </description>
+  <author>William Morris</author>
+  <license>GPL</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/asctec_mon</url>
+  <depend package="std_msgs"/>
+  <depend package="rospy"/>
+  <depend package="asctec_msgs"/>
+</package>
+
+

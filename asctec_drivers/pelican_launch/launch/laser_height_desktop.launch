@@ -1,0 +1,67 @@
+<launch>
+
+  <node pkg="rviz" type="rviz" name="rviz"
+    args="-d $(find pelican_launch)/launch/laser_height.vcg"/>
+
+  <node pkg="tf" type="static_transform_publisher" name="base_link_to_laser_link" 
+   args="0.00 0.00 0.16   0 0 0 /base_link /laser 20" />
+
+  ####################################################################
+
+  <node pkg="tf" type="static_transform_publisher" name="rvl_0_pub" 
+   args=" 0.00  0.00  0.00   -0.35  0.000  0.000 /laser /rvl_0 20" />
+
+  <node pkg="tf" type="static_transform_publisher" name="rvl_1_pub" 
+   args=" 0.00 -0.07  0.00    0.000  0.000  0.000 /rvl_0 /rvl_1 20" />
+
+  <node pkg="tf" type="static_transform_publisher" name="rvl_2_pub" 
+   args=" 0.00  0.00  0.00    0.000  0.000 -1.571 /rvl_1 /rvl_2 20" />
+
+  <node pkg="tf" type="static_transform_publisher" name="rvl_3_pub" 
+   args=" 0.00 -0.07  0.00    0.000  0.000  0.000 /rvl_2 /rvl_3 20" />
+
+  <node pkg="tf" type="static_transform_publisher" name="rvl_4_pub" 
+   args=" 0.00  0.00  0.00    3.492  0.000  0.000 /rvl_3 /rvl 20" />
+
+  ####################################################################
+
+  <node pkg="tf" type="static_transform_publisher" name="lvl_0_pub" 
+   args=" 0.00  0.00  0.00    0.350  0.000  0.000 /laser /lvl_0 20" />
+
+  <node pkg="tf" type="static_transform_publisher" name="lvl_1_pub" 
+   args=" 0.00  0.07  0.00    0.000  0.000  0.000 /lvl_0 /lvl_1 20" />
+
+  <node pkg="tf" type="static_transform_publisher" name="lvl_2_pub" 
+   args=" 0.00  0.00  0.00    0.000  0.000  1.571 /lvl_1 /lvl_2 20" />
+
+  <node pkg="tf" type="static_transform_publisher" name="lvl_3_pub" 
+   args=" 0.00  0.07  0.00    0.000  0.000  0.000 /lvl_2 /lvl_3 20" />
+
+  <node pkg="tf" type="static_transform_publisher" name="lvl_4_pub" 
+   args=" 0.00  0.00  0.00   -3.491  0.000  0.000 /lvl_3 /lvl 20" />
+
+  ####################################################################
+
+  <node pkg="hokuyo_node" type="hokuyo_node" name="hokuyo_node" output="screen">
+    <param name="frame_id" value="/laser"/>
+    <param name="port" value="/dev/ttyACM0"/>
+  </node>
+
+  ####################################################################
+
+  <node pkg="laser_scan_splitter" type="laser_scan_splitter" name="splitter" output="screen">
+    <param name="sizes" value="9 22 17 593 23 17"/>
+    <param name="topics" value="m1 rvs m2 mvs m3 lvs"/>
+    <param name="frames" value="/laser /rvl /laser /laser /laser /lvl"/>
+  </node>
+
+  ####################################################################
+
+  <node pkg="laser_height_estimation" type="laser_height_estimation" name="floor_height_estimation" output="screen">
+    <param name="base_frame" value="/base_link"/>
+    <remap from="/scan"   to="splitter/lvs"/>
+    <remap from="/height" to="floor_height_left"/>
+    <remap from="/imu"    to="asctec_proc/imu"/>
+  </node>
+
+</launch>

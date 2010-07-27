@@ -77,6 +77,7 @@ LaserScanSplitter::LaserScanSplitter ()
   // **** advertise topics
   for (unsigned int i = 0; i < publishedScanTopics_.size (); i++)
   {
+    ROS_INFO("advertising on topic: %s", publishedScanTopics_[i].c_str());
     scanPublishers_.push_back (ros::Publisher ());
     scanPublishers_[i] = nh_private.advertise < sensor_msgs::LaserScan > (publishedScanTopics_[i], 10);
   }
@@ -94,7 +95,7 @@ void LaserScanSplitter::scanCallback (const sensor_msgs::LaserScanConstPtr & sca
 
   if (sizeSum_ != scan->ranges.size ())
   {
-    ROS_WARN ("LaserScanSplitter: Received a laser scan with size incompatible to input parameters. Skipping scan.");
+    ROS_WARN ("LaserScanSplitter: Received a laser scan with size (%d) incompatible to input parameters. Skipping scan.", scan->ranges.size());
     return;
   }
 

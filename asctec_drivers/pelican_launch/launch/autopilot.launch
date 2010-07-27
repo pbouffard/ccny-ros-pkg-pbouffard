@@ -1,0 +1,19 @@
+<launch>
+
+  <node pkg="tf" type="static_transform_publisher" name="world_to_navigation" 
+   args="0.00 0.00 0.0  0.000 0.000 3.14159 /world /navigation 20" />
+
+  <node pkg="tf" type="static_transform_publisher" name="base_link_to_imu" 
+   args="0.00 0.00 0.0 0.000 3.14159 0.000 /base_link /imu 20" />
+
+  <node name="autopilot" pkg="asctec_autopilot" type="autopilot" respawn="false" required="true" output="screen">
+    <param name="serial_port" type="string" value="/dev/ttyUSB0"/>
+    <param name="serial_speed" type="int" value="57600"/>
+    <param name="freq" value="40.0"/>
+  </node>
+
+  <node name="asctec_proc" pkg="asctec_proc" type="asctec_proc" respawn="false" required="true" output="screen">
+    <remap from="IMU_CALCDATA" to = "autopilot/IMU_CALCDATA"/>
+  </node>
+
+</launch>

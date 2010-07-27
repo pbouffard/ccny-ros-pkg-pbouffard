@@ -1,0 +1,14 @@
+<package>
+  <description brief="pelican_launch">
+
+     pelican_launch
+
+  </description>
+  <author>Ivan Dryanovski</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/pelican_launch</url>
+
+</package>
+
+

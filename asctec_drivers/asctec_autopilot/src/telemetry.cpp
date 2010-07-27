@@ -84,6 +84,10 @@ namespace asctec
             copyIMU_CALCDATA();
             requestPublisher_[i].publish(IMUCalcData_);
             break;
+          case RequestTypes::GPS_DATA:
+            copyGPS_DATA();
+            requestPublisher_[i].publish(GPSData_);
+            break;
           default:
             ROS_DEBUG("Unable to publish unknown type");
         }
@@ -93,17 +97,20 @@ namespace asctec
 
   void Telemetry::enablePolling (RequestType msg, uint8_t interval, uint8_t offset)
   {
-    ros::NodeHandle n;
+    ros::NodeHandle nh_private("~");
     switch (msg)
     {
       case RequestTypes::LL_STATUS:
-        requestPublisher_[msg] = n.advertise<asctec_msgs::LLStatus>(requestToString(msg).c_str(), 10);
+        requestPublisher_[msg] = nh_private.advertise<asctec_msgs::LLStatus>(requestToString(msg).c_str(), 10);
         break;
 //      case RequestTypes::IMU_RAWDATA: {
       case RequestTypes::IMU_CALCDATA:
-        requestPublisher_[msg] = n.advertise<asctec_msgs::IMUCalcData>(requestToString(msg).c_str(), 10);
+        requestPublisher_[msg] = nh_private.advertise<asctec_msgs::IMUCalcData>(requestToString(msg).c_str(), 10);
         break;
 //      case RequestTypes::RC_DATA:    {
+      case RequestTypes::GPS_DATA:
+        requestPublisher_[msg] = nh_private.advertise<asctec_msgs::GPSData>(requestToString(msg).c_str(), 10);
+        break;
     }
     
 	  ROS_INFO("Publishing %s data on topic: %s", requestToString(msg).c_str(),requestToString(msg).c_str ()); 
@@ -121,6 +128,7 @@ std::string Telemetry::requestToString(RequestTypes::RequestType t)
       case RequestTypes::IMU_RAWDATA:    { return "IMU_RAWDATA";    }
       case RequestTypes::IMU_CALCDATA:    { return "IMU_CALCDATA";    }
       case RequestTypes::RC_DATA:    { return "RC_DATA";    }
+      case RequestTypes::GPS_DATA:    { return "GPS_DATA";    }
    }
    return "Unknown";
 }
@@ -236,5 +244,33 @@ std::string Telemetry::requestToString(RequestTypes::RequestType t)
       RC_DATA_.channels_out[2],RC_DATA_.channels_out[3],RC_DATA_.channels_out[4],RC_DATA_.channels_out[5],
       RC_DATA_.channels_out[6],RC_DATA_.channels_out[7]);
     ROS_INFO("lock:%d",RC_DATA_.lock);
+  }
+  void Telemetry::dumpGPS_DATA() {
+    ROS_INFO("GPS_DATA");
+    ROS_INFO("--------------------------------");
+    ROS_INFO("latitude:%d",GPS_DATA_.latitude);
+    ROS_INFO("longitude:%d",GPS_DATA_.longitude);
+    ROS_INFO("height:%d",GPS_DATA_.height);
+    ROS_INFO("speed_x:%d",GPS_DATA_.speed_x);
+    ROS_INFO("speed_y:%d",GPS_DATA_.speed_y);
+    ROS_INFO("heading:%d",GPS_DATA_.heading);
+    ROS_INFO("horizontal_accuracy:%d",GPS_DATA_.horizontal_accuracy);
+    ROS_INFO("vertical_accuracy:%d",GPS_DATA_.vertical_accuracy);
+    ROS_INFO("speed_accuracy:%d",GPS_DATA_.speed_accuracy);
+    ROS_INFO("numSV:%d",GPS_DATA_.numSV);
+    ROS_INFO("status:%d",GPS_DATA_.status);
+  }
+  void Telemetry::copyGPS_DATA() {
+    GPSData_.latitude = GPS_DATA_.latitude;
+    GPSData_.longitude = GPS_DATA_.longitude;
+    GPSData_.height = GPS_DATA_.height;
+    GPSData_.speed_x = GPS_DATA_.speed_x;
+    GPSData_.speed_y = GPS_DATA_.speed_y;
+    GPSData_.heading = GPS_DATA_.heading;
+    GPSData_.horizontal_accuracy = GPS_DATA_.horizontal_accuracy;
+    GPSData_.vertical_accuracy = GPS_DATA_.vertical_accuracy;
+    GPSData_.speed_accuracy = GPS_DATA_.speed_accuracy;
+    GPSData_.numSV = GPS_DATA_.numSV;
+    GPSData_.status = GPS_DATA_.status;
   }
 }
