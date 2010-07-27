@@ -162,7 +162,7 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
   std::vector<ScanWithPose> referenceScans(scansHistory_->begin(), scansHistory_->end());
 
   // **********************
-
+/*
   tf::StampedTransform worldToBaseTf;
   try
   {
@@ -185,7 +185,7 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
   guessedPose.theta = yaw;
 
   //lastScanPose_.theta = yaw;
-
+*/
   //ROS_INFO("[gg] (%f, %f, %f)", guessedPose.x, 
    //                             guessedPose.y, 
    //                             guessedPose.theta);
@@ -193,13 +193,13 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
   //**************
 
   long start = clock();
-  geometry_msgs::Pose2D estimatedPose = matcher_->scanMatch(scanMsg, guessedPose, referenceScans).first;
+  geometry_msgs::Pose2D estimatedPose = matcher_->scanMatch(scanMsg, lastScanPose_, referenceScans).first;
   int dur = (clock()-start) / 1000;
 
   ROS_INFO("[[%d]] (%f, %f, %f)", dur, estimatedPose.x, 
                                      estimatedPose.y, 
                                      estimatedPose.theta);
-  //lastScanPose_     = estimatedPose;
+  lastScanPose_     = estimatedPose;
 
   addToHistory(scanMsg, estimatedPose);
 
