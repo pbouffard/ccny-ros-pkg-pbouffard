@@ -212,6 +212,7 @@ void ScanMatcherNode::addToHistory(const sensor_msgs::LaserScan& scanMsg, const 
 
 void ScanMatcherNode::publishMapToOdomTf(const geometry_msgs::Pose2D& estimatedPose, const ros::Time& time)
 {
+/*
   btTransform transform;
 
   btQuaternion rotation;
@@ -226,10 +227,10 @@ void ScanMatcherNode::publishMapToOdomTf(const geometry_msgs::Pose2D& estimatedP
 
   tf::StampedTransform transformMsg (transform, time, worldFrame_, odomFrame_);
   tfBroadcaster_.sendTransform (transformMsg);
-
+*/
   // publish pose2D
 
-  //posePublisher_.publish(estimatedPose);
+  posePublisher_.publish(estimatedPose);
 }
 
 void ScanMatcherNode::tokenize(const std::string& str, std::vector<std::string>& tokens)
