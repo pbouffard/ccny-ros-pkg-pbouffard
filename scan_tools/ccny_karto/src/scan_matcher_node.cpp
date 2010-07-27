@@ -86,6 +86,8 @@ ScanMatcherNode::ScanMatcherNode()
   tokenize(searchSizesString, searchSizesTokens);
   tokenize(resolutionsString, resolutionsTokens);
 
+  std::cout << "History Length is: " << historyLength_ << std::endl;
+
   for(unsigned int i = 0; i < searchSizesTokens.size(); ++i)
   {
     double size = std::strtod(searchSizesTokens[i].c_str(), NULL);
@@ -178,6 +180,9 @@ void ScanMatcherNode::addToHistory(const sensor_msgs::LaserScan& scanMsg, const 
       scansHistoryVect_.push_back(scanWithPose);
     else
       scansHistoryVect_[historyIndex_] = scanWithPose;
+
+    std::cout << "HistoryVect size: " << scansHistoryVect_.size();
+    std::cout << "\t Index: " << historyIndex_ << std::endl;
 
     historyIndex_++;    
     if (historyIndex_ == historyLength_) historyIndex_ = 0;
