@@ -37,6 +37,10 @@ class ScanMatcherNode
     std::string baseFrame_;
 
     ScanBuffer* scansHistory_;
+
+    std::vector<ScanWithPose> scansHistoryVect_;
+    int historyIndex_;
+
     int scansReceived_;
     geometry_msgs::Pose2D lastScanPose_; 
    
@@ -101,10 +105,13 @@ ScanMatcherNode::ScanMatcherNode()
   scansHistory_ = new ScanBuffer(historyLength_);
   scansReceived_ = 0;
 
+  scansHistoryVect_.resize(historyLength_);
 
   lastScanPose_.x     = 0.0;
   lastScanPose_.y     = 0.0;
   lastScanPose_.theta = 0.0;
+
+  historyIndex_ = 0;
 
   scan_sub_ = nh_.subscribe("scan", 10, &ScanMatcherNode::scanCallback, this);
 
@@ -136,13 +143,13 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
   long start = clock();
   boost::mutex::scoped_lock lock(mutex_);
 
-  std::vector<ScanWithPose> referenceScans(scansHistory_->begin(), scansHistory_->end());
+  //std::vector<ScanWithPose> referenceScans(scansHistory_->begin(), scansHistory_->end());
 
   //**************
 
 
 //  printf("matching\n");
-  geometry_msgs::Pose2D estimatedPose = matcher_->scanMatch(scanMsg, lastScanPose_, referenceScans).first;
+  geometry_msgs::Pose2D estimatedPose = matcher_->scanMatch(scanMsg, lastScanPose_, scansHistoryVect_).first;
   int dur = (clock()-start) / 1000;
 
   printf("dur %d\n", dur);
@@ -164,7 +171,13 @@ void ScanMatcherNode::addToHistory(const sensor_msgs::LaserScan& scanMsg, const 
     ScanWithPose scanWithPose;
     scanWithPose.scan = scanMsg;
     scanWithPose.pose = scanPose;
-    scansHistory_->push_back(scanWithPose);
+
+//    scansHistory_->push_back(scanWithPose);
+
+    scansHistoryVect_[historyIndex_] = scanWithPose;
+    historyIndex_++;
+    if (historyIndex_ == historyLength_) historyIndex_ = 0;
+
   }
 }
 
