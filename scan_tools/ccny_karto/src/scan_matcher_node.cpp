@@ -119,6 +119,8 @@ ScanMatcherNode::ScanMatcherNode()
 
 void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
 {
+  long start = clock();
+
   scansReceived_++;
 
   // **** If this is the first scan, initialize the matcher
@@ -139,12 +141,10 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
     }
     return;
   }
-  long start = clock();
+
   boost::mutex::scoped_lock lock(mutex_);
 
   //std::vector<ScanWithPose> referenceScans(scansHistory_->begin(), scansHistory_->end());
-
-  //**************
 
   geometry_msgs::Pose2D estimatedPose = matcher_->scanMatch(scanMsg, lastScanPose_, scansHistoryVect_).first;
 
