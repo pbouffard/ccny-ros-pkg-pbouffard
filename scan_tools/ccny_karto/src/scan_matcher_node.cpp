@@ -129,7 +129,7 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
   // **** If this is the first scan, initialize the matcher
   if (!matcher_.get()) 
   {
-    matcher_.reset(new KartoScanMatcher(scanMsg, lastPose_, searchSizes_, resolutions_));
+    matcher_.reset(new KartoScanMatcher(scanMsg, lastScanPose_, searchSizes_, resolutions_));
     ROS_INFO ("Initialized matcher");
   }
 
@@ -160,7 +160,7 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
     ROS_WARN("Transform unavailable, skipping scan (%s)", ex.what());
     return;
   }
-  btTransform odomToBase = odomToBase;
+  btTransform odomToBase = odomToBaseTf;
 
   btMatrix3x3 m(odomToBase.getRotation());
   double roll, pitch, yaw;
