@@ -115,7 +115,7 @@ bool LaserHeightEstimation::setBaseToLaserTf(const sensor_msgs::LaserScanConstPt
   catch (tf::TransformException ex)
   {
     // transform unavailable - skip scan
-    ROS_WARN("Transform unavailable, skipping scan (%s)", ex.what());
+    ROS_WARN("LHE: Transform unavailable, skipping scan (%s)", ex.what());
     return false;
   }
   
