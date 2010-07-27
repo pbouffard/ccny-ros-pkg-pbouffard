@@ -138,7 +138,7 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
     if(scansReceived_ % historySkip_ == 0)
     {
       // create a scan
-      Lock lock(mutex_);
+      //Lock lock(mutex_);
       addToHistory(scanMsg, lastScanPose_);
     }
     return;
