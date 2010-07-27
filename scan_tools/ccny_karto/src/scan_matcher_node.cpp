@@ -167,8 +167,6 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
 
   boost::mutex::scoped_lock lock(mutex_);
 
-  //std::vector<ScanWithPose> referenceScans(scansHistory_->begin(), scansHistory_->end());
-
   // ***************************
 
   tf::StampedTransform odomToBaseTf;
@@ -193,14 +191,13 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
   guessPose.x = odomToBase.getOrigin().getX();
   guessPose.y = odomToBase.getOrigin().getY();
   guessPose.theta = yaw;
-  // ************
 
+  // ******************************
 
   geometry_msgs::Pose2D estimatedPose = matcher_->scanMatch(scanMsg, guessPose, scansHistoryVect_).first;
 
-/*  ROS_INFO("[[%d]] (%f, %f, %f)", dur, estimatedPose.x, 
-                                     estimatedPose.y, 
-                                     estimatedPose.theta);*/
+  ROS_INFO("%f, %f, %f", dur, estimatedPose.x, estimatedPose.y, estimatedPose.theta);
+
   lastScanPose_     = estimatedPose;
 
   addToHistory(scanMsg, estimatedPose);
@@ -208,9 +205,7 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
   publishMapToOdomTf(estimatedPose, scanMsg.header.stamp);
 
   gettimeofday(&end, NULL);
-
-  double dur = (end.tv_sec * 1000000 + end.tv_usec)
-		          - (start.tv_sec * 1000000 + start.tv_usec);
+  double dur = (end.tv_sec * 1000000 + end.tv_usec) - (start.tv_sec * 1000000 + start.tv_usec);
   printf("dur:\t %d ms\n", (int)(dur/1000.0));
 }
 
@@ -227,12 +222,11 @@ void ScanMatcherNode::addToHistory(const sensor_msgs::LaserScan& scanMsg, const 
     else
       scansHistoryVect_[historyIndex_] = scanWithPose;
 
-    std::cout << "HistoryVect size: " << scansHistoryVect_.size();
-    std::cout << "\t Index: " << historyIndex_ << std::endl;
+    //std::cout << "HistoryVect size: " << scansHistoryVect_.size();
+    //std::cout << "\t Index: " << historyIndex_ << std::endl;
 
     historyIndex_++;    
     if (historyIndex_ == historyLength_) historyIndex_ = 0;
-
   }
 }
 
@@ -248,7 +242,7 @@ void ScanMatcherNode::publishMapToOdomTf(const geometry_msgs::Pose2D& estimatedP
   origin.setValue (estimatedPose.x, estimatedPose.y, 0.0);
   transform.setOrigin (origin);
 
-  transform = transform.inverse();
+  //transform = transform.inverse();
 
   tf::StampedTransform transformMsg (transform, time, worldFrame_, odomFrame_);
   tfBroadcaster_.sendTransform (transformMsg);
