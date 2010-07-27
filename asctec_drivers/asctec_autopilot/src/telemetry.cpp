@@ -64,7 +64,8 @@ namespace asctec
     requestPackets_ ^= requestPackets_;
     for (int i = 0; i < REQUEST_TYPES; i++)
     {
-      if (requestInterval_[i] != 0 && ((requestCount_ - requestOffset_[i]) % requestInterval_[i] == 0))
+      if (requestInterval_[i] != 0 && ((requestCount_ - requestOffset_[i]) % requestInterval_[i] == 0) &&
+            (requestPublisher_[i].getNumSubscribers() > 0))
         requestPackets_ |= REQUEST_BITMASK[i];
     }
   }
