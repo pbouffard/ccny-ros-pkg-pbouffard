@@ -146,12 +146,7 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
 
   //**************
 
-
-//  printf("matching\n");
   geometry_msgs::Pose2D estimatedPose = matcher_->scanMatch(scanMsg, lastScanPose_, scansHistoryVect_).first;
-  int dur = (clock()-start) / 1000;
-
-  printf("dur %d\n", dur);
 
 /*  ROS_INFO("[[%d]] (%f, %f, %f)", dur, estimatedPose.x, 
                                      estimatedPose.y, 
@@ -161,6 +156,10 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
   addToHistory(scanMsg, estimatedPose);
 
   publishMapToOdomTf(estimatedPose, scanMsg.header.stamp);
+
+  int dur = (clock()-start) / 1000;
+
+  printf("dur %d\n", dur);
 }
 
 void ScanMatcherNode::addToHistory(const sensor_msgs::LaserScan& scanMsg, const geometry_msgs::Pose2D& scanPose)
@@ -191,10 +190,10 @@ void ScanMatcherNode::publishMapToOdomTf(const geometry_msgs::Pose2D& estimatedP
   transform.setRotation (rotation);
 
   btVector3 origin;
-  origin.setValue (estimatedPose.x, estimatedPose.y, 0.0);
+  origin.setValue (-estimatedPose.x, -estimatedPose.y, 0.0);
   transform.setOrigin (origin);
 
-  transform = transform.inverse();
+  //transform = transform.inverse();
 
   tf::StampedTransform transformMsg (transform, time, worldFrame_, odomFrame_);
   tfBroadcaster_.sendTransform (transformMsg);
