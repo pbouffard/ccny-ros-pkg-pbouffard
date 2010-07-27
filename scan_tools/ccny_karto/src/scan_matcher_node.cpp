@@ -177,6 +177,8 @@ void ScanMatcherNode::addToHistory(const sensor_msgs::LaserScan& scanMsg, const 
 
 //    scansHistory_->push_back(scanWithPose);
 
+    printf("adding");
+
     scansHistoryVect_[historyIndex_] = scanWithPose;
     historyIndex_++;
     if (historyIndex_ == historyLength_) historyIndex_ = 0;
