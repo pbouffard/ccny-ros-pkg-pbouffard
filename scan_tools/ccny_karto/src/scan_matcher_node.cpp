@@ -119,7 +119,8 @@ ScanMatcherNode::ScanMatcherNode()
 
 void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
 {
-  long start = clock();
+  struct timeval start, end;
+  gettimeofday(&start, NULL);
 
   scansReceived_++;
 
@@ -157,9 +158,12 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
 
   publishMapToOdomTf(estimatedPose, scanMsg.header.stamp);
 
-  int dur = (clock()-start) / 1000;
 
-  printf("dur %d\n", dur);
+  gettimeofday(&end, NULL);
+
+  double dur = (end.tv_sec * 1000000 + end.tv_usec)
+		          - (start.tv_sec * 1000000 + start.tv_usec);
+  printf("dur:\t %d ms\n", (int)(dur/1000.0));
 }
 
 void ScanMatcherNode::addToHistory(const sensor_msgs::LaserScan& scanMsg, const geometry_msgs::Pose2D& scanPose)
