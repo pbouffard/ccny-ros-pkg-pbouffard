@@ -129,33 +129,8 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
   // **** If this is the first scan, initialize the matcher
   if (!matcher_.get()) 
   {
-    tf::StampedTransform odomToBaseTf;
-    try
-    {
-       tfListener_.lookupTransform (odomFrame_, baseFrame_, scanMsg.header.stamp, odomToBaseTf);
-    }
-    catch (tf::TransformException ex)
-    {
-      // transform unavailable - skip scan
-      ROS_WARN("Transform unavailable, skipping scan (%s)", ex.what());
-      return;
-    }
-    btTransform odomToBase = odomToBase;
-
-    btMatrix3x3 m(odomToBase.getRotation());
-    double roll, pitch, yaw;
-    m.getRPY(roll, pitch, yaw);
-
-    geometry_msgs::Pose2D initPose;
-
-    initPose.x = odomToBase.getOrigin().getX();
-    initPose.y = odomToBase.getOrigin().getY();
-    initPose.theta = yaw;
-
-    matcher_.reset(new KartoScanMatcher(scanMsg, initPose, searchSizes_, resolutions_));
+    matcher_.reset(new KartoScanMatcher(scanMsg, lastPose_, searchSizes_, resolutions_));
     ROS_INFO ("Initialized matcher");
-
-    lastScanPose_.theta = yaw;
   }
 
   if (scansHistoryVect_.size() < historyLength_)
