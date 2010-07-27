@@ -88,6 +88,10 @@ namespace asctec
             copyGPS_DATA();
             requestPublisher_[i].publish(GPSData_);
             break;
+          case RequestTypes::RC_DATA:
+            copyRC_DATA();
+            requestPublisher_[i].publish(RCData_);
+            break;
           default:
             ROS_DEBUG("Unable to publish unknown type");
         }
@@ -107,13 +111,15 @@ namespace asctec
       case RequestTypes::IMU_CALCDATA:
         requestPublisher_[msg] = nh_private.advertise<asctec_msgs::IMUCalcData>(requestToString(msg).c_str(), 10);
         break;
-//      case RequestTypes::RC_DATA:    {
+      case RequestTypes::RC_DATA:
+        requestPublisher_[msg] = nh_private.advertise<asctec_msgs::RCData>(requestToString(msg).c_str(), 10);
+        break;
       case RequestTypes::GPS_DATA:
         requestPublisher_[msg] = nh_private.advertise<asctec_msgs::GPSData>(requestToString(msg).c_str(), 10);
         break;
     }
-    
-	  ROS_INFO("Publishing %s data on topic: %s", requestToString(msg).c_str(),requestToString(msg).c_str ()); 
+
+    ROS_INFO("Publishing %s data on topic: %s", requestToString(msg).c_str(),requestToString(msg).c_str ());
     ROS_DEBUG ("Telemetry::enablePolling()");
     requestInterval_[msg] = interval;
     requestOffset_[msg] = offset;
@@ -244,6 +250,14 @@ std::string Telemetry::requestToString(RequestTypes::RequestType t)
       RC_DATA_.channels_out[2],RC_DATA_.channels_out[3],RC_DATA_.channels_out[4],RC_DATA_.channels_out[5],
       RC_DATA_.channels_out[6],RC_DATA_.channels_out[7]);
     ROS_INFO("lock:%d",RC_DATA_.lock);
+  }
+
+  void Telemetry::copyRC_DATA() {
+    for(int i=0;i<8;i++){
+      RCData_.channels_in[i] = RC_DATA_.channels_in[i];
+      RCData_.channels_out[i] = RC_DATA_.channels_out[i];
+    }
+    RCData_.lock = RC_DATA_.lock;
   }
   void Telemetry::dumpGPS_DATA() {
     ROS_INFO("GPS_DATA");

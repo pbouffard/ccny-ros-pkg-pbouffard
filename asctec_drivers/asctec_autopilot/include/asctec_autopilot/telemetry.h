@@ -25,6 +25,7 @@
 #include "asctec_msgs/IMUCalcData.h"
 #include "asctec_msgs/LLStatus.h"
 #include "asctec_msgs/GPSData.h"
+#include "asctec_msgs/RCData.h"
 
 namespace asctec
 {
@@ -118,7 +119,7 @@ namespace asctec
     void copyLL_STATUS();
 //    void copyIMU_RAWDATA();
     void copyIMU_CALCDATA();
-//    void copyRC_DATA();
+    void copyRC_DATA();
     void copyGPS_DATA();
     
     bool pollingEnabled_;
@@ -381,6 +382,7 @@ You will receive an acknowledge if a command or a waypoint was received correctl
     asctec_msgs::LLStatus LLStatus_;
     asctec_msgs::IMUCalcData IMUCalcData_;
     asctec_msgs::GPSData GPSData_;
+    asctec_msgs::RCData RCData_;
     
   };                            // end class Telemetry
 }                               //end namespace asctec
