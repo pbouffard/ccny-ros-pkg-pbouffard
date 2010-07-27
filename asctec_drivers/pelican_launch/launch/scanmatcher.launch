@@ -1,0 +1,18 @@
+<launch>
+
+  <node pkg="ccny_karto" type="scan_matcher_node" name="scan_matcher_node" output="screen">
+
+    <param name="world_frame" value="world"/>
+    <param name="odom_frame" value="odom"/>
+
+    <param name="history_length" value="10"/>
+    <param name="search_sizes" type="string" value="0.50 0.10"/>
+    <param name="resolutions" type="string"  value="0.05 0.005"/>
+    <param name="history_skip" value="5"/>
+
+    <remap from="/scan" to="/splitter/mvs"/>    
+  </node>
+
+</launch>
+
+
