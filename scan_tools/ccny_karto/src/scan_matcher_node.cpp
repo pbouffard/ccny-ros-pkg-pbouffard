@@ -106,14 +106,11 @@ ScanMatcherNode::ScanMatcherNode()
   scansHistory_ = new ScanBuffer(historyLength_);
   scansReceived_ = 0;
 
-  scansHistoryVect_.resize(historyLength_);
-
   lastScanPose_.x     = 0.0;
   lastScanPose_.y     = 0.0;
   lastScanPose_.theta = 0.0;
 
   historyIndex_ = 0;
-  historyReady_ = false;
 
   scan_sub_ = nh_.subscribe("scan", 10, &ScanMatcherNode::scanCallback, this);
 
@@ -131,14 +128,13 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
     ROS_INFO ("Initialized matcher");
   }
 
-  if (historyIndex_ < historyLength_ && !historyReady_)
+  if (scansHistoryVect_.size() < historyLength_)
   {
     ROS_INFO("Received %d/%d.", scansHistory_->size(), historyLength_);
-    historyReady_ = true;
     if(scansReceived_ % historySkip_ == 0)
     {
       // create a scan
-      //Lock lock(mutex_);
+      Lock lock(mutex_);
       addToHistory(scanMsg, lastScanPose_);
     }
     return;
@@ -175,12 +171,12 @@ void ScanMatcherNode::addToHistory(const sensor_msgs::LaserScan& scanMsg, const 
     scanWithPose.scan = scanMsg;
     scanWithPose.pose = scanPose;
 
-//    scansHistory_->push_back(scanWithPose);
+    if (scansHistoryVect_.size() < historyLength_)
+      scansHistoryVect_.push_back(scanWithPose);
+    else
+      scansHistoryVect_[historyIndex_] = scanWithPose;
 
-    printf("adding");
-
-    scansHistoryVect_[historyIndex_] = scanWithPose;
-    historyIndex_++;
+    historyIndex_++;    
     if (historyIndex_ == historyLength_) historyIndex_ = 0;
 
   }
