@@ -5,7 +5,7 @@ int32 angle_nick
 int32 angle_roll
 int32 angle_yaw
 
-# angular velocities, raw values [16 bit], bias free, in 0.0154 deg/s (=> 64.8 = 1 deg/s)
+# angular velocities, raw values [16 bit], bias free, in 0.0154 degree/s (=> 64.8 = 1 degree/s)
 
 int32 angvel_nick
 int32 angvel_roll

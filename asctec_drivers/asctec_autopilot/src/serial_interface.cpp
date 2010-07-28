@@ -153,9 +153,9 @@ namespace asctec
     i = fread (stoken, sizeof (char), 3, dev_);
     if (i == 0 || strncmp (stoken, ">*>", 3) != 0)
     {
-      ROS_DEBUG ("dev: %d", (int)dev_);
+      //ROS_DEBUG ("dev: %d", (int)dev_);
       ROS_ERROR ("Error Reading Packet Header: %s", strerror (errno));
-      ROS_DEBUG ("Read (%d): %s", i, stoken);
+      ROS_ERROR ("Read (%d): %s", i, stoken);
       flush ();
       return false;
     }
@@ -209,8 +209,8 @@ namespace asctec
   void SerialInterface::write (char *output, int len)
   {
     int i;
-    ROS_DEBUG ("Writing %d element(s): %s", len, output);
-    ROS_DEBUG ("dev: %d", (int)dev_);
+    ROS_INFO ("Writing %d element(s): %s", len, output);
+    //ROS_DEBUG ("dev: %d", (int)dev_);
     flush();
     ROS_DEBUG("FOO");
     i = fwrite (output, sizeof (char), len, dev_);
@@ -219,6 +219,32 @@ namespace asctec
       ROS_ERROR ("Error wrote %d out of %d element(s): %s", i, len, strerror (errno));
       ROS_BREAK ();
     }
+  }
+
+  bool SerialInterface::sendCommand (Telemetry *telemetry)
+  {
+    ROS_INFO ("sendCommand");
+    char cmd[16];
+    
+    //ROS_INFO ("trying to write to sprintf: %c%c%c%c%c%c", (short) telemetry->CTRL_INPUT_.pitch.to_ulong(),(short) telemetry->CTRL_INPUT_.roll.to_ulong(),(short) telemetry->CTRL_INPUT_.yaw.to_ulong(),(short) telemetry->CTRL_INPUT_.thrust.to_ulong(),(short) telemetry->CTRL_INPUT_.ctrl.to_ulong(),(short) telemetry->CTRL_INPUT_.chksum.to_ulong());
+    //sprintf (cmd, ">*>di%c%c%c%c%c%c", (short) telemetry->CTRL_INPUT_.pitch.to_ulong(),(short) telemetry->CTRL_INPUT_.roll.to_ulong(),(short) telemetry->CTRL_INPUT_.yaw.to_ulong(),(short) telemetry->CTRL_INPUT_.thrust.to_ulong(),(short) telemetry->CTRL_INPUT_.ctrl.to_ulong(),(short) telemetry->CTRL_INPUT_.chksum.to_ulong());
+    int i;
+    //ROS_INFO ("Writing %d element(s): %s", len, );
+    //flush();
+    i = fwrite (&telemetry->CTRL_INPUT_, sizeof (telemetry->CTRL_INPUT_)+1, 1, dev_);
+    ROS_INFO("wrote command to pelican: size %d", sizeof (telemetry->CTRL_INPUT_));
+    if (i != 1)
+    {
+      ROS_ERROR ("Error wrote %d out of %d element(s): %s", i, 1, strerror (errno));
+      ROS_BREAK ();
+    }
+    //ROS_INFO ("sprintf function completed");
+
+    //i = fwrite (&telemetry->CTRL_INPUT_, sizeof(telemetry->CTRL_INPUT_), 1, dev_);
+    ROS_INFO ("fwrite command completed - command written to Pelican" );
+    //flush();
+    bool result = true;
+    return result;
   }
 
   bool SerialInterface::getPackets (Telemetry *telemetry)
@@ -232,8 +258,7 @@ namespace asctec
     unsigned short packet_size;
     unsigned int i;
 
-    ROS_DEBUG ("Packet Request: %04x %d packets", (short) telemetry->requestPackets_.to_ulong (),
-              telemetry->requestPackets_.count ());
+    ROS_INFO ("Packet Request: %04x %d packets", (short) telemetry->requestPackets_.to_ulong (), telemetry->requestPackets_.count ());
     sprintf (cmd, ">*>p%c", (short) telemetry->requestPackets_.to_ulong ());
     write (cmd, 6);
     drain ();
@@ -288,6 +313,16 @@ namespace asctec
           }
           //telemetry->dumpRC_DATA();
         }
+        else if (packet_type == Telemetry::PD_CTRLOUT)
+        {
+          ROS_DEBUG ("Packet type is CONTROLLER_OUTPUT");
+          memcpy (&telemetry->CONTROLLER_OUTPUT_, spacket, packet_size);
+          if (crc_valid (packet_crc,&telemetry->CONTROLLER_OUTPUT_, packet_size)) {
+            result = true;
+            ROS_DEBUG ("Valid CRC!!");
+          }
+          //telemetry->dumpCONTROLLER_OUTPUT();
+        }
         else if (packet_type == Telemetry::PD_GPSDATA)
         {
           ROS_DEBUG ("Packet type is GPS_DATA");
@@ -297,6 +332,16 @@ namespace asctec
             ROS_DEBUG ("Valid CRC!!");
           }
           //telemetry->dumpGPS_DATA();
+        }
+        else if (packet_type == Telemetry::PD_GPSDATAADVANCED)
+        {
+          ROS_DEBUG ("Packet type is GPS_DATA_ADVANCED");
+          memcpy (&telemetry->GPS_DATA_ADVANCED_, spacket, packet_size);
+          if (crc_valid (packet_crc,&telemetry->GPS_DATA_ADVANCED_, packet_size)) {
+            result = true;
+            ROS_DEBUG ("Valid CRC!!");
+          }
+          //telemetry->dumpGPS_DATA_ADVANCED();
         }
         else
         {
@@ -312,13 +357,7 @@ namespace asctec
     }
     stall (false);
     i = fread (spacket, sizeof (char), 1, dev_);
-    //FIXME~!!
-    // If we receive unexpected data then log a warning
-    if (i != 0) {
-      drain();
-      ROS_ERROR("Unexpected Data: Flushing receive buffer");
-    }
+    ROS_ASSERT_MSG (i == 0, "Unexpected Data: Flush buffers?!");
     return result;
   }
-
 }

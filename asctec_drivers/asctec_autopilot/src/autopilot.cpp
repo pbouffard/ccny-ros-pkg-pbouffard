@@ -60,11 +60,25 @@ namespace asctec
 
     // **** enable polling
 
+    telemetry_->enablePolling(asctec::RequestTypes::LL_STATUS, 1);
+    telemetry_->enablePolling(asctec::RequestTypes::IMU_RAWDATA, 1);
     telemetry_->enablePolling(asctec::RequestTypes::IMU_CALCDATA, 1);
-    //telemetry_->enablePolling(asctec::RequestTypes::IMU_RAWDATA,  2, 0);
-    telemetry_->enablePolling(asctec::RequestTypes::LL_STATUS, 10, 0);
-    telemetry_->enablePolling(asctec::RequestTypes::RC_DATA, 20, 3);
-    telemetry_->enablePolling(asctec::RequestTypes::GPS_DATA, 10, 5);
+    telemetry_->enablePolling(asctec::RequestTypes::RC_DATA, 1);
+    telemetry_->enablePolling(asctec::RequestTypes::CONTROLLER_OUTPUT, 1);
+    //telemetry_->enablePolling(asctec::RequestTypes::GPS_DATA, 1);
+    //telemetry_->enableCommanding();
+    //telemetry_->CTRL_INPUT_.character1 = '>';
+    //telemetry_->CTRL_INPUT_.character2 = '*';
+    //telemetry_->CTRL_INPUT_.character3 = '>';
+    //telemetry_->CTRL_INPUT_.character4 = 'd';
+    //telemetry_->CTRL_INPUT_.character5 = 'i';
+    //telemetry_->CTRL_INPUT_.pitch = 0;
+    //telemetry_->CTRL_INPUT_.roll = 0;
+    //telemetry_->CTRL_INPUT_.yaw = 0;
+    //telemetry_->CTRL_INPUT_.thrust = 0;
+    //telemetry_->CTRL_INPUT_.ctrl = 0x0004;
+    //telemetry_->CTRL_INPUT_.chksum = telemetry_->CTRL_INPUT_.pitch + telemetry_->CTRL_INPUT_.roll + telemetry_->CTRL_INPUT_.yaw + telemetry_->CTRL_INPUT_.thrust + telemetry_->CTRL_INPUT_.ctrl + 0xAAAA;
+    //telemetry_->CTRL_INPUT_.chksum = 0x0000;
 
     timer_ = nh_private.createTimer (d, &AutoPilot::spin, this);
   }
@@ -76,10 +90,13 @@ namespace asctec
 
   void AutoPilot::spin (const ros::TimerEvent& e)
   {
+    ROS_INFO("spin()");
+    
     telemetry_->buildRequest ();
     telemetry_->requestCount_++;
     serialInterface_->getPackets(telemetry_);
     telemetry_->publishPackets();
+    //serialInterface_->sendCommand(telemetry_);
   }
 }
 
