@@ -137,6 +137,7 @@ namespace asctec
     uint8_t requestInterval_[REQUEST_TYPES];
     uint8_t requestOffset_[REQUEST_TYPES];
     ros::Publisher requestPublisher_[REQUEST_TYPES];
+    ros::Time timestamps_[REQUEST_TYPES];
 
     //packet descriptors
     static const uint8_t PD_IMURAWDATA = 0x01;

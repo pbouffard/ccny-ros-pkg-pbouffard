@@ -231,6 +231,7 @@ namespace asctec
     unsigned short packet_crc;
     unsigned short packet_size;
     unsigned int i;
+    ros::Time packetTime;
 
     ROS_DEBUG ("Packet Request: %04x %d packets", (short) telemetry->requestPackets_.to_ulong (),
               telemetry->requestPackets_.count ());
@@ -242,6 +243,7 @@ namespace asctec
     for (i = 0; i < telemetry->requestPackets_.count(); i++)
     {
       ROS_DEBUG ("getPacket started");
+      packetTime = ros::Time::now();
       bool read_result = getPacket (spacket, packet_type, packet_crc, packet_size);
 
       if (read_result)
@@ -252,6 +254,7 @@ namespace asctec
         {
           ROS_DEBUG ("Packet type is LL_STATUS");
           memcpy (&telemetry->LL_STATUS_, spacket, packet_size);
+          telemetry->timestamps_[RequestTypes::LL_STATUS] = packetTime;
           if (crc_valid (packet_crc,&telemetry->LL_STATUS_, sizeof (packet_size))) {
             result = true;
             ROS_DEBUG ("Valid CRC!!");
@@ -262,6 +265,7 @@ namespace asctec
         {
           ROS_DEBUG ("Packet type is IMU_RAWDATA");
           memcpy (&telemetry->IMU_RAWDATA_, spacket, packet_size);
+          telemetry->timestamps_[RequestTypes::IMU_RAWDATA] = packetTime;
           if (crc_valid (packet_crc,&telemetry->IMU_RAWDATA_, packet_size)) {
             result = true;
             ROS_DEBUG ("Valid CRC!!");
@@ -272,6 +276,7 @@ namespace asctec
         {
           ROS_DEBUG ("Packet type is IMU_CALCDATA");
           memcpy (&telemetry->IMU_CALCDATA_, spacket, packet_size);
+          telemetry->timestamps_[RequestTypes::IMU_CALCDATA] = packetTime;
           if (crc_valid (packet_crc,&telemetry->IMU_CALCDATA_, packet_size)) {
             result = true;
             ROS_DEBUG ("Valid CRC!!");
@@ -282,6 +287,7 @@ namespace asctec
         {
           ROS_DEBUG ("Packet type is RC_DATA");
           memcpy (&telemetry->RC_DATA_, spacket, packet_size);
+          telemetry->timestamps_[RequestTypes::RC_DATA] = packetTime;
           if (crc_valid (packet_crc,&telemetry->RC_DATA_, packet_size)) {
             result = true;
             ROS_DEBUG ("Valid CRC!!");
@@ -292,6 +298,7 @@ namespace asctec
         {
           ROS_DEBUG ("Packet type is GPS_DATA");
           memcpy (&telemetry->GPS_DATA_, spacket, packet_size);
+          telemetry->timestamps_[RequestTypes::GPS_DATA] = packetTime;
           if (crc_valid (packet_crc,&telemetry->GPS_DATA_, packet_size)) {
             result = true;
             ROS_DEBUG ("Valid CRC!!");
@@ -302,6 +309,7 @@ namespace asctec
         {
           ROS_DEBUG ("Packet type is CTRLOUT");
           memcpy (&telemetry->CONTROLLER_OUTPUT_, spacket, packet_size);
+          telemetry->timestamps_[RequestTypes::CONTROLLER_OUTPUT] = packetTime;
           if (crc_valid (packet_crc,&telemetry->CONTROLLER_OUTPUT_, packet_size)) {
             result = true;
             ROS_DEBUG ("Valid CRC!!");

@@ -79,22 +79,27 @@ namespace asctec
         {
           case RequestTypes::LL_STATUS:
             copyLL_STATUS();
+            LLStatus_.header.stamp = timestamps_[RequestTypes::LL_STATUS];
             requestPublisher_[i].publish(LLStatus_);
             break;
           case RequestTypes::IMU_CALCDATA:
             copyIMU_CALCDATA();
+            IMUCalcData_.header.stamp = timestamps_[RequestTypes::IMU_CALCDATA];
             requestPublisher_[i].publish(IMUCalcData_);
             break;
           case RequestTypes::GPS_DATA:
             copyGPS_DATA();
+            GPSData_.header.stamp = timestamps_[RequestTypes::GPS_DATA];
             requestPublisher_[i].publish(GPSData_);
             break;
           case RequestTypes::RC_DATA:
             copyRC_DATA();
+            RCData_.header.stamp = timestamps_[RequestTypes::RC_DATA];
             requestPublisher_[i].publish(RCData_);
             break;
           case RequestTypes::CONTROLLER_OUTPUT:
             copyCONTROLLER_OUTPUT();
+            CTRLOut_.header.stamp = timestamps_[RequestTypes::CONTROLLER_OUTPUT];
             requestPublisher_[i].publish(CTRLOut_);
             break;
           default:
