@@ -147,6 +147,9 @@ namespace asctec
     int i;
 
     // get beginning (">*>")
+    stoken[0] = '\0';
+    stoken[1] = '\0';
+    stoken[2] = '\0';
     stoken[3] = '\0';
 
     stall (true);
@@ -156,7 +159,11 @@ namespace asctec
       //ROS_DEBUG ("dev: %d", (int)dev_);
       ROS_ERROR ("Error Reading Packet Header: %s", strerror (errno));
       ROS_ERROR ("Read (%d): %s", i, stoken);
-      flush ();
+      stall (false);
+      while (fread (stoken, sizeof (char), 1, dev_) != 0) { }
+      flush();
+      drain();
+      stall (true);
       return false;
     }
     ROS_DEBUG ("Packet Header OK");
@@ -198,7 +205,15 @@ namespace asctec
     {
       ROS_ERROR ("Error Reading Packet Footer: %s", strerror (errno));
       ROS_DEBUG ("Read (%d): %s", i, stoken);
-      flush ();
+      stall (false);
+      while (fread (stoken, sizeof (char), 1, dev_) != 0) {
+        stoken[1] = '\0';
+        ROS_DEBUG ("%s",stoken);
+      }
+      flush();
+      drain();
+      stall (true);
+      ROS_DEBUG ("Packet Footer Corrupt!!");
       return false;
     }
     ROS_DEBUG ("Packet Footer OK");
@@ -243,6 +258,7 @@ namespace asctec
     //i = fwrite (&telemetry->CTRL_INPUT_, sizeof(telemetry->CTRL_INPUT_), 1, dev_);
     ROS_INFO ("fwrite command completed - command written to Pelican" );
     //flush();
+    drain ();
     bool result = true;
     return result;
   }
@@ -357,7 +373,12 @@ namespace asctec
     }
     stall (false);
     i = fread (spacket, sizeof (char), 1, dev_);
-    ROS_ASSERT_MSG (i == 0, "Unexpected Data: Flush buffers?!");
+    //FIXME~!!
+    // If we receive unexpected data then log a warning
+    if (i != 0) {
+      drain();
+      ROS_ERROR("Unexpected Data: Flushing receive buffer");
+    }
     return result;
   }
 }
