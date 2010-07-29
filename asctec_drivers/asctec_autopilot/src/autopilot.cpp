@@ -60,19 +60,11 @@ namespace asctec
 
     // **** enable polling
 
-<<<<<<< HEAD
     telemetry_->enablePolling(asctec::RequestTypes::LL_STATUS, 10,0);
     telemetry_->enablePolling(asctec::RequestTypes::IMU_RAWDATA, 1);
     telemetry_->enablePolling(asctec::RequestTypes::IMU_CALCDATA, 1);
     telemetry_->enablePolling(asctec::RequestTypes::RC_DATA, 10,1);
     telemetry_->enablePolling(asctec::RequestTypes::CONTROLLER_OUTPUT, 10,2);
-=======
-    telemetry_->enablePolling(asctec::RequestTypes::LL_STATUS, 2, 1);
-    //telemetry_->enablePolling(asctec::RequestTypes::IMU_RAWDATA, 10, 2);
-    //telemetry_->enablePolling(asctec::RequestTypes::IMU_CALCDATA, 10, 4);
-    //telemetry_->enablePolling(asctec::RequestTypes::RC_DATA, 10, 6);
-    //telemetry_->enablePolling(asctec::RequestTypes::CONTROLLER_OUTPUT, 10, 8);
->>>>>>> 2828a18218f5eeec3f33b8f045d0b2e1218edf26
     //telemetry_->enablePolling(asctec::RequestTypes::GPS_DATA, 1);
     telemetry_->enableCommanding( 2, 2);
     telemetry_->CTRL_INPUT_.pitch = 0;

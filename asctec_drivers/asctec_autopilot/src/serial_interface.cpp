@@ -249,18 +249,7 @@ namespace asctec
         write (cmd, 18);
         drain ();
     }
-<<<<<<< HEAD
-    //ROS_INFO ("sprintf function completed");
-
-    //i = fwrite (&telemetry->CTRL_INPUT_, sizeof(telemetry->CTRL_INPUT_), 1, dev_);
-    ROS_INFO ("fwrite command completed - command written to Pelican" );
-    //flush();
-    drain ();
-    bool result = true;
-    return result;
-=======
     ROS_INFO ("sendCommand completed" );
->>>>>>> 2828a18218f5eeec3f33b8f045d0b2e1218edf26
   }
 
   bool SerialInterface::getPackets (Telemetry *telemetry)
