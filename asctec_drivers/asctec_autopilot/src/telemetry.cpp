@@ -78,37 +78,37 @@ namespace asctec
         {
           case RequestTypes::LL_STATUS:
             copyLL_STATUS();
-            //dumpLL_STATUS();
+            dumpLL_STATUS();
             requestPublisher_[i].publish(LLStatus_);
             break;
           case RequestTypes::IMU_RAWDATA:
             copyIMU_RAWDATA();
-            //dumpIMU_RAWDATA();
+            dumpIMU_RAWDATA();
             requestPublisher_[i].publish(IMURawData_);
             break;
           case RequestTypes::IMU_CALCDATA:
             copyIMU_CALCDATA();
-            //dumpIMU_CALCDATA();
+            dumpIMU_CALCDATA();
             requestPublisher_[i].publish(IMUCalcData_);
             break;
           case RequestTypes::RC_DATA:
             copyRC_DATA();
-            //dumpRC_DATA();
+            dumpRC_DATA();
             requestPublisher_[i].publish(RCData_);
             break;
           case RequestTypes::CONTROLLER_OUTPUT:
             copyCONTROLLER_OUTPUT();
-            //dumpCONTROLLER_OUTPUT();
+            dumpCONTROLLER_OUTPUT();
             requestPublisher_[i].publish(ControllerOutput_);
             break;
           case RequestTypes::GPS_DATA:
             copyGPS_DATA();
-            //dumpGPS_DATA();
+            dumpGPS_DATA();
             requestPublisher_[i].publish(GPSData_);
             break;
           case RequestTypes::GPS_DATA_ADVANCED:
             copyGPS_DATA_ADVANCED();
-            //dumpGPS_DATA_ADVANCED();
+            dumpGPS_DATA_ADVANCED();
             requestPublisher_[i].publish(GPSDataAdvanced_);
             break;
           default:
@@ -153,12 +153,14 @@ namespace asctec
     pollingEnabled_ = true;
   }
 
-void Telemetry::enableCommanding ()
+void Telemetry::enableCommanding (uint8_t interval, uint8_t offset)
 {
     ros::NodeHandle n;
     commandPublisher_ = n.advertise<asctec_msgs::CtrlInput>("CTRL_INPUT", 10);
     ROS_INFO("Publishing %s data on topics: %s", "CTRL_INPUT","CTRL_INPUT");
     ROS_DEBUG ("Telemetry::enableCommanding()");
+    commandInterval_ = interval;
+    commandOffset_ = offset;
     commandingEnabled_ = true;
 }
 

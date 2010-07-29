@@ -60,24 +60,27 @@ namespace asctec
 
     // **** enable polling
 
+<<<<<<< HEAD
     telemetry_->enablePolling(asctec::RequestTypes::LL_STATUS, 10,0);
     telemetry_->enablePolling(asctec::RequestTypes::IMU_RAWDATA, 1);
     telemetry_->enablePolling(asctec::RequestTypes::IMU_CALCDATA, 1);
     telemetry_->enablePolling(asctec::RequestTypes::RC_DATA, 10,1);
     telemetry_->enablePolling(asctec::RequestTypes::CONTROLLER_OUTPUT, 10,2);
+=======
+    telemetry_->enablePolling(asctec::RequestTypes::LL_STATUS, 2, 1);
+    //telemetry_->enablePolling(asctec::RequestTypes::IMU_RAWDATA, 10, 2);
+    //telemetry_->enablePolling(asctec::RequestTypes::IMU_CALCDATA, 10, 4);
+    //telemetry_->enablePolling(asctec::RequestTypes::RC_DATA, 10, 6);
+    //telemetry_->enablePolling(asctec::RequestTypes::CONTROLLER_OUTPUT, 10, 8);
+>>>>>>> 2828a18218f5eeec3f33b8f045d0b2e1218edf26
     //telemetry_->enablePolling(asctec::RequestTypes::GPS_DATA, 1);
-    //telemetry_->enableCommanding();
-    //telemetry_->CTRL_INPUT_.character1 = '>';
-    //telemetry_->CTRL_INPUT_.character2 = '*';
-    //telemetry_->CTRL_INPUT_.character3 = '>';
-    //telemetry_->CTRL_INPUT_.character4 = 'd';
-    //telemetry_->CTRL_INPUT_.character5 = 'i';
-    //telemetry_->CTRL_INPUT_.pitch = 0;
-    //telemetry_->CTRL_INPUT_.roll = 0;
-    //telemetry_->CTRL_INPUT_.yaw = 0;
-    //telemetry_->CTRL_INPUT_.thrust = 0;
-    //telemetry_->CTRL_INPUT_.ctrl = 0x0004;
-    //telemetry_->CTRL_INPUT_.chksum = telemetry_->CTRL_INPUT_.pitch + telemetry_->CTRL_INPUT_.roll + telemetry_->CTRL_INPUT_.yaw + telemetry_->CTRL_INPUT_.thrust + telemetry_->CTRL_INPUT_.ctrl + 0xAAAA;
+    telemetry_->enableCommanding( 2, 2);
+    telemetry_->CTRL_INPUT_.pitch = 0;
+    telemetry_->CTRL_INPUT_.roll = 0;
+    telemetry_->CTRL_INPUT_.yaw = 0;
+    telemetry_->CTRL_INPUT_.thrust = 0;
+    telemetry_->CTRL_INPUT_.ctrl = 0x0004;
+    telemetry_->CTRL_INPUT_.chksum = telemetry_->CTRL_INPUT_.pitch + telemetry_->CTRL_INPUT_.roll + telemetry_->CTRL_INPUT_.yaw + telemetry_->CTRL_INPUT_.thrust + telemetry_->CTRL_INPUT_.ctrl + 0xAAAA;
     //telemetry_->CTRL_INPUT_.chksum = 0x0000;
 
     timer_ = nh_private.createTimer (d, &AutoPilot::spin, this);
@@ -96,7 +99,8 @@ namespace asctec
     telemetry_->requestCount_++;
     serialInterface_->getPackets(telemetry_);
     telemetry_->publishPackets();
-    //serialInterface_->sendCommand(telemetry_);
+    serialInterface_->sendCommand(telemetry_);
+    telemetry_->commandCount_++;
   }
 }
 

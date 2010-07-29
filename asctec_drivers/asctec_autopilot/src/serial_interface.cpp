@@ -156,7 +156,7 @@ namespace asctec
     i = fread (stoken, sizeof (char), 3, dev_);
     if (i == 0 || strncmp (stoken, ">*>", 3) != 0)
     {
-      //ROS_DEBUG ("dev: %d", (int)dev_);
+      ROS_DEBUG ("dev: %d", (intptr_t)dev_);
       ROS_ERROR ("Error Reading Packet Header: %s", strerror (errno));
       ROS_ERROR ("Read (%d): %s", i, stoken);
       stall (false);
@@ -225,7 +225,7 @@ namespace asctec
   {
     int i;
     ROS_INFO ("Writing %d element(s): %s", len, output);
-    //ROS_DEBUG ("dev: %d", (int)dev_);
+    ROS_DEBUG ("dev: %d", (intptr_t)dev_);
     flush();
     ROS_DEBUG("FOO");
     i = fwrite (output, sizeof (char), len, dev_);
@@ -236,23 +236,20 @@ namespace asctec
     }
   }
 
-  bool SerialInterface::sendCommand (Telemetry *telemetry)
+  void SerialInterface::sendCommand (Telemetry *telemetry)
   {
-    ROS_INFO ("sendCommand");
-    char cmd[16];
-    
-    //ROS_INFO ("trying to write to sprintf: %c%c%c%c%c%c", (short) telemetry->CTRL_INPUT_.pitch.to_ulong(),(short) telemetry->CTRL_INPUT_.roll.to_ulong(),(short) telemetry->CTRL_INPUT_.yaw.to_ulong(),(short) telemetry->CTRL_INPUT_.thrust.to_ulong(),(short) telemetry->CTRL_INPUT_.ctrl.to_ulong(),(short) telemetry->CTRL_INPUT_.chksum.to_ulong());
-    //sprintf (cmd, ">*>di%c%c%c%c%c%c", (short) telemetry->CTRL_INPUT_.pitch.to_ulong(),(short) telemetry->CTRL_INPUT_.roll.to_ulong(),(short) telemetry->CTRL_INPUT_.yaw.to_ulong(),(short) telemetry->CTRL_INPUT_.thrust.to_ulong(),(short) telemetry->CTRL_INPUT_.ctrl.to_ulong(),(short) telemetry->CTRL_INPUT_.chksum.to_ulong());
-    int i;
-    //ROS_INFO ("Writing %d element(s): %s", len, );
-    //flush();
-    i = fwrite (&telemetry->CTRL_INPUT_, sizeof (telemetry->CTRL_INPUT_)+1, 1, dev_);
-    ROS_INFO("wrote command to pelican: size %d", sizeof (telemetry->CTRL_INPUT_));
-    if (i != 1)
-    {
-      ROS_ERROR ("Error wrote %d out of %d element(s): %s", i, 1, strerror (errno));
-      ROS_BREAK ();
+    flush();
+    ROS_DEBUG ("sendCommand started");
+    char cmd[18];
+
+    if (telemetry->commandInterval_ != 0 && ((telemetry->commandCount_ - telemetry->commandOffset_) % telemetry->commandInterval_ == 0)) {
+        ROS_DEBUG("writing command to pelican: size of CTRL_INPUT %d", sizeof (telemetry->CTRL_INPUT_));
+        sprintf (cmd, ">*>di%c",  telemetry->CTRL_INPUT_ );
+        ROS_INFO("writing command to pelican: size of cmd %d", sizeof(cmd));
+        write (cmd, 18);
+        drain ();
     }
+<<<<<<< HEAD
     //ROS_INFO ("sprintf function completed");
 
     //i = fwrite (&telemetry->CTRL_INPUT_, sizeof(telemetry->CTRL_INPUT_), 1, dev_);
@@ -261,6 +258,9 @@ namespace asctec
     drain ();
     bool result = true;
     return result;
+=======
+    ROS_INFO ("sendCommand completed" );
+>>>>>>> 2828a18218f5eeec3f33b8f045d0b2e1218edf26
   }
 
   bool SerialInterface::getPackets (Telemetry *telemetry)
