@@ -41,7 +41,7 @@ namespace asctec
     // **** get parameters
     
     if (!nh_private.getParam ("freq", freq_))
-      freq_ = 5.0;
+      freq_ = 50.0;
 
     if (!nh_private.getParam ("port", port_))
       port_ = "/dev/ttyUSB0";
