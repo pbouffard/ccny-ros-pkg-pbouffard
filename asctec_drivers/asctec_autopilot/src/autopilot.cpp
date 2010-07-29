@@ -41,7 +41,7 @@ namespace asctec
     // **** get parameters
     
     if (!nh_private.getParam ("freq", freq_))
-      freq_ = 50.0;
+      freq_ = 10.0;
 
     if (!nh_private.getParam ("port", port_))
       port_ = "/dev/ttyUSB0";
@@ -60,12 +60,21 @@ namespace asctec
 
     // **** enable polling
 
-    telemetry_->enablePolling(asctec::RequestTypes::IMU_CALCDATA, 1);
-    //telemetry_->enablePolling(asctec::RequestTypes::IMU_RAWDATA,  2, 0);
     telemetry_->enablePolling(asctec::RequestTypes::LL_STATUS, 10, 0);
     telemetry_->enablePolling(asctec::RequestTypes::RC_DATA, 20, 3);
-    telemetry_->enablePolling(asctec::RequestTypes::GPS_DATA, 10, 5);
     telemetry_->enablePolling(asctec::RequestTypes::CONTROLLER_OUTPUT, 10, 1);
+    //telemetry_->enablePolling(asctec::RequestTypes::IMU_RAWDATA, 10, 2);
+    telemetry_->enablePolling(asctec::RequestTypes::IMU_CALCDATA, 10, 4);
+    //telemetry_->enablePolling(asctec::RequestTypes::CONTROLLER_OUTPUT, 10, 8);
+    telemetry_->enablePolling(asctec::RequestTypes::GPS_DATA, 10);
+    telemetry_->enableCommanding( 10 , 2);
+    telemetry_->CTRL_INPUT_.pitch = 0;
+    telemetry_->CTRL_INPUT_.roll = 0;
+    telemetry_->CTRL_INPUT_.yaw = 0;
+    telemetry_->CTRL_INPUT_.thrust = 0;
+    telemetry_->CTRL_INPUT_.ctrl = 0x0000;
+    telemetry_->CTRL_INPUT_.chksum = telemetry_->CTRL_INPUT_.pitch + telemetry_->CTRL_INPUT_.roll + telemetry_->CTRL_INPUT_.yaw + telemetry_->CTRL_INPUT_.thrust + telemetry_->CTRL_INPUT_.ctrl + 0xAAAA;
+    ROS_INFO("CTRL_INPUT_.chksum: %i", (short) telemetry_->CTRL_INPUT_.chksum);
 
     timer_ = nh_private.createTimer (d, &AutoPilot::spin, this);
   }
@@ -77,10 +86,14 @@ namespace asctec
 
   void AutoPilot::spin (const ros::TimerEvent& e)
   {
+    ROS_INFO("spin()");
+    
     telemetry_->buildRequest ();
     telemetry_->requestCount_++;
     serialInterface_->getPackets(telemetry_);
     telemetry_->publishPackets();
+    serialInterface_->sendCommand(telemetry_);
+    telemetry_->commandCount_++;
   }
 }
 

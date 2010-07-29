@@ -1,5 +1,4 @@
-Header header
-# latitude/longitude in deg * 10^7
+#latitude/longitude in deg * 10^7
 int32 latitude
 int32 longitude
 
@@ -23,3 +22,11 @@ int32 numSV
 
 #GPS status information; 0x03 = valid GPS fix
 int32 status
+
+#coordinates of current origin in deg * 10^7
+int32 latitude_best_estimate
+int32 longitude_best_estimate
+
+#velocities in X (E/W) and Y (N/S) after data fusion
+int32 speed_x_best_estimate
+int32 speed_y_best_estimate

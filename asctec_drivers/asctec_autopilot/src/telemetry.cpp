@@ -80,11 +80,18 @@ namespace asctec
           case RequestTypes::LL_STATUS:
             copyLL_STATUS();
             LLStatus_.header.stamp = timestamps_[RequestTypes::LL_STATUS];
+            dumpLL_STATUS();
             requestPublisher_[i].publish(LLStatus_);
+            break;
+          case RequestTypes::IMU_RAWDATA:
+            copyIMU_RAWDATA();
+            //dumpIMU_RAWDATA();
+            requestPublisher_[i].publish(IMURawData_);
             break;
           case RequestTypes::IMU_CALCDATA:
             copyIMU_CALCDATA();
             IMUCalcData_.header.stamp = timestamps_[RequestTypes::IMU_CALCDATA];
+            //dumpIMU_CALCDATA();
             requestPublisher_[i].publish(IMUCalcData_);
             break;
           case RequestTypes::GPS_DATA:
@@ -102,6 +109,11 @@ namespace asctec
             CTRLOut_.header.stamp = timestamps_[RequestTypes::CONTROLLER_OUTPUT];
             requestPublisher_[i].publish(CTRLOut_);
             break;
+          case RequestTypes::GPS_DATA_ADVANCED:
+            copyGPS_DATA_ADVANCED();
+            //dumpGPS_DATA_ADVANCED();
+            requestPublisher_[i].publish(GPSDataAdvanced_);
+            break;
           default:
             ROS_DEBUG("Unable to publish unknown type");
         }
@@ -111,24 +123,35 @@ namespace asctec
 
   void Telemetry::enablePolling (RequestType msg, uint8_t interval, uint8_t offset)
   {
-    ros::NodeHandle nh_private("~");
+    ros::NodeHandle n;
     switch (msg)
     {
       case RequestTypes::LL_STATUS:
-        requestPublisher_[msg] = nh_private.advertise<asctec_msgs::LLStatus>(requestToString(msg).c_str(), 10);
+        requestPublisher_[msg] = n.advertise<asctec_msgs::LLStatus>(requestToString(msg).c_str(), 10);
         break;
-//      case RequestTypes::IMU_RAWDATA: {
+      case RequestTypes::IMU_RAWDATA:
+        requestPublisher_[msg] = n.advertise<asctec_msgs::IMURawData>(requestToString(msg).c_str(), 10);
+        break;
       case RequestTypes::IMU_CALCDATA:
-        requestPublisher_[msg] = nh_private.advertise<asctec_msgs::IMUCalcData>(requestToString(msg).c_str(), 10);
+        requestPublisher_[msg] = n.advertise<asctec_msgs::IMUCalcData>(requestToString(msg).c_str(), 10);
         break;
       case RequestTypes::RC_DATA:
-        requestPublisher_[msg] = nh_private.advertise<asctec_msgs::RCData>(requestToString(msg).c_str(), 10);
+        requestPublisher_[msg] = n.advertise<asctec_msgs::RCData>(requestToString(msg).c_str(), 10);
         break;
       case RequestTypes::GPS_DATA:
-        requestPublisher_[msg] = nh_private.advertise<asctec_msgs::GPSData>(requestToString(msg).c_str(), 10);
+        requestPublisher_[msg] = n.advertise<asctec_msgs::GPSData>(requestToString(msg).c_str(), 10);
+        break;
+      case RequestTypes::GPS_DATA_ADVANCED:
+        requestPublisher_[msg] = n.advertise<asctec_msgs::GPSDataAdvanced>(requestToString(msg).c_str(), 10);
+        break;
+      case RequestTypes::WAYPOINT:
+        // to be filled in 
+        break;
+      case RequestTypes::CAM_DATA:
+        // to be filled in 
         break;
       case RequestTypes::CONTROLLER_OUTPUT:
-        requestPublisher_[msg] = nh_private.advertise<asctec_msgs::CTRLOut>(requestToString(msg).c_str(), 10);
+        requestPublisher_[msg] = n.advertise<asctec_msgs::CTRLOut>(requestToString(msg).c_str(), 10);
         break;
     }
 
@@ -139,6 +162,17 @@ namespace asctec
     pollingEnabled_ = true;
   }
 
+void Telemetry::enableCommanding (uint8_t interval, uint8_t offset)
+{
+    ros::NodeHandle n;
+    commandPublisher_ = n.advertise<asctec_msgs::CtrlInput>("CTRL_INPUT", 10);
+    ROS_INFO("Publishing %s data on topics: %s", "CTRL_INPUT","CTRL_INPUT");
+    ROS_DEBUG ("Telemetry::enableCommanding()");
+    commandInterval_ = interval;
+    commandOffset_ = offset;
+    commandingEnabled_ = true;
+}
+
 std::string Telemetry::requestToString(RequestTypes::RequestType t)
 {
    switch (t)
@@ -147,38 +181,30 @@ std::string Telemetry::requestToString(RequestTypes::RequestType t)
       case RequestTypes::IMU_RAWDATA:    { return "IMU_RAWDATA";    }
       case RequestTypes::IMU_CALCDATA:    { return "IMU_CALCDATA";    }
       case RequestTypes::RC_DATA:    { return "RC_DATA";    }
-      case RequestTypes::GPS_DATA:    { return "GPS_DATA";    }
       case RequestTypes::CONTROLLER_OUTPUT:    { return "CONTROLLER_OUTPUT";    }
+      case RequestTypes::GPS_DATA:    { return "GPS_DATA";    }
+      case RequestTypes::GPS_DATA_ADVANCED:    { return "GPS_DATA_ADVANCED";    }
+      case RequestTypes::WAYPOINT:    { return "WAYPOINT";    }
+      case RequestTypes::CAM_DATA:    { return "CAM_DATA";    }
    }
    return "Unknown";
 }
 
-
   void Telemetry::dumpLL_STATUS() {
-    ROS_INFO("LL_STATUS");
-    ROS_INFO("--------------------------------");
-    ROS_INFO("battery_voltage_1:%d",LL_STATUS_.battery_voltage_1);
-    ROS_INFO("battery_voltage_2:%d",LL_STATUS_.battery_voltage_2);
-    ROS_INFO("status:%d",LL_STATUS_.status);
-    ROS_INFO("cpu_load:%d",LL_STATUS_.cpu_load);
-    ROS_INFO("compass_enabled:%d",LL_STATUS_.compass_enabled);
-    ROS_INFO("chksum_error:%d",LL_STATUS_.chksum_error);
-    ROS_INFO("flying:%d",LL_STATUS_.flying);
-    ROS_INFO("motors_on:%d",LL_STATUS_.motors_on);
-    ROS_INFO("flightMode:%d",LL_STATUS_.flightMode);
-    ROS_INFO("up_time:%d",LL_STATUS_.up_time);
-  }
-  void Telemetry::copyLL_STATUS() {
-    LLStatus_.battery_voltage_1 =  LL_STATUS_.battery_voltage_1;
-    LLStatus_.battery_voltage_2 = LL_STATUS_.battery_voltage_2;
-    LLStatus_.status = LL_STATUS_.status;
-    LLStatus_.cpu_load = LL_STATUS_.cpu_load;
-    LLStatus_.compass_enabled = LL_STATUS_.compass_enabled;
-    LLStatus_.chksum_error = LL_STATUS_.chksum_error;
-    LLStatus_.flying = LL_STATUS_.flying;
-    LLStatus_.motors_on = LL_STATUS_.motors_on;
-    LLStatus_.flightMode = LL_STATUS_.flightMode;
-    LLStatus_.up_time = LL_STATUS_.up_time;
+    //ROS_INFO("LL_STATUS");
+    //ROS_INFO("--------------------------------");
+    //ROS_INFO("battery_voltage_1:%d",LL_STATUS_.battery_voltage_1);
+    //ROS_INFO("battery_voltage_2:%d",LL_STATUS_.battery_voltage_2);
+    //ROS_INFO("status:%d",LL_STATUS_.status);
+    //ROS_INFO("cpu_load:%d",LL_STATUS_.cpu_load);
+    //ROS_INFO("compass_enabled:%d",LL_STATUS_.compass_enabled);
+    //ROS_INFO("chksum_error:%d",LL_STATUS_.chksum_error);
+    //ROS_INFO("flying:%d",LL_STATUS_.flying);
+    //ROS_INFO("motors_on:%d",LL_STATUS_.motors_on);
+    //ROS_INFO("flightMode:%d",LL_STATUS_.flightMode);
+    //ROS_INFO("up_time:%d",LL_STATUS_.up_time);
+    if(LL_STATUS_.flightMode == 97)
+        ROS_INFO("---------- SERIAL LINK ACTIVE !!! --------");
   }
   void Telemetry::dumpIMU_RAWDATA() {
     ROS_INFO("IMU_RAWDATA");
@@ -226,6 +252,95 @@ std::string Telemetry::requestToString(RequestTypes::RequestType t)
     ROS_INFO("dheight_reference:%d",IMU_CALCDATA_.dheight_reference);
     ROS_INFO("height_reference:%d",IMU_CALCDATA_.height_reference);
   }
+  void Telemetry::dumpRC_DATA() {
+    ROS_INFO("RC_DATA");
+    ROS_INFO("--------------------------------");
+    ROS_INFO("channels_in: %d %d %d %d %d %d %d %d",RC_DATA_.channels_in[0],RC_DATA_.channels_in[1],
+      RC_DATA_.channels_in[2],RC_DATA_.channels_in[3],RC_DATA_.channels_in[4],RC_DATA_.channels_in[5],
+      RC_DATA_.channels_in[6],RC_DATA_.channels_in[7]);
+    ROS_INFO("channels_out: %d %d %d %d %d %d %d %d",RC_DATA_.channels_out[0],RC_DATA_.channels_out[1],
+      RC_DATA_.channels_out[2],RC_DATA_.channels_out[3],RC_DATA_.channels_out[4],RC_DATA_.channels_out[5],
+      RC_DATA_.channels_out[6],RC_DATA_.channels_out[7]);
+    ROS_INFO("lock:%d",RC_DATA_.lock);
+  }
+  void Telemetry::dumpCONTROLLER_OUTPUT() {
+    ROS_INFO("CONTROLLER_OUTPUT");
+    ROS_INFO("--------------------------------");
+    ROS_INFO("nick:%d",CONTROLLER_OUTPUT_.nick);
+    ROS_INFO("roll:%d",CONTROLLER_OUTPUT_.roll);
+    ROS_INFO("yaw:%d",CONTROLLER_OUTPUT_.yaw);
+    ROS_INFO("thrust:%d",CONTROLLER_OUTPUT_.thrust);
+  }
+  void Telemetry::dumpGPS_DATA() {
+    ROS_INFO("GPS_DATA");
+    ROS_INFO("--------------------------------");
+    ROS_INFO("latitude:%d",GPS_DATA_.latitude);
+    ROS_INFO("longitude:%d",GPS_DATA_.longitude);
+    ROS_INFO("height:%d",GPS_DATA_.height);
+    ROS_INFO("speed_x:%d",GPS_DATA_.speed_x);
+    ROS_INFO("speed_y:%d",GPS_DATA_.speed_y);
+    ROS_INFO("heading:%d",GPS_DATA_.heading);
+    ROS_INFO("horizontal_accuracy:%d",GPS_DATA_.horizontal_accuracy);
+    ROS_INFO("vertical_accuracy:%d",GPS_DATA_.vertical_accuracy);
+    ROS_INFO("speed_accuracy:%d",GPS_DATA_.speed_accuracy);
+    ROS_INFO("numSV:%d",GPS_DATA_.numSV);
+    ROS_INFO("status:%d",GPS_DATA_.status);
+  }
+  void Telemetry::dumpGPS_DATA_ADVANCED() {
+    ROS_INFO("GPS_DATA_ADVANCED");
+    ROS_INFO("--------------------------------");
+    ROS_INFO("latitude:%d",GPS_DATA_ADVANCED_.latitude);
+    ROS_INFO("longitude:%d",GPS_DATA_ADVANCED_.longitude);
+    ROS_INFO("height:%d",GPS_DATA_ADVANCED_.height);
+    ROS_INFO("speed_x:%d",GPS_DATA_ADVANCED_.speed_x);
+    ROS_INFO("speed_y:%d",GPS_DATA_ADVANCED_.speed_y);
+    ROS_INFO("heading:%d",GPS_DATA_ADVANCED_.heading);
+    ROS_INFO("horizontal_accuracy:%d",GPS_DATA_ADVANCED_.horizontal_accuracy);
+    ROS_INFO("vertical_accuracy:%d",GPS_DATA_ADVANCED_.vertical_accuracy);
+    ROS_INFO("speed_accuracy:%d",GPS_DATA_ADVANCED_.speed_accuracy);
+    ROS_INFO("numSV:%d",GPS_DATA_ADVANCED_.numSV);
+    ROS_INFO("status:%d",GPS_DATA_ADVANCED_.status);
+    ROS_INFO("latitude_best_estimate:%d",GPS_DATA_ADVANCED_.latitude_best_estimate);
+    ROS_INFO("longitude_best_estimate:%d",GPS_DATA_ADVANCED_.longitude_best_estimate);
+    ROS_INFO("speed_x_best_estimate:%d",GPS_DATA_ADVANCED_.speed_x_best_estimate);
+    ROS_INFO("speed_y_best_estimate:%d",GPS_DATA_ADVANCED_.speed_y_best_estimate);
+  }
+  void Telemetry::dumpCTRL_INPUT() {
+    ROS_INFO("CTRL_INPUT");
+    ROS_INFO("--------------------------------");
+    ROS_INFO("pitch:%d",CTRL_INPUT_.pitch);
+    ROS_INFO("roll:%d",CTRL_INPUT_.roll);
+    ROS_INFO("yaw:%d",CTRL_INPUT_.yaw);
+    ROS_INFO("thrust:%d",CTRL_INPUT_.thrust);
+    ROS_INFO("ctrl:%d",CTRL_INPUT_.ctrl);
+    ROS_INFO("chksum:%d",CTRL_INPUT_.chksum);
+  }
+  void Telemetry::copyLL_STATUS() {
+    LLStatus_.battery_voltage_1 =  LL_STATUS_.battery_voltage_1;
+    LLStatus_.battery_voltage_2 = LL_STATUS_.battery_voltage_2;
+    LLStatus_.status = LL_STATUS_.status;
+    LLStatus_.cpu_load = LL_STATUS_.cpu_load;
+    LLStatus_.compass_enabled = LL_STATUS_.compass_enabled;
+    LLStatus_.chksum_error = LL_STATUS_.chksum_error;
+    LLStatus_.flying = LL_STATUS_.flying;
+    LLStatus_.motors_on = LL_STATUS_.motors_on;
+    LLStatus_.flightMode = LL_STATUS_.flightMode;
+    LLStatus_.up_time = LL_STATUS_.up_time;
+  }
+  void Telemetry::copyIMU_RAWDATA(){
+    IMURawData_.pressure = IMU_RAWDATA_.pressure;
+    IMURawData_.gyro_x = IMU_RAWDATA_.gyro_x;
+    IMURawData_.gyro_y = IMU_RAWDATA_.gyro_y;
+    IMURawData_.gyro_z = IMU_RAWDATA_.gyro_z;
+    IMURawData_.mag_x = IMU_RAWDATA_.mag_x;
+    IMURawData_.mag_y = IMU_RAWDATA_.mag_y;
+    IMURawData_.mag_z = IMU_RAWDATA_.mag_z;
+    IMURawData_.acc_x = IMU_RAWDATA_.acc_x;
+    IMURawData_.acc_y = IMU_RAWDATA_.acc_y;
+    IMURawData_.acc_z = IMU_RAWDATA_.acc_z;
+    IMURawData_.temp_gyro = IMU_RAWDATA_.temp_gyro;
+    IMURawData_.temp_ADC = IMU_RAWDATA_.temp_ADC;
+  }
   void Telemetry::copyIMU_CALCDATA() {
     IMUCalcData_.angle_nick = IMU_CALCDATA_.angle_nick;
     IMUCalcData_.angle_roll = IMU_CALCDATA_.angle_roll;
@@ -254,40 +369,22 @@ std::string Telemetry::requestToString(RequestTypes::RequestType t)
     IMUCalcData_.dheight_reference = IMU_CALCDATA_.dheight_reference;
     IMUCalcData_.height_reference = IMU_CALCDATA_.height_reference;
   }
-  void Telemetry::dumpRC_DATA() {
-    ROS_INFO("RC_DATA");
-    ROS_INFO("--------------------------------");
-    ROS_INFO("channels_in: %d %d %d %d %d %d %d %d",RC_DATA_.channels_in[0],RC_DATA_.channels_in[1],
-      RC_DATA_.channels_in[2],RC_DATA_.channels_in[3],RC_DATA_.channels_in[4],RC_DATA_.channels_in[5],
-      RC_DATA_.channels_in[6],RC_DATA_.channels_in[7]);
-    ROS_INFO("channels_out: %d %d %d %d %d %d %d %d",RC_DATA_.channels_out[0],RC_DATA_.channels_out[1],
-      RC_DATA_.channels_out[2],RC_DATA_.channels_out[3],RC_DATA_.channels_out[4],RC_DATA_.channels_out[5],
-      RC_DATA_.channels_out[6],RC_DATA_.channels_out[7]);
-    ROS_INFO("lock:%d",RC_DATA_.lock);
+  void Telemetry::copyRC_DATA() {
+      for(int i = 0; i < 8; i++)
+      {
+          RCData_.channels_in[i] = RC_DATA_.channels_in[i];
+          RCData_.channels_out[i] = RC_DATA_.channels_out[i];
+      }
+    RCData_.lock =  RC_DATA_.lock;
   }
 
-  void Telemetry::copyRC_DATA() {
-    for(int i=0;i<8;i++){
-      RCData_.channels_in[i] = RC_DATA_.channels_in[i];
-      RCData_.channels_out[i] = RC_DATA_.channels_out[i];
-    }
-    RCData_.lock = RC_DATA_.lock;
+  void Telemetry::copyCONTROLLER_OUTPUT() {
+    ControllerOutput_.nick = CONTROLLER_OUTPUT_.nick;
+    ControllerOutput_.roll = CONTROLLER_OUTPUT_.roll;
+    ControllerOutput_.yaw = CONTROLLER_OUTPUT_.yaw;
+    ControllerOutput_.thrust = CONTROLLER_OUTPUT_.thrust;
   }
-  void Telemetry::dumpGPS_DATA() {
-    ROS_INFO("GPS_DATA");
-    ROS_INFO("--------------------------------");
-    ROS_INFO("latitude:%d",GPS_DATA_.latitude);
-    ROS_INFO("longitude:%d",GPS_DATA_.longitude);
-    ROS_INFO("height:%d",GPS_DATA_.height);
-    ROS_INFO("speed_x:%d",GPS_DATA_.speed_x);
-    ROS_INFO("speed_y:%d",GPS_DATA_.speed_y);
-    ROS_INFO("heading:%d",GPS_DATA_.heading);
-    ROS_INFO("horizontal_accuracy:%d",GPS_DATA_.horizontal_accuracy);
-    ROS_INFO("vertical_accuracy:%d",GPS_DATA_.vertical_accuracy);
-    ROS_INFO("speed_accuracy:%d",GPS_DATA_.speed_accuracy);
-    ROS_INFO("numSV:%d",GPS_DATA_.numSV);
-    ROS_INFO("status:%d",GPS_DATA_.status);
-  }
+
   void Telemetry::copyGPS_DATA() {
     GPSData_.latitude = GPS_DATA_.latitude;
     GPSData_.longitude = GPS_DATA_.longitude;
@@ -301,10 +398,22 @@ std::string Telemetry::requestToString(RequestTypes::RequestType t)
     GPSData_.numSV = GPS_DATA_.numSV;
     GPSData_.status = GPS_DATA_.status;
   }
-  void Telemetry::copyCONTROLLER_OUTPUT() {
-    CTRLOut_.pitch = CONTROLLER_OUTPUT_.nick;
-    CTRLOut_.yaw = CONTROLLER_OUTPUT_.yaw;
-    CTRLOut_.roll = CONTROLLER_OUTPUT_.roll;
-    CTRLOut_.thrust = CONTROLLER_OUTPUT_.thrust;
+
+  void Telemetry::copyGPS_DATA_ADVANCED() {
+    GPSDataAdvanced_.latitude = GPS_DATA_ADVANCED_.latitude;
+    GPSDataAdvanced_.longitude = GPS_DATA_ADVANCED_.longitude;
+    GPSDataAdvanced_.height = GPS_DATA_ADVANCED_.height;
+    GPSDataAdvanced_.speed_x = GPS_DATA_ADVANCED_.speed_x;
+    GPSDataAdvanced_.speed_y = GPS_DATA_ADVANCED_.speed_y;
+    GPSDataAdvanced_.heading = GPS_DATA_ADVANCED_.heading;
+    GPSDataAdvanced_.horizontal_accuracy = GPS_DATA_ADVANCED_.horizontal_accuracy;
+    GPSDataAdvanced_.vertical_accuracy = GPS_DATA_ADVANCED_.vertical_accuracy;
+    GPSDataAdvanced_.speed_accuracy = GPS_DATA_ADVANCED_.speed_accuracy;
+    GPSDataAdvanced_.numSV = GPS_DATA_ADVANCED_.numSV;
+    GPSDataAdvanced_.status = GPS_DATA_ADVANCED_.status;
+    GPSDataAdvanced_.latitude_best_estimate = GPS_DATA_ADVANCED_.latitude_best_estimate;
+    GPSDataAdvanced_.longitude_best_estimate = GPS_DATA_ADVANCED_.longitude_best_estimate;
+    GPSDataAdvanced_.speed_x_best_estimate = GPS_DATA_ADVANCED_.speed_x_best_estimate;
+    GPSDataAdvanced_.speed_y_best_estimate = GPS_DATA_ADVANCED_.speed_y_best_estimate;
   }
 }
