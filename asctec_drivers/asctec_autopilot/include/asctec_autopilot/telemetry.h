@@ -113,7 +113,7 @@ namespace asctec
     std::string requestToString(RequestTypes::RequestType t);
     void publishPackets();
 
-    void enableCommanding ();
+    void enableCommanding (uint8_t interval = 1, uint8_t offset = 0);
         
     void dumpLL_STATUS();
     void dumpIMU_RAWDATA();
@@ -136,6 +136,7 @@ namespace asctec
     bool pollingEnabled_;
     bool commandingEnabled_;
     uint16_t requestCount_;
+    uint16_t commandCount_;
     std::bitset < 16 > requestPackets_;
 
 
@@ -150,6 +151,8 @@ namespace asctec
     uint8_t requestOffset_[REQUEST_TYPES];
     ros::Publisher requestPublisher_[REQUEST_TYPES];
 
+    uint8_t commandInterval_;
+    uint8_t commandOffset_;
     ros::Publisher commandPublisher_;
 
     //packet descriptors
@@ -367,11 +370,6 @@ namespace asctec
     };
     struct CTRL_INPUT
     {
-        unsigned char character1;
-        unsigned char character2;
-        unsigned char character3;
-        unsigned char character4;
-        unsigned char character5;
         //serial commands (= Scientific Interface)
         //pitch input: -2047..2047 (0=neutral)
         short pitch;

@@ -47,7 +47,7 @@ namespace asctec
 
     void write (char *output, int len);
     bool getPackets (Telemetry *telemetry);
-    bool sendCommand (Telemetry *telemetry);
+    void sendCommand (Telemetry *telemetry);
     void dumpDebug (void);
     bool getPacket (char *spacket, unsigned char &packet_type, unsigned short &packet_crc, unsigned short &packet_size);
 
