@@ -41,7 +41,7 @@ namespace asctec
     // **** get parameters
     
     if (!nh_private.getParam ("freq", freq_))
-      freq_ = 50.0;
+      freq_ = 10.0;
 
     if (!nh_private.getParam ("port", port_))
       port_ = "/dev/ttyUSB0";
@@ -62,10 +62,10 @@ namespace asctec
 
     telemetry_->enablePolling(asctec::RequestTypes::LL_STATUS, 10, 0);
     //telemetry_->enablePolling(asctec::RequestTypes::IMU_RAWDATA, 10, 2);
-    //telemetry_->enablePolling(asctec::RequestTypes::IMU_CALCDATA, 10, 4);
+    telemetry_->enablePolling(asctec::RequestTypes::IMU_CALCDATA, 10, 4);
     //telemetry_->enablePolling(asctec::RequestTypes::RC_DATA, 10, 6);
     //telemetry_->enablePolling(asctec::RequestTypes::CONTROLLER_OUTPUT, 10, 8);
-    //telemetry_->enablePolling(asctec::RequestTypes::GPS_DATA, 1);
+    telemetry_->enablePolling(asctec::RequestTypes::GPS_DATA, 10);
     telemetry_->enableCommanding( 10 , 2);
     telemetry_->CTRL_INPUT_.pitch = 0;
     telemetry_->CTRL_INPUT_.roll = 0;
