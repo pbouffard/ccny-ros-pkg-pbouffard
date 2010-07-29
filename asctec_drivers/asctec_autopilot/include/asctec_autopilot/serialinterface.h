@@ -46,6 +46,7 @@ namespace asctec
     ~SerialInterface ();
 
     void write (char *output, int len);
+    void write (unsigned char *output, int len);
     bool getPackets (Telemetry *telemetry);
     void sendCommand (Telemetry *telemetry);
     void dumpDebug (void);
