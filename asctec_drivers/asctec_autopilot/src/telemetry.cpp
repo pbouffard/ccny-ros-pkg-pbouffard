@@ -83,32 +83,32 @@ namespace asctec
             break;
           case RequestTypes::IMU_RAWDATA:
             copyIMU_RAWDATA();
-            dumpIMU_RAWDATA();
+            //dumpIMU_RAWDATA();
             requestPublisher_[i].publish(IMURawData_);
             break;
           case RequestTypes::IMU_CALCDATA:
             copyIMU_CALCDATA();
-            dumpIMU_CALCDATA();
+            //dumpIMU_CALCDATA();
             requestPublisher_[i].publish(IMUCalcData_);
             break;
           case RequestTypes::RC_DATA:
             copyRC_DATA();
-            dumpRC_DATA();
+            //dumpRC_DATA();
             requestPublisher_[i].publish(RCData_);
             break;
           case RequestTypes::CONTROLLER_OUTPUT:
             copyCONTROLLER_OUTPUT();
-            dumpCONTROLLER_OUTPUT();
+            //dumpCONTROLLER_OUTPUT();
             requestPublisher_[i].publish(ControllerOutput_);
             break;
           case RequestTypes::GPS_DATA:
             copyGPS_DATA();
-            dumpGPS_DATA();
+            //dumpGPS_DATA();
             requestPublisher_[i].publish(GPSData_);
             break;
           case RequestTypes::GPS_DATA_ADVANCED:
             copyGPS_DATA_ADVANCED();
-            dumpGPS_DATA_ADVANCED();
+            //dumpGPS_DATA_ADVANCED();
             requestPublisher_[i].publish(GPSDataAdvanced_);
             break;
           default:
@@ -144,6 +144,12 @@ namespace asctec
       case RequestTypes::GPS_DATA_ADVANCED:
         requestPublisher_[msg] = n.advertise<asctec_msgs::GPSDataAdvanced>(requestToString(msg).c_str(), 10);
         break;
+      case RequestTypes::WAYPOINT:
+        // to be filled in 
+        break;
+      case RequestTypes::CAM_DATA:
+        // to be filled in 
+        break;
     }
     
 	ROS_INFO("Publishing %s data on topic: %s", requestToString(msg).c_str(),requestToString(msg).c_str ()); 
@@ -175,23 +181,27 @@ std::string Telemetry::requestToString(RequestTypes::RequestType t)
       case RequestTypes::CONTROLLER_OUTPUT:    { return "CONTROLLER_OUTPUT";    }
       case RequestTypes::GPS_DATA:    { return "GPS_DATA";    }
       case RequestTypes::GPS_DATA_ADVANCED:    { return "GPS_DATA_ADVANCED";    }
+      case RequestTypes::WAYPOINT:    { return "WAYPOINT";    }
+      case RequestTypes::CAM_DATA:    { return "CAM_DATA";    }
    }
    return "Unknown";
 }
 
   void Telemetry::dumpLL_STATUS() {
-    ROS_INFO("LL_STATUS");
-    ROS_INFO("--------------------------------");
-    ROS_INFO("battery_voltage_1:%d",LL_STATUS_.battery_voltage_1);
-    ROS_INFO("battery_voltage_2:%d",LL_STATUS_.battery_voltage_2);
-    ROS_INFO("status:%d",LL_STATUS_.status);
-    ROS_INFO("cpu_load:%d",LL_STATUS_.cpu_load);
-    ROS_INFO("compass_enabled:%d",LL_STATUS_.compass_enabled);
-    ROS_INFO("chksum_error:%d",LL_STATUS_.chksum_error);
-    ROS_INFO("flying:%d",LL_STATUS_.flying);
-    ROS_INFO("motors_on:%d",LL_STATUS_.motors_on);
-    ROS_INFO("flightMode:%d",LL_STATUS_.flightMode);
-    ROS_INFO("up_time:%d",LL_STATUS_.up_time);
+    //ROS_INFO("LL_STATUS");
+    //ROS_INFO("--------------------------------");
+    //ROS_INFO("battery_voltage_1:%d",LL_STATUS_.battery_voltage_1);
+    //ROS_INFO("battery_voltage_2:%d",LL_STATUS_.battery_voltage_2);
+    //ROS_INFO("status:%d",LL_STATUS_.status);
+    //ROS_INFO("cpu_load:%d",LL_STATUS_.cpu_load);
+    //ROS_INFO("compass_enabled:%d",LL_STATUS_.compass_enabled);
+    //ROS_INFO("chksum_error:%d",LL_STATUS_.chksum_error);
+    //ROS_INFO("flying:%d",LL_STATUS_.flying);
+    //ROS_INFO("motors_on:%d",LL_STATUS_.motors_on);
+    //ROS_INFO("flightMode:%d",LL_STATUS_.flightMode);
+    //ROS_INFO("up_time:%d",LL_STATUS_.up_time);
+    if(LL_STATUS_.flightMode == 97)
+        ROS_INFO("---------- SERIAL LINK ACTIVE !!! --------");
   }
   void Telemetry::dumpIMU_RAWDATA() {
     ROS_INFO("IMU_RAWDATA");

@@ -30,7 +30,7 @@ int main (int argc, char **argv)
     tele.buildRequest ();
     ROS_INFO("Counter: %d",tele.requestCount_);
     ROS_INFO("Request: %04X", (short) tele.requestPackets_.to_ulong ());
-    ROS_INFO("Packets Requested: %d",tele.requestPackets_.count());
+    ROS_INFO("Packets Requested: %zd",tele.requestPackets_.count());
     tele.requestPackets_ ^= tele.requestPackets_;
     tele.requestCount_++;
   }
