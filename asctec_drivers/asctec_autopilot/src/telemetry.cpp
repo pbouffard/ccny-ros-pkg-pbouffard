@@ -106,8 +106,8 @@ namespace asctec
             break;
           case RequestTypes::CONTROLLER_OUTPUT:
             copyCONTROLLER_OUTPUT ();
-            CTRLOut_.header.stamp = timestamps_[RequestTypes::CONTROLLER_OUTPUT];
-            requestPublisher_[i].publish (CTRLOut_);
+            ControllerOutput_.header.stamp = timestamps_[RequestTypes::CONTROLLER_OUTPUT];
+            requestPublisher_[i].publish (ControllerOutput_);
             break;
           case RequestTypes::GPS_DATA_ADVANCED:
             copyGPS_DATA_ADVANCED ();
@@ -151,7 +151,7 @@ namespace asctec
         // to be filled in 
         break;
       case RequestTypes::CONTROLLER_OUTPUT:
-        requestPublisher_[msg] = nh_private.advertise < asctec_msgs::CTRLOut > (requestToString (msg).c_str (), 10);
+        requestPublisher_[msg] = nh_private.advertise < asctec_msgs::ControllerOutput > (requestToString (msg).c_str (), 10);
         break;
     }
 

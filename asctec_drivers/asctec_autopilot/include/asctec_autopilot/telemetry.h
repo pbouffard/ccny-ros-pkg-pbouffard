@@ -28,7 +28,6 @@
 #include "asctec_msgs/RCData.h"
 #include "asctec_msgs/ControllerOutput.h"
 #include "asctec_msgs/GPSData.h"
-#include "asctec_msgs/CTRLOut.h"
 #include "asctec_msgs/GPSDataAdvanced.h"
 #include "asctec_msgs/CtrlInput.h"
 
@@ -436,7 +435,6 @@ You will receive an acknowledge if a command or a waypoint was received correctl
     asctec_msgs::RCData RCData_;
     asctec_msgs::ControllerOutput ControllerOutput_;
     asctec_msgs::GPSData GPSData_;
-    asctec_msgs::CTRLOut CTRLOut_;
     asctec_msgs::GPSDataAdvanced GPSDataAdvanced_;
     asctec_msgs::CtrlInput CtrlInput_;
     
