@@ -252,18 +252,21 @@ namespace asctec
 
   void SerialInterface::sendCommand (Telemetry *telemetry)
   {
-    if(!telemetry->commandingEnabled_) return;
+    if(!telemetry->controlEnabled_) return;
     ROS_DEBUG ("sendCommand started");
     unsigned char cmd[] = ">*>di";
 
-    if (telemetry->commandInterval_ != 0 && ((telemetry->commandCount_ - telemetry->commandOffset_) % telemetry->commandInterval_ == 0)) {
-        //ROS_INFO("writing command to pelican: size of &CTRL_INPUT_ %zd", sizeof (&telemetry->CTRL_INPUT_));
+    if (telemetry->controlInterval_ != 0 && ((telemetry->controlCount_ - telemetry->controlOffset_) % telemetry->controlInterval_ == 0)) {
+        if(telemetry->CTRL_INPUT_.chksum != telemetry->CTRL_INPUT_.pitch + telemetry->CTRL_INPUT_.roll + telemetry->CTRL_INPUT_.yaw + telemetry->CTRL_INPUT_.thrust + telemetry->CTRL_INPUT_.ctrl + 0xAAAA){
+            ROS_INFO("invalid CtrlInput checksum!");
+            return;
+        }
         flush();
         write(cmd,5);
         write((unsigned char*) &telemetry->CTRL_INPUT_, 12);
         ROS_INFO("writing command to pelican: size of CTRL_INPUT_ %zd", sizeof(telemetry->CTRL_INPUT_));
     }
-    //ROS_INFO ("sendCommand completed" );
+    //ROS_DEBUG ("sendCommand completed" );
   }
 
   bool SerialInterface::getPackets (Telemetry *telemetry)

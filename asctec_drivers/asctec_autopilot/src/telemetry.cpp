@@ -159,15 +159,16 @@ namespace asctec
     pollingEnabled_ = true;
   }
 
-void Telemetry::enableCommanding (uint8_t interval, uint8_t offset)
+void Telemetry::enableControl (uint8_t interval, uint8_t offset)
 {
     ros::NodeHandle n;
-    commandPublisher_ = n.advertise<asctec_msgs::CtrlInput>("CTRL_INPUT", 10);
-    ROS_INFO("Publishing %s data on topics: %s", "CTRL_INPUT","CTRL_INPUT");
+    Telemetry telemetry_object;
+    controlSubscriber_ = n.subscribe("CTRL_INPUT", 100, &Telemetry::copyCTRL_INPUT, &telemetry_object);
+    ROS_INFO("Listening to %s data on topic: %s", "CTRL_INPUT","CTRL_INPUT");
     ROS_DEBUG ("Telemetry::enableCommanding()");
-    commandInterval_ = interval;
-    commandOffset_ = offset;
-    commandingEnabled_ = true;
+    controlInterval_ = interval;
+    controlOffset_ = offset;
+    controlEnabled_ = true;
 }
 
 std::string Telemetry::requestToString(RequestTypes::RequestType t)
@@ -410,5 +411,15 @@ std::string Telemetry::requestToString(RequestTypes::RequestType t)
     GPSDataAdvanced_.speed_x_best_estimate = GPS_DATA_ADVANCED_.speed_x_best_estimate;
     GPSDataAdvanced_.speed_y_best_estimate = GPS_DATA_ADVANCED_.speed_y_best_estimate;
   }
+  void Telemetry::copyCTRL_INPUT(const asctec_msgs::CtrlInput& msg){
+    CTRL_INPUT_.pitch = msg.pitch;
+    CTRL_INPUT_.roll = msg.roll;
+    CTRL_INPUT_.yaw = msg.yaw;
+    CTRL_INPUT_.thrust = msg.thrust;
+    CTRL_INPUT_.ctrl = msg.ctrl;
+    CTRL_INPUT_.chksum = msg.chksum;
+  }
+
+
    
 }
