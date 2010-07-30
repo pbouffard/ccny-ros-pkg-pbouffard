@@ -164,9 +164,9 @@ namespace asctec
 
   void Telemetry::enableControl (uint8_t interval, uint8_t offset)
   {
-    ros::NodeHandle n;
+    ros::NodeHandle nh_private ("~");
     Telemetry telemetry_object;
-    controlSubscriber_ = n.subscribe("CTRL_INPUT", 100, &Telemetry::copyCTRL_INPUT, &telemetry_object);
+    controlSubscriber_ = nh_private.subscribe("CTRL_INPUT", 100, &Telemetry::copyCTRL_INPUT, &telemetry_object);
     ROS_INFO("Listening to %s data on topic: %s", "CTRL_INPUT","CTRL_INPUT");
     ROS_DEBUG ("Telemetry::enableCommanding()");
     controlInterval_ = interval;
