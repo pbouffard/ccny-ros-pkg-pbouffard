@@ -247,7 +247,7 @@ namespace asctec
   {
     int i;
     serialport_bytes_tx_ += len;
-    ROS_INFO ("Writing %d element(s): %s", len, output);
+    //ROS_INFO ("Writing %d element(s): %s", len, output);
     ROS_DEBUG ("dev: %zd", (size_t) dev_);
     ROS_DEBUG ("FOO");
     i = fwrite (output, sizeof (unsigned char), len, dev_);
@@ -262,10 +262,10 @@ namespace asctec
     if(!telemetry->controlEnabled_) return;
     ROS_DEBUG ("sendControl started");
     unsigned char cmd[] = ">*>di";
-
+    //telemetry->dumpCTRL_INPUT();
     if (telemetry->controlInterval_ != 0 && ((telemetry->controlCount_ - telemetry->controlOffset_) % telemetry->controlInterval_ == 0)) {
       if(telemetry->CTRL_INPUT_.chksum != telemetry->CTRL_INPUT_.pitch + telemetry->CTRL_INPUT_.roll + telemetry->CTRL_INPUT_.yaw + telemetry->CTRL_INPUT_.thrust + telemetry->CTRL_INPUT_.ctrl + 0xAAAA){
-        ROS_INFO("invalid CtrlInput checksum!");
+        ROS_INFO("invalid CtrlInput checksum: %d !=  %d", telemetry->CTRL_INPUT_.chksum, telemetry->CTRL_INPUT_.pitch + telemetry->CTRL_INPUT_.roll + telemetry->CTRL_INPUT_.yaw + telemetry->CTRL_INPUT_.thrust + telemetry->CTRL_INPUT_.ctrl + 0xAAAA);
         return;
       }
       flush();
@@ -287,8 +287,8 @@ namespace asctec
     unsigned short packet_size;
     unsigned int i;
 
-    ROS_INFO ("Packet Request: %04x %zd packets", (short) telemetry->requestPackets_.to_ulong (),
-              telemetry->requestPackets_.count ());
+    //ROS_INFO ("Packet Request: %04x %zd packets", (short) telemetry->requestPackets_.to_ulong (),
+    //          telemetry->requestPackets_.count ());
     sprintf (cmd, ">*>p%c", (short) telemetry->requestPackets_.to_ulong ());
     write (cmd, 6);
     drain ();

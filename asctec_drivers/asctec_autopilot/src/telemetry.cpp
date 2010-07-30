@@ -80,7 +80,7 @@ namespace asctec
           case RequestTypes::LL_STATUS:
             copyLL_STATUS ();
             LLStatus_.header.stamp = timestamps_[RequestTypes::LL_STATUS];
-            //dumpLL_STATUS ();
+            dumpLL_STATUS ();
             requestPublisher_[i].publish (LLStatus_);
             break;
           case RequestTypes::IMU_RAWDATA:
@@ -460,11 +460,17 @@ namespace asctec
     GPSDataAdvanced_.speed_y_best_estimate = GPS_DATA_ADVANCED_.speed_y_best_estimate;
   }
   void Telemetry::copyCTRL_INPUT(const asctec_msgs::CtrlInput& msg){
+    dumpCTRL_INPUT();
+    ROS_INFO("copying CTRL_INPUT to local structure!!!");
+    ROS_INFO("msg.pitch: %d", msg.pitch);
+    ROS_INFO("CTRL_INPUT_.pitch: %d", CTRL_INPUT_.pitch);
     CTRL_INPUT_.pitch = msg.pitch;
+    ROS_INFO("CTRL_INPUT_.pitch: %d", CTRL_INPUT_.pitch);
     CTRL_INPUT_.roll = msg.roll;
     CTRL_INPUT_.yaw = msg.yaw;
     CTRL_INPUT_.thrust = msg.thrust;
     CTRL_INPUT_.ctrl = msg.ctrl;
     CTRL_INPUT_.chksum = msg.chksum;
+    dumpCTRL_INPUT();
   }
 }

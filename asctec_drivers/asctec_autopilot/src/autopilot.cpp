@@ -130,14 +130,14 @@ namespace asctec
       telemetry_->enablePolling (asctec::RequestTypes::GPS_DATA_ADVANCED, interval_GPS_DATA_ADVANCED_,  offset_GPS_DATA_ADVANCED_);
 
     telemetry_->enableControl(10, 2);
-    telemetry_->CTRL_INPUT_.pitch = 0;
-    telemetry_->CTRL_INPUT_.roll = 0;
-    telemetry_->CTRL_INPUT_.yaw = 0;
-    telemetry_->CTRL_INPUT_.thrust = 0;
-    telemetry_->CTRL_INPUT_.ctrl = 0x0000;
-    telemetry_->CTRL_INPUT_.chksum =
-      telemetry_->CTRL_INPUT_.pitch + telemetry_->CTRL_INPUT_.roll + telemetry_->CTRL_INPUT_.yaw +
-      telemetry_->CTRL_INPUT_.thrust + telemetry_->CTRL_INPUT_.ctrl + 0xAAAA;
+    //telemetry_->CTRL_INPUT_.pitch = 0;
+    //telemetry_->CTRL_INPUT_.roll = 0;
+    //telemetry_->CTRL_INPUT_.yaw = 0;
+    //telemetry_->CTRL_INPUT_.thrust = 0;
+    //telemetry_->CTRL_INPUT_.ctrl = 0x0000;
+    //telemetry_->CTRL_INPUT_.chksum =
+    //  telemetry_->CTRL_INPUT_.pitch + telemetry_->CTRL_INPUT_.roll + telemetry_->CTRL_INPUT_.yaw +
+    //  telemetry_->CTRL_INPUT_.thrust + telemetry_->CTRL_INPUT_.ctrl + 0xAAAA;
     ROS_INFO ("CTRL_INPUT_.chksum: %i", (short) telemetry_->CTRL_INPUT_.chksum);
 
     timer_ = nh_private.createTimer (d, &AutoPilot::spin, this);
@@ -150,9 +150,9 @@ namespace asctec
 
   void AutoPilot::spin (const ros::TimerEvent & e)
   {
-    ROS_INFO ("spin()");
-    ROS_INFO ("RX: %03.3f Bps",float(serialInterface_->serialport_bytes_rx_)/1000*freq_);
-    ROS_INFO ("TX: %03.3f Bps",float(serialInterface_->serialport_bytes_tx_)/1000*freq_);
+    //ROS_INFO ("spin()");
+    //ROS_INFO ("RX: %03.3f Bps",float(serialInterface_->serialport_bytes_rx_)/1000*freq_);
+    //ROS_INFO ("TX: %03.3f Bps",float(serialInterface_->serialport_bytes_tx_)/1000*freq_);
     serialInterface_->serialport_bytes_rx_ = 0;
     serialInterface_->serialport_bytes_tx_ = 0;
     telemetry_->buildRequest ();
