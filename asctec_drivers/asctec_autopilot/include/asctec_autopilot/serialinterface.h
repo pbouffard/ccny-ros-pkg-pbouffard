@@ -52,6 +52,8 @@ namespace asctec
     void dumpDebug (void);
     bool getPacket (char *spacket, unsigned char &packet_type, unsigned short &packet_crc, unsigned short &packet_size);
 
+    uint32_t serialport_bytes_rx_;
+    uint32_t serialport_bytes_tx_;
     int *scan;
     bool status;
     int pt[800];

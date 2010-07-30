@@ -80,7 +80,7 @@ namespace asctec
           case RequestTypes::LL_STATUS:
             copyLL_STATUS ();
             LLStatus_.header.stamp = timestamps_[RequestTypes::LL_STATUS];
-            dumpLL_STATUS ();
+            //dumpLL_STATUS ();
             requestPublisher_[i].publish (LLStatus_);
             break;
           case RequestTypes::IMU_RAWDATA:
@@ -219,18 +219,18 @@ namespace asctec
 
   void Telemetry::dumpLL_STATUS ()
   {
-    //ROS_INFO("LL_STATUS");
-    //ROS_INFO("--------------------------------");
-    //ROS_INFO("battery_voltage_1:%d",LL_STATUS_.battery_voltage_1);
-    //ROS_INFO("battery_voltage_2:%d",LL_STATUS_.battery_voltage_2);
-    //ROS_INFO("status:%d",LL_STATUS_.status);
-    //ROS_INFO("cpu_load:%d",LL_STATUS_.cpu_load);
-    //ROS_INFO("compass_enabled:%d",LL_STATUS_.compass_enabled);
-    //ROS_INFO("chksum_error:%d",LL_STATUS_.chksum_error);
-    //ROS_INFO("flying:%d",LL_STATUS_.flying);
-    //ROS_INFO("motors_on:%d",LL_STATUS_.motors_on);
-    //ROS_INFO("flightMode:%d",LL_STATUS_.flightMode);
-    //ROS_INFO("up_time:%d",LL_STATUS_.up_time);
+    ROS_INFO("LL_STATUS");
+    ROS_INFO("--------------------------------");
+    ROS_INFO("battery_voltage_1:%d",LL_STATUS_.battery_voltage_1);
+    ROS_INFO("battery_voltage_2:%d",LL_STATUS_.battery_voltage_2);
+    ROS_INFO("status:%d",LL_STATUS_.status);
+    ROS_INFO("cpu_load:%d",LL_STATUS_.cpu_load);
+    ROS_INFO("compass_enabled:%d",LL_STATUS_.compass_enabled);
+    ROS_INFO("chksum_error:%d",LL_STATUS_.chksum_error);
+    ROS_INFO("flying:%d",LL_STATUS_.flying);
+    ROS_INFO("motors_on:%d",LL_STATUS_.motors_on);
+    ROS_INFO("flightMode:%d",LL_STATUS_.flightMode);
+    ROS_INFO("up_time:%d",LL_STATUS_.up_time);
     if (LL_STATUS_.flightMode == 97)
       ROS_INFO ("---------- SERIAL LINK ACTIVE !!! --------");
   }

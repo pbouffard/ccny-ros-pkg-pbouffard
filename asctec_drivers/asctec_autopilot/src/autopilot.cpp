@@ -102,11 +102,20 @@ namespace asctec
     // **** set up intefaces
 
     serialInterface_ = new asctec::SerialInterface::SerialInterface (port_, speed_);
+    serialInterface_->serialport_bytes_rx_ = 0;
+    serialInterface_->serialport_bytes_tx_ = 0;
     telemetry_ = new asctec::Telemetry::Telemetry ();
 
     // **** enable polling
-    if(enable_LL_STATUS_)
+    if(enable_LL_STATUS_ == true)
+    {
+      ROS_INFO("LL_STATUS Polling Enabled");
       telemetry_->enablePolling (asctec::RequestTypes::LL_STATUS, interval_LL_STATUS_, offset_LL_STATUS_);
+    }
+    else
+    {
+      ROS_INFO("LL_STATUS Polling Disabled");
+    }
     if(enable_RC_DATA_)
       telemetry_->enablePolling (asctec::RequestTypes::RC_DATA, interval_RC_DATA_, offset_RC_DATA_);
     if(enable_CONTROLLER_OUTPUT_)
@@ -142,11 +151,16 @@ namespace asctec
   void AutoPilot::spin (const ros::TimerEvent & e)
   {
     ROS_INFO ("spin()");
+    ROS_INFO ("RX: %03.3f Bps",float(serialInterface_->serialport_bytes_rx_)/1000*freq_);
+    ROS_INFO ("TX: %03.3f Bps",float(serialInterface_->serialport_bytes_tx_)/1000*freq_);
+    ROS_INFO ("TX: %d Bps",serialInterface_->serialport_bytes_tx_*int(freq_));
+    serialInterface_->serialport_bytes_rx_ = 0;
+    serialInterface_->serialport_bytes_tx_ = 0;
     telemetry_->buildRequest ();
     telemetry_->requestCount_++;
     serialInterface_->getPackets (telemetry_);
     telemetry_->publishPackets ();
-    serialInterface_->sendCommand (telemetry_);
     telemetry_->commandCount_++;
+    serialInterface_->sendCommand (telemetry_);
   }
 }

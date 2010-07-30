@@ -160,14 +160,13 @@ namespace asctec
       ROS_ERROR ("Error Reading Packet Header: %s", strerror (errno));
       ROS_ERROR ("Read (%d): %s", i, stoken);
       stall (false);
-      while (fread (stoken, sizeof (char), 1, dev_) != 0)
-      {
-      }
+      while (fread (stoken, sizeof (char), 1, dev_) != 0) {}
       flush ();
       drain ();
       stall (true);
       return false;
     }
+    serialport_bytes_rx_ += 3;
     ROS_DEBUG ("Packet Header OK");
 
     // get packet size
@@ -178,6 +177,7 @@ namespace asctec
       flush ();
       return false;
     }
+    serialport_bytes_rx_ += 2;
     memcpy (&packet_size, ssize, sizeof (packet_size));
     ROS_DEBUG ("Packet size: %d", packet_size);
 
@@ -185,6 +185,7 @@ namespace asctec
     i = fread (stype, sizeof (char), 1, dev_);
     if (i == 0)
       return false;
+    serialport_bytes_rx_ += 1;
     memcpy (&packet_type, stype, sizeof (packet_type));
     ROS_DEBUG ("Packet type: %d", packet_type);
 
@@ -192,12 +193,14 @@ namespace asctec
     i = fread (spacket, sizeof (char), packet_size, dev_);
     if (i == 0)
       return false;
+    serialport_bytes_rx_ += packet_size;
     ROS_DEBUG ("Packet string: ok");
 
     // get packet crc
     i = fread (scrc, sizeof (char), sizeof (scrc), dev_);
     if (i == 0)
       return false;
+    serialport_bytes_rx_ += sizeof (scrc);
     memcpy (&packet_crc, scrc, sizeof (packet_crc));
     ROS_DEBUG ("Packet crc: %d", packet_crc);
 
@@ -219,6 +222,7 @@ namespace asctec
       ROS_DEBUG ("Packet Footer Corrupt!!");
       return false;
     }
+    serialport_bytes_rx_ += 3;
     ROS_DEBUG ("Packet Footer OK");
 
     return true;
@@ -227,6 +231,7 @@ namespace asctec
   void SerialInterface::write (char *output, int len)
   {
     int i;
+    serialport_bytes_tx_ += len;
     //ROS_INFO ("Writing %d element(s): %s", len, output);
     ROS_DEBUG ("dev: %zd", (size_t) dev_);
     flush ();
@@ -241,6 +246,7 @@ namespace asctec
   void SerialInterface::write (unsigned char *output, int len)
   {
     int i;
+    serialport_bytes_tx_ += len;
     ROS_INFO ("Writing %d element(s): %s", len, output);
     ROS_DEBUG ("dev: %zd", (size_t) dev_);
     ROS_DEBUG ("FOO");
@@ -304,7 +310,6 @@ namespace asctec
           if (crc_valid (packet_crc, &telemetry->LL_STATUS_, sizeof (packet_size)))
           {
             result = true;
-            ROS_DEBUG ("Valid CRC!!");
           }
           //telemetry->dumpLL_STATUS();
         }
@@ -315,7 +320,6 @@ namespace asctec
           if (crc_valid (packet_crc, &telemetry->IMU_RAWDATA_, packet_size))
           {
             result = true;
-            ROS_DEBUG ("Valid CRC!!");
           }
           //telemetry->dumpIMU_RAWDATA();
         }
@@ -326,7 +330,6 @@ namespace asctec
           if (crc_valid (packet_crc, &telemetry->IMU_CALCDATA_, packet_size))
           {
             result = true;
-            ROS_DEBUG ("Valid CRC!!");
           }
           //telemetry->dumpIMU_CALCDATA();
         }
@@ -337,7 +340,6 @@ namespace asctec
           if (crc_valid (packet_crc, &telemetry->RC_DATA_, packet_size))
           {
             result = true;
-            ROS_DEBUG ("Valid CRC!!");
           }
           //telemetry->dumpRC_DATA();
         }
@@ -348,7 +350,6 @@ namespace asctec
           if (crc_valid (packet_crc, &telemetry->CONTROLLER_OUTPUT_, packet_size))
           {
             result = true;
-            ROS_DEBUG ("Valid CRC!!");
           }
           //telemetry->dumpCONTROLLER_OUTPUT();
         }
@@ -359,7 +360,6 @@ namespace asctec
           if (crc_valid (packet_crc, &telemetry->GPS_DATA_, packet_size))
           {
             result = true;
-            ROS_DEBUG ("Valid CRC!!");
           }
           //telemetry->dumpGPS_DATA();
         }
@@ -370,7 +370,6 @@ namespace asctec
           if (crc_valid (packet_crc, &telemetry->GPS_DATA_ADVANCED_, packet_size))
           {
             result = true;
-            ROS_DEBUG ("Valid CRC!!");
           }
           //telemetry->dumpGPS_DATA_ADVANCED();
         }
@@ -388,6 +387,7 @@ namespace asctec
     }
     stall (false);
     i = fread (spacket, sizeof (char), 1, dev_);
+    serialport_bytes_rx_ += i;
     //FIXME~!!
     // If we receive unexpected data then log a warning
     if (i != 0)
