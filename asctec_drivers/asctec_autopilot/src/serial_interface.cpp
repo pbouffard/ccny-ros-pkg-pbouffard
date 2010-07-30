@@ -41,42 +41,42 @@ namespace asctec
   SerialInterface::SerialInterface (std::string port, uint32_t speed):serialport_name_ (port), serialport_speed_ (speed)
   {
     struct termios tio;
-    status = false;
-    serialport_baud_ = bitrate (serialport_speed_);
-    ROS_INFO ("Initializing serial port...");
+      status = false;
+      serialport_baud_ = bitrate (serialport_speed_);
+      ROS_INFO ("Initializing serial port...");
 
-    dev_ = fopen (serialport_name_.c_str (), "w+");
-    ROS_DEBUG ("dev: %d", (int)fileno(dev_));
-    ROS_ASSERT_MSG (dev_ != NULL, "Failed to open serial port: %s", serialport_name_.c_str ());
+      dev_ = fopen (serialport_name_.c_str (), "w+");
+      ROS_DEBUG ("dev: %d", (int) fileno (dev_));
+      ROS_ASSERT_MSG (dev_ != NULL, "Failed to open serial port: %s", serialport_name_.c_str ());
 
-    ROS_ASSERT_MSG (tcgetattr (fileno (dev_), &tio) == 0, "Unknown Error: %s", strerror (errno));
+      ROS_ASSERT_MSG (tcgetattr (fileno (dev_), &tio) == 0, "Unknown Error: %s", strerror (errno));
 
-    cfsetispeed (&tio, serialport_baud_);
-    cfsetospeed (&tio, serialport_baud_);
+      cfsetispeed (&tio, serialport_baud_);
+      cfsetospeed (&tio, serialport_baud_);
 
-    tio.c_iflag = 0;
-    tio.c_iflag &= ~(BRKINT | ICRNL | IMAXBEL);
-    tio.c_iflag |= IGNBRK;
+      tio.c_iflag = 0;
+      tio.c_iflag &= ~(BRKINT | ICRNL | IMAXBEL);
+      tio.c_iflag |= IGNBRK;
 
-    tio.c_oflag = 0;
-    tio.c_oflag &= ~(OPOST | ONLCR);
+      tio.c_oflag = 0;
+      tio.c_oflag &= ~(OPOST | ONLCR);
 
-    tio.c_cflag = (tio.c_cflag & ~CSIZE) | CS8;
-    tio.c_cflag &= ~(PARENB | CRTSCTS | CSTOPB);
+      tio.c_cflag = (tio.c_cflag & ~CSIZE) | CS8;
+      tio.c_cflag &= ~(PARENB | CRTSCTS | CSTOPB);
 
-    tio.c_lflag = 0;
-    tio.c_lflag |= NOFLSH;
-    tio.c_lflag &= ~(ISIG | IEXTEN | ICANON | ECHO | ECHOE);
+      tio.c_lflag = 0;
+      tio.c_lflag |= NOFLSH;
+      tio.c_lflag &= ~(ISIG | IEXTEN | ICANON | ECHO | ECHOE);
 
-    ROS_ASSERT_MSG (tcsetattr (fileno (dev_), TCSADRAIN, &tio) == 0, "Unknown Error: %s", strerror (errno));
+      ROS_ASSERT_MSG (tcsetattr (fileno (dev_), TCSADRAIN, &tio) == 0, "Unknown Error: %s", strerror (errno));
 
-    stall (true);
+      stall (true);
 
-    fflush (dev_);
-    tcflush (fileno (dev_), TCIOFLUSH);
+      fflush (dev_);
+      tcflush (fileno (dev_), TCIOFLUSH);
 
-    ROS_ASSERT_MSG (dev_ != NULL, "Could not open serial port %s", serialport_name_.c_str ());
-    ROS_INFO ("Successfully connected to %s, Baudrate %d\n", serialport_name_.c_str (), serialport_speed_);
+      ROS_ASSERT_MSG (dev_ != NULL, "Could not open serial port %s", serialport_name_.c_str ());
+      ROS_INFO ("Successfully connected to %s, Baudrate %d\n", serialport_name_.c_str (), serialport_speed_);
   }
 
   SerialInterface::~SerialInterface ()
@@ -160,9 +160,11 @@ namespace asctec
       ROS_ERROR ("Error Reading Packet Header: %s", strerror (errno));
       ROS_ERROR ("Read (%d): %s", i, stoken);
       stall (false);
-      while (fread (stoken, sizeof (char), 1, dev_) != 0) { }
-      flush();
-      drain();
+      while (fread (stoken, sizeof (char), 1, dev_) != 0)
+      {
+      }
+      flush ();
+      drain ();
       stall (true);
       return false;
     }
@@ -206,12 +208,13 @@ namespace asctec
       ROS_ERROR ("Error Reading Packet Footer: %s", strerror (errno));
       ROS_DEBUG ("Read (%d): %s", i, stoken);
       stall (false);
-      while (fread (stoken, sizeof (char), 1, dev_) != 0) {
+      while (fread (stoken, sizeof (char), 1, dev_) != 0)
+      {
         stoken[1] = '\0';
-        ROS_DEBUG ("%s",stoken);
+        ROS_DEBUG ("%s", stoken);
       }
-      flush();
-      drain();
+      flush ();
+      drain ();
       stall (true);
       ROS_DEBUG ("Packet Footer Corrupt!!");
       return false;
@@ -225,9 +228,9 @@ namespace asctec
   {
     int i;
     //ROS_INFO ("Writing %d element(s): %s", len, output);
-    ROS_DEBUG ("dev: %zd", (size_t)dev_);
-    flush();
-    ROS_DEBUG("FOO");
+    ROS_DEBUG ("dev: %zd", (size_t) dev_);
+    flush ();
+    ROS_DEBUG ("FOO");
     i = fwrite (output, sizeof (char), len, dev_);
     if (i != len)
     {
@@ -240,8 +243,8 @@ namespace asctec
   {
     int i;
     ROS_INFO ("Writing %d element(s): %s", len, output);
-    ROS_DEBUG ("dev: %zd", (size_t)dev_);
-    ROS_DEBUG("FOO");
+    ROS_DEBUG ("dev: %zd", (size_t) dev_);
+    ROS_DEBUG ("FOO");
     i = fwrite (output, sizeof (unsigned char), len, dev_);
     if (i != len)
     {
@@ -250,25 +253,28 @@ namespace asctec
     }
   }
 
-  void SerialInterface::sendCommand (Telemetry *telemetry)
+  void SerialInterface::sendCommand (Telemetry * telemetry)
   {
-    if(!telemetry->commandingEnabled_) return;
+    if (!telemetry->commandingEnabled_)
+      return;
     ROS_DEBUG ("sendCommand started");
     unsigned char cmd[] = ">*>di";
 
-    if (telemetry->commandInterval_ != 0 && ((telemetry->commandCount_ - telemetry->commandOffset_) % telemetry->commandInterval_ == 0)) {
-        //ROS_INFO("writing command to pelican: size of &CTRL_INPUT_ %zd", sizeof (&telemetry->CTRL_INPUT_));
-        flush();
-        write(cmd,5);
-        write((unsigned char*) &telemetry->CTRL_INPUT_, 12);
-        ROS_INFO("writing command to pelican: size of CTRL_INPUT_ %zd", sizeof(telemetry->CTRL_INPUT_));
+    if (telemetry->commandInterval_ != 0
+        && ((telemetry->commandCount_ - telemetry->commandOffset_) % telemetry->commandInterval_ == 0))
+    {
+      //ROS_INFO("writing command to pelican: size of &CTRL_INPUT_ %zd", sizeof (&telemetry->CTRL_INPUT_));
+      flush ();
+      write (cmd, 5);
+      write ((unsigned char *) &telemetry->CTRL_INPUT_, 12);
+      ROS_INFO ("writing command to pelican: size of CTRL_INPUT_ %zd", sizeof (telemetry->CTRL_INPUT_));
     }
     //ROS_INFO ("sendCommand completed" );
   }
 
-  bool SerialInterface::getPackets (Telemetry *telemetry)
+  bool SerialInterface::getPackets (Telemetry * telemetry)
   {
-    flush();
+    flush ();
     ROS_DEBUG ("getPackets");
     char cmd[16];
     char spacket[1024];
@@ -277,13 +283,14 @@ namespace asctec
     unsigned short packet_size;
     unsigned int i;
 
-    ROS_INFO ("Packet Request: %04x %zd packets", (short) telemetry->requestPackets_.to_ulong (), telemetry->requestPackets_.count ());
+    ROS_INFO ("Packet Request: %04x %zd packets", (short) telemetry->requestPackets_.to_ulong (),
+              telemetry->requestPackets_.count ());
     sprintf (cmd, ">*>p%c", (short) telemetry->requestPackets_.to_ulong ());
     write (cmd, 6);
     drain ();
 
     bool result = false;
-    for (i = 0; i < telemetry->requestPackets_.count(); i++)
+    for (i = 0; i < telemetry->requestPackets_.count (); i++)
     {
       ROS_DEBUG ("getPacket started");
       bool read_result = getPacket (spacket, packet_type, packet_crc, packet_size);
@@ -296,7 +303,8 @@ namespace asctec
         {
           ROS_DEBUG ("Packet type is LL_STATUS");
           memcpy (&telemetry->LL_STATUS_, spacket, packet_size);
-          if (crc_valid (packet_crc,&telemetry->LL_STATUS_, sizeof (packet_size))) {
+          if (crc_valid (packet_crc, &telemetry->LL_STATUS_, sizeof (packet_size)))
+          {
             result = true;
             ROS_DEBUG ("Valid CRC!!");
           }
@@ -306,7 +314,8 @@ namespace asctec
         {
           ROS_DEBUG ("Packet type is IMU_RAWDATA");
           memcpy (&telemetry->IMU_RAWDATA_, spacket, packet_size);
-          if (crc_valid (packet_crc,&telemetry->IMU_RAWDATA_, packet_size)) {
+          if (crc_valid (packet_crc, &telemetry->IMU_RAWDATA_, packet_size))
+          {
             result = true;
             ROS_DEBUG ("Valid CRC!!");
           }
@@ -316,7 +325,8 @@ namespace asctec
         {
           ROS_DEBUG ("Packet type is IMU_CALCDATA");
           memcpy (&telemetry->IMU_CALCDATA_, spacket, packet_size);
-          if (crc_valid (packet_crc,&telemetry->IMU_CALCDATA_, packet_size)) {
+          if (crc_valid (packet_crc, &telemetry->IMU_CALCDATA_, packet_size))
+          {
             result = true;
             ROS_DEBUG ("Valid CRC!!");
           }
@@ -326,7 +336,8 @@ namespace asctec
         {
           ROS_DEBUG ("Packet type is RC_DATA");
           memcpy (&telemetry->RC_DATA_, spacket, packet_size);
-          if (crc_valid (packet_crc,&telemetry->RC_DATA_, packet_size)) {
+          if (crc_valid (packet_crc, &telemetry->RC_DATA_, packet_size))
+          {
             result = true;
             ROS_DEBUG ("Valid CRC!!");
           }
@@ -336,7 +347,8 @@ namespace asctec
         {
           ROS_DEBUG ("Packet type is CONTROLLER_OUTPUT");
           memcpy (&telemetry->CONTROLLER_OUTPUT_, spacket, packet_size);
-          if (crc_valid (packet_crc,&telemetry->CONTROLLER_OUTPUT_, packet_size)) {
+          if (crc_valid (packet_crc, &telemetry->CONTROLLER_OUTPUT_, packet_size))
+          {
             result = true;
             ROS_DEBUG ("Valid CRC!!");
           }
@@ -346,7 +358,8 @@ namespace asctec
         {
           ROS_DEBUG ("Packet type is GPS_DATA");
           memcpy (&telemetry->GPS_DATA_, spacket, packet_size);
-          if (crc_valid (packet_crc,&telemetry->GPS_DATA_, packet_size)) {
+          if (crc_valid (packet_crc, &telemetry->GPS_DATA_, packet_size))
+          {
             result = true;
             ROS_DEBUG ("Valid CRC!!");
           }
@@ -356,7 +369,8 @@ namespace asctec
         {
           ROS_DEBUG ("Packet type is GPS_DATA_ADVANCED");
           memcpy (&telemetry->GPS_DATA_ADVANCED_, spacket, packet_size);
-          if (crc_valid (packet_crc,&telemetry->GPS_DATA_ADVANCED_, packet_size)) {
+          if (crc_valid (packet_crc, &telemetry->GPS_DATA_ADVANCED_, packet_size))
+          {
             result = true;
             ROS_DEBUG ("Valid CRC!!");
           }
@@ -364,13 +378,13 @@ namespace asctec
         }
         else
         {
-          ROS_ERROR("Packet type is UNKNOWN");
+          ROS_ERROR ("Packet type is UNKNOWN");
         }
       }
       else
       {
         // failed read
-        ROS_ERROR("getPacket failed");
+        ROS_ERROR ("getPacket failed");
         break;
       }
     }
@@ -378,9 +392,10 @@ namespace asctec
     i = fread (spacket, sizeof (char), 1, dev_);
     //FIXME~!!
     // If we receive unexpected data then log a warning
-    if (i != 0) {
-      drain();
-      ROS_ERROR("Unexpected Data: Flushing receive buffer");
+    if (i != 0)
+    {
+      drain ();
+      ROS_ERROR ("Unexpected Data: Flushing receive buffer");
     }
     return result;
   }
