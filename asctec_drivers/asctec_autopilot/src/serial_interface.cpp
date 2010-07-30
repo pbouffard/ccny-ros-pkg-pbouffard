@@ -230,7 +230,6 @@ namespace asctec
     //ROS_INFO ("Writing %d element(s): %s", len, output);
     ROS_DEBUG ("dev: %zd", (size_t) dev_);
     flush ();
-    ROS_DEBUG ("FOO");
     i = fwrite (output, sizeof (char), len, dev_);
     if (i != len)
     {
@@ -252,7 +251,6 @@ namespace asctec
       ROS_BREAK ();
     }
   }
-
   void SerialInterface::sendCommand (Telemetry * telemetry)
   {
     if (!telemetry->commandingEnabled_)
@@ -378,7 +376,7 @@ namespace asctec
         }
         else
         {
-          ROS_ERROR ("Packet type is UNKNOWN");
+          ROS_ERROR ("Packet type (%#2x) is UNKNOWN", packet_type);
         }
       }
       else

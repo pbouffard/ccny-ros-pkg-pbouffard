@@ -28,6 +28,7 @@
 #include "asctec_msgs/RCData.h"
 #include "asctec_msgs/ControllerOutput.h"
 #include "asctec_msgs/GPSData.h"
+#include "asctec_msgs/CTRLOut.h"
 #include "asctec_msgs/GPSDataAdvanced.h"
 #include "asctec_msgs/CtrlInput.h"
 
@@ -150,6 +151,7 @@ namespace asctec
     uint8_t requestInterval_[REQUEST_TYPES];
     uint8_t requestOffset_[REQUEST_TYPES];
     ros::Publisher requestPublisher_[REQUEST_TYPES];
+    ros::Time timestamps_[REQUEST_TYPES];
 
     uint8_t commandInterval_;
     uint8_t commandOffset_;
@@ -334,7 +336,7 @@ namespace asctec
 
       //GPS status information; 0x03 = valid GPS fix
       int status;
-      //coordinates of current origin in deg * 10ˆ7
+      //coordinates of current origin in deg * 10ˆ7RCData_
       int latitude_best_estimate;
       int longitude_best_estimate;
       //velocities in X (E/W) and Y (N/S) after data fusion
@@ -434,6 +436,7 @@ You will receive an acknowledge if a command or a waypoint was received correctl
     asctec_msgs::RCData RCData_;
     asctec_msgs::ControllerOutput ControllerOutput_;
     asctec_msgs::GPSData GPSData_;
+    asctec_msgs::CTRLOut CTRLOut_;
     asctec_msgs::GPSDataAdvanced GPSDataAdvanced_;
     asctec_msgs::CtrlInput CtrlInput_;
     

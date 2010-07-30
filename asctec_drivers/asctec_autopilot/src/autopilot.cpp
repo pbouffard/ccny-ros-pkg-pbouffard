@@ -61,9 +61,10 @@ namespace asctec
     // **** enable polling
 
     telemetry_->enablePolling(asctec::RequestTypes::LL_STATUS, 10, 0);
+    telemetry_->enablePolling(asctec::RequestTypes::RC_DATA, 20, 3);
+    telemetry_->enablePolling(asctec::RequestTypes::CONTROLLER_OUTPUT, 10, 1);
     //telemetry_->enablePolling(asctec::RequestTypes::IMU_RAWDATA, 10, 2);
     telemetry_->enablePolling(asctec::RequestTypes::IMU_CALCDATA, 10, 4);
-    //telemetry_->enablePolling(asctec::RequestTypes::RC_DATA, 10, 6);
     //telemetry_->enablePolling(asctec::RequestTypes::CONTROLLER_OUTPUT, 10, 8);
     telemetry_->enablePolling(asctec::RequestTypes::GPS_DATA, 10);
     telemetry_->enableCommanding( 10 , 2);
@@ -86,7 +87,6 @@ namespace asctec
   void AutoPilot::spin (const ros::TimerEvent& e)
   {
     ROS_INFO("spin()");
-    
     telemetry_->buildRequest ();
     telemetry_->requestCount_++;
     serialInterface_->getPackets(telemetry_);

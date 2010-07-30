@@ -64,7 +64,8 @@ namespace asctec
     requestPackets_ ^= requestPackets_;
     for (int i = 0; i < REQUEST_TYPES; i++)
     {
-      if (requestInterval_[i] != 0 && ((requestCount_ - requestOffset_[i]) % requestInterval_[i] == 0))
+      if (requestInterval_[i] != 0 && ((requestCount_ - requestOffset_[i]) % requestInterval_[i] == 0) &&
+            (requestPublisher_[i].getNumSubscribers() > 0))
         requestPackets_ |= REQUEST_BITMASK[i];
     }
   }
@@ -78,6 +79,7 @@ namespace asctec
         {
           case RequestTypes::LL_STATUS:
             copyLL_STATUS();
+            LLStatus_.header.stamp = timestamps_[RequestTypes::LL_STATUS];
             dumpLL_STATUS();
             requestPublisher_[i].publish(LLStatus_);
             break;
@@ -88,23 +90,24 @@ namespace asctec
             break;
           case RequestTypes::IMU_CALCDATA:
             copyIMU_CALCDATA();
+            IMUCalcData_.header.stamp = timestamps_[RequestTypes::IMU_CALCDATA];
             //dumpIMU_CALCDATA();
             requestPublisher_[i].publish(IMUCalcData_);
             break;
+          case RequestTypes::GPS_DATA:
+            copyGPS_DATA();
+            GPSData_.header.stamp = timestamps_[RequestTypes::GPS_DATA];
+            requestPublisher_[i].publish(GPSData_);
+            break;
           case RequestTypes::RC_DATA:
             copyRC_DATA();
-            //dumpRC_DATA();
+            RCData_.header.stamp = timestamps_[RequestTypes::RC_DATA];
             requestPublisher_[i].publish(RCData_);
             break;
           case RequestTypes::CONTROLLER_OUTPUT:
             copyCONTROLLER_OUTPUT();
-            //dumpCONTROLLER_OUTPUT();
-            requestPublisher_[i].publish(ControllerOutput_);
-            break;
-          case RequestTypes::GPS_DATA:
-            copyGPS_DATA();
-            //dumpGPS_DATA();
-            requestPublisher_[i].publish(GPSData_);
+            CTRLOut_.header.stamp = timestamps_[RequestTypes::CONTROLLER_OUTPUT];
+            requestPublisher_[i].publish(CTRLOut_);
             break;
           case RequestTypes::GPS_DATA_ADVANCED:
             copyGPS_DATA_ADVANCED();
@@ -135,9 +138,6 @@ namespace asctec
       case RequestTypes::RC_DATA:
         requestPublisher_[msg] = n.advertise<asctec_msgs::RCData>(requestToString(msg).c_str(), 10);
         break;
-      case RequestTypes::CONTROLLER_OUTPUT:
-        requestPublisher_[msg] = n.advertise<asctec_msgs::ControllerOutput>(requestToString(msg).c_str(), 10);
-        break;
       case RequestTypes::GPS_DATA:
         requestPublisher_[msg] = n.advertise<asctec_msgs::GPSData>(requestToString(msg).c_str(), 10);
         break;
@@ -150,9 +150,12 @@ namespace asctec
       case RequestTypes::CAM_DATA:
         // to be filled in 
         break;
+      case RequestTypes::CONTROLLER_OUTPUT:
+        requestPublisher_[msg] = n.advertise<asctec_msgs::CTRLOut>(requestToString(msg).c_str(), 10);
+        break;
     }
-    
-	ROS_INFO("Publishing %s data on topic: %s", requestToString(msg).c_str(),requestToString(msg).c_str ()); 
+
+    ROS_INFO("Publishing %s data on topic: %s", requestToString(msg).c_str(),requestToString(msg).c_str ());
     ROS_DEBUG ("Telemetry::enablePolling()");
     requestInterval_[msg] = interval;
     requestOffset_[msg] = offset;
@@ -374,12 +377,14 @@ std::string Telemetry::requestToString(RequestTypes::RequestType t)
       }
     RCData_.lock =  RC_DATA_.lock;
   }
+
   void Telemetry::copyCONTROLLER_OUTPUT() {
     ControllerOutput_.nick = CONTROLLER_OUTPUT_.nick;
     ControllerOutput_.roll = CONTROLLER_OUTPUT_.roll;
     ControllerOutput_.yaw = CONTROLLER_OUTPUT_.yaw;
     ControllerOutput_.thrust = CONTROLLER_OUTPUT_.thrust;
   }
+
   void Telemetry::copyGPS_DATA() {
     GPSData_.latitude = GPS_DATA_.latitude;
     GPSData_.longitude = GPS_DATA_.longitude;
@@ -393,6 +398,7 @@ std::string Telemetry::requestToString(RequestTypes::RequestType t)
     GPSData_.numSV = GPS_DATA_.numSV;
     GPSData_.status = GPS_DATA_.status;
   }
+
   void Telemetry::copyGPS_DATA_ADVANCED() {
     GPSDataAdvanced_.latitude = GPS_DATA_ADVANCED_.latitude;
     GPSDataAdvanced_.longitude = GPS_DATA_ADVANCED_.longitude;
@@ -410,5 +416,4 @@ std::string Telemetry::requestToString(RequestTypes::RequestType t)
     GPSDataAdvanced_.speed_x_best_estimate = GPS_DATA_ADVANCED_.speed_x_best_estimate;
     GPSDataAdvanced_.speed_y_best_estimate = GPS_DATA_ADVANCED_.speed_y_best_estimate;
   }
-   
 }

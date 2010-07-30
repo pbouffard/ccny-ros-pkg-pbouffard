@@ -1,4 +1,5 @@
-#latitude/longitude in deg * 10^7
+Header header
+# latitude/longitude in deg * 10^7
 int32 latitude
 int32 longitude
 
