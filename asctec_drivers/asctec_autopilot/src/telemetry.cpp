@@ -162,15 +162,15 @@ namespace asctec
     pollingEnabled_ = true;
   }
 
-  void Telemetry::enableCommanding (uint8_t interval, uint8_t offset)
+  void Telemetry::enableControl (uint8_t interval, uint8_t offset)
   {
     ros::NodeHandle nh_private ("~");
-    commandPublisher_ = nh_private.advertise < asctec_msgs::CtrlInput > ("CTRL_INPUT", 10);
+    controlPublisher_ = nh_private.advertise < asctec_msgs::CtrlInput > ("CTRL_INPUT", 10);
     ROS_INFO ("Publishing %s data on topics: %s", "CTRL_INPUT", "CTRL_INPUT");
     ROS_DEBUG ("Telemetry::enableCommanding()");
-    commandInterval_ = interval;
-    commandOffset_ = offset;
-    commandingEnabled_ = true;
+    controlInterval_ = interval;
+    controlOffset_ = offset;
+    controlEnabled_ = true;
   }
 
   std::string Telemetry::requestToString (RequestTypes::RequestType t)

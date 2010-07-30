@@ -129,7 +129,7 @@ namespace asctec
     if(enable_GPS_DATA_ADVANCED_)
       telemetry_->enablePolling (asctec::RequestTypes::GPS_DATA_ADVANCED, interval_GPS_DATA_ADVANCED_,  offset_GPS_DATA_ADVANCED_);
 
-    telemetry_->enableCommanding (10, 2);
+    telemetry_->enableControl(10, 2);
     telemetry_->CTRL_INPUT_.pitch = 0;
     telemetry_->CTRL_INPUT_.roll = 0;
     telemetry_->CTRL_INPUT_.yaw = 0;
@@ -153,14 +153,13 @@ namespace asctec
     ROS_INFO ("spin()");
     ROS_INFO ("RX: %03.3f Bps",float(serialInterface_->serialport_bytes_rx_)/1000*freq_);
     ROS_INFO ("TX: %03.3f Bps",float(serialInterface_->serialport_bytes_tx_)/1000*freq_);
-    ROS_INFO ("TX: %d Bps",serialInterface_->serialport_bytes_tx_*int(freq_));
     serialInterface_->serialport_bytes_rx_ = 0;
     serialInterface_->serialport_bytes_tx_ = 0;
     telemetry_->buildRequest ();
     telemetry_->requestCount_++;
     serialInterface_->getPackets (telemetry_);
     telemetry_->publishPackets ();
-    telemetry_->commandCount_++;
-    serialInterface_->sendCommand (telemetry_);
+    telemetry_->controlCount_++;
+    serialInterface_->sendControl (telemetry_);
   }
 }

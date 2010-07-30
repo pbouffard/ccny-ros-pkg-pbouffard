@@ -114,7 +114,7 @@ namespace asctec
     std::string requestToString(RequestTypes::RequestType t);
     void publishPackets();
 
-    void enableCommanding (uint8_t interval = 1, uint8_t offset = 0);
+    void enableControl (uint8_t interval = 1, uint8_t offset = 0);
         
     void dumpLL_STATUS();
     void dumpIMU_RAWDATA();
@@ -135,9 +135,9 @@ namespace asctec
     void copyCTRL_INPUT();
     
     bool pollingEnabled_;
-    bool commandingEnabled_;
+    bool controlEnabled_;
     uint16_t requestCount_;
-    uint16_t commandCount_;
+    uint16_t controlCount_;
     std::bitset < 16 > requestPackets_;
 
 
@@ -153,9 +153,9 @@ namespace asctec
     ros::Publisher requestPublisher_[REQUEST_TYPES];
     ros::Time timestamps_[REQUEST_TYPES];
 
-    uint8_t commandInterval_;
-    uint8_t commandOffset_;
-    ros::Publisher commandPublisher_;
+    uint8_t controlInterval_;
+    uint8_t controlOffset_;
+    ros::Publisher controlPublisher_;
 
     //packet descriptors
     static const uint8_t PD_IMURAWDATA = 0x01;
