@@ -160,19 +160,19 @@ namespace asctec
     requestInterval_[msg] = interval;
     requestOffset_[msg] = offset;
     pollingEnabled_ = true;
-    }
+  }
 
-    void Telemetry::enableControl (uint8_t interval, uint8_t offset)
-    {
-      ros::NodeHandle n;
-      Telemetry telemetry_object;
-      controlSubscriber_ = n.subscribe("CTRL_INPUT", 100, &Telemetry::copyCTRL_INPUT, &telemetry_object);
-      ROS_INFO("Listening to %s data on topic: %s", "CTRL_INPUT","CTRL_INPUT");
-      ROS_DEBUG ("Telemetry::enableCommanding()");
-      controlInterval_ = interval;
-      controlOffset_ = offset;
-      controlEnabled_ = true;
-    }
+  void Telemetry::enableControl (uint8_t interval, uint8_t offset)
+  {
+    ros::NodeHandle n;
+    Telemetry telemetry_object;
+    controlSubscriber_ = n.subscribe("CTRL_INPUT", 100, &Telemetry::copyCTRL_INPUT, &telemetry_object);
+    ROS_INFO("Listening to %s data on topic: %s", "CTRL_INPUT","CTRL_INPUT");
+    ROS_DEBUG ("Telemetry::enableCommanding()");
+    controlInterval_ = interval;
+    controlOffset_ = offset;
+    controlEnabled_ = true;
+  }
 
   std::string Telemetry::requestToString (RequestTypes::RequestType t)
   {

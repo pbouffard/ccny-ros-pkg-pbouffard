@@ -264,14 +264,14 @@ namespace asctec
     unsigned char cmd[] = ">*>di";
 
     if (telemetry->controlInterval_ != 0 && ((telemetry->controlCount_ - telemetry->controlOffset_) % telemetry->controlInterval_ == 0)) {
-        if(telemetry->CTRL_INPUT_.chksum != telemetry->CTRL_INPUT_.pitch + telemetry->CTRL_INPUT_.roll + telemetry->CTRL_INPUT_.yaw + telemetry->CTRL_INPUT_.thrust + telemetry->CTRL_INPUT_.ctrl + 0xAAAA){
-            ROS_INFO("invalid CtrlInput checksum!");
-            return;
-        }
-        flush();
-        write(cmd,5);
-        write((unsigned char*) &telemetry->CTRL_INPUT_, 12);
-        ROS_INFO("writing command to pelican: size of CTRL_INPUT_ %zd", sizeof(telemetry->CTRL_INPUT_));
+      if(telemetry->CTRL_INPUT_.chksum != telemetry->CTRL_INPUT_.pitch + telemetry->CTRL_INPUT_.roll + telemetry->CTRL_INPUT_.yaw + telemetry->CTRL_INPUT_.thrust + telemetry->CTRL_INPUT_.ctrl + 0xAAAA){
+        ROS_INFO("invalid CtrlInput checksum!");
+        return;
+      }
+      flush();
+      write(cmd,5);
+      write((unsigned char*) &telemetry->CTRL_INPUT_, 12);
+      ROS_INFO("writing control to pelican: size of CTRL_INPUT_ %zd", sizeof(telemetry->CTRL_INPUT_));
     }
     //ROS_INFO ("sendControl completed" );
   }

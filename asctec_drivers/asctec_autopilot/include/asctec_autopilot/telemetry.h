@@ -132,7 +132,6 @@ namespace asctec
     void copyGPS_DATA();
     void copyGPS_DATA_ADVANCED();
     void copyCTRL_INPUT(const asctec_msgs::CtrlInput& msg);
-    //void copyCTRL_INPUT(const asctec_msgs::CtrlInput::ConstPtr&);
     
     bool pollingEnabled_;
     bool controlEnabled_;
