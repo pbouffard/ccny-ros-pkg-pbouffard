@@ -123,26 +123,26 @@ namespace asctec
 
   void Telemetry::enablePolling (RequestType msg, uint8_t interval, uint8_t offset)
   {
-    ros::NodeHandle n;
+    ros::NodeHandle nh_private ("~");
     switch (msg)
     {
       case RequestTypes::LL_STATUS:
-        requestPublisher_[msg] = n.advertise < asctec_msgs::LLStatus > (requestToString (msg).c_str (), 10);
+        requestPublisher_[msg] = nh_private.advertise < asctec_msgs::LLStatus > (requestToString (msg).c_str (), 10);
         break;
       case RequestTypes::IMU_RAWDATA:
-        requestPublisher_[msg] = n.advertise < asctec_msgs::IMURawData > (requestToString (msg).c_str (), 10);
+        requestPublisher_[msg] = nh_private.advertise < asctec_msgs::IMURawData > (requestToString (msg).c_str (), 10);
         break;
       case RequestTypes::IMU_CALCDATA:
-        requestPublisher_[msg] = n.advertise < asctec_msgs::IMUCalcData > (requestToString (msg).c_str (), 10);
+        requestPublisher_[msg] = nh_private.advertise < asctec_msgs::IMUCalcData > (requestToString (msg).c_str (), 10);
         break;
       case RequestTypes::RC_DATA:
-        requestPublisher_[msg] = n.advertise < asctec_msgs::RCData > (requestToString (msg).c_str (), 10);
+        requestPublisher_[msg] = nh_private.advertise < asctec_msgs::RCData > (requestToString (msg).c_str (), 10);
         break;
       case RequestTypes::GPS_DATA:
-        requestPublisher_[msg] = n.advertise < asctec_msgs::GPSData > (requestToString (msg).c_str (), 10);
+        requestPublisher_[msg] = nh_private.advertise < asctec_msgs::GPSData > (requestToString (msg).c_str (), 10);
         break;
       case RequestTypes::GPS_DATA_ADVANCED:
-        requestPublisher_[msg] = n.advertise < asctec_msgs::GPSDataAdvanced > (requestToString (msg).c_str (), 10);
+        requestPublisher_[msg] = nh_private.advertise < asctec_msgs::GPSDataAdvanced > (requestToString (msg).c_str (), 10);
         break;
       case RequestTypes::WAYPOINT:
         // to be filled in 
@@ -151,7 +151,7 @@ namespace asctec
         // to be filled in 
         break;
       case RequestTypes::CONTROLLER_OUTPUT:
-        requestPublisher_[msg] = n.advertise < asctec_msgs::CTRLOut > (requestToString (msg).c_str (), 10);
+        requestPublisher_[msg] = nh_private.advertise < asctec_msgs::CTRLOut > (requestToString (msg).c_str (), 10);
         break;
     }
 
@@ -164,8 +164,8 @@ namespace asctec
 
   void Telemetry::enableCommanding (uint8_t interval, uint8_t offset)
   {
-    ros::NodeHandle n;
-    commandPublisher_ = n.advertise < asctec_msgs::CtrlInput > ("CTRL_INPUT", 10);
+    ros::NodeHandle nh_private ("~");
+    commandPublisher_ = nh_private.advertise < asctec_msgs::CtrlInput > ("CTRL_INPUT", 10);
     ROS_INFO ("Publishing %s data on topics: %s", "CTRL_INPUT", "CTRL_INPUT");
     ROS_DEBUG ("Telemetry::enableCommanding()");
     commandInterval_ = interval;

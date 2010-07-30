@@ -49,6 +49,27 @@ namespace asctec
       double freq_;
       std::string port_;
       int speed_;
+      bool enable_LL_STATUS_;
+      int interval_LL_STATUS_;
+      int offset_LL_STATUS_;
+      bool enable_IMU_RAWDATA_;
+      int interval_IMU_RAWDATA_;
+      int offset_IMU_RAWDATA_;
+      bool enable_IMU_CALCDATA_;
+      int interval_IMU_CALCDATA_;
+      int offset_IMU_CALCDATA_;
+      bool enable_RC_DATA_;
+      int interval_RC_DATA_;
+      int offset_RC_DATA_;
+      bool enable_CONTROLLER_OUTPUT_;
+      int interval_CONTROLLER_OUTPUT_;
+      int offset_CONTROLLER_OUTPUT_;
+      bool enable_GPS_DATA_;
+      int interval_GPS_DATA_;
+      int offset_GPS_DATA_;
+      bool enable_GPS_DATA_ADVANCED_;
+      int interval_GPS_DATA_ADVANCED_;
+      int offset_GPS_DATA_ADVANCED_;
 
       SerialInterface* serialInterface_;
       Telemetry* telemetry_;
