@@ -151,10 +151,15 @@ namespace asctec
     uint8_t requestInterval_[REQUEST_TYPES];
     uint8_t requestOffset_[REQUEST_TYPES];
     ros::Publisher requestPublisher_[REQUEST_TYPES];
+    ros::Time timestamps_[REQUEST_TYPES];
 
     uint8_t controlInterval_;
     uint8_t controlOffset_;
+<<<<<<< HEAD
     ros::Subscriber controlSubscriber_;
+=======
+    ros::Publisher controlPublisher_;
+>>>>>>> master
 
     //packet descriptors
     static const uint8_t PD_IMURAWDATA = 0x01;
@@ -335,7 +340,7 @@ namespace asctec
 
       //GPS status information; 0x03 = valid GPS fix
       int status;
-      //coordinates of current origin in deg * 10ˆ7
+      //coordinates of current origin in deg * 10ˆ7RCData_
       int latitude_best_estimate;
       int longitude_best_estimate;
       //velocities in X (E/W) and Y (N/S) after data fusion
