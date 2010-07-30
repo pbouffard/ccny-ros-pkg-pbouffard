@@ -375,9 +375,9 @@ def listener():
     global rec_enable
 
     rospy.init_node('cursed_controller', anonymous=True)
-    rospy.Subscriber("/LL_STATUS", LLStatus, callback)
-    rospy.Subscriber("/IMU_CALCDATA", IMUCalcData, imu_callback)
-    rospy.Subscriber("/GPS_DATA", GPSData, gps_callback)
+    rospy.Subscriber("/autopilot/LL_STATUS", LLStatus, callback)
+    rospy.Subscriber("/autopilot/IMU_CALCDATA", IMUCalcData, imu_callback)
+    rospy.Subscriber("/autopilot/GPS_DATA", GPSData, gps_callback)
     curses.init_pair(1, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
     curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
     curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)
