@@ -155,11 +155,7 @@ namespace asctec
 
     uint8_t controlInterval_;
     uint8_t controlOffset_;
-<<<<<<< HEAD
     ros::Subscriber controlSubscriber_;
-=======
-    ros::Publisher controlPublisher_;
->>>>>>> master
 
     //packet descriptors
     static const uint8_t PD_IMURAWDATA = 0x01;

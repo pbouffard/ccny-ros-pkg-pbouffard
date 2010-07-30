@@ -174,23 +174,6 @@ namespace asctec
       controlEnabled_ = true;
     }
 
-    std::string Telemetry::requestToString(RequestTypes::RequestType t)
-    {
-      switch (t)
-      {
-        case RequestTypes::LL_STATUS:    { return "LL_STATUS";    }
-        case RequestTypes::IMU_RAWDATA:    { return "IMU_RAWDATA";    }
-        case RequestTypes::IMU_CALCDATA:    { return "IMU_CALCDATA";    }
-        case RequestTypes::RC_DATA:    { return "RC_DATA";    }
-        case RequestTypes::CONTROLLER_OUTPUT:    { return "CONTROLLER_OUTPUT";    }
-        case RequestTypes::GPS_DATA:    { return "GPS_DATA";    }
-        case RequestTypes::GPS_DATA_ADVANCED:    { return "GPS_DATA_ADVANCED";    }
-        case RequestTypes::WAYPOINT:    { return "WAYPOINT";    }
-        case RequestTypes::CAM_DATA:    { return "CAM_DATA";    }
-      }
-      return "Unknown";
-    }
-
   std::string Telemetry::requestToString (RequestTypes::RequestType t)
   {
     switch (t)
