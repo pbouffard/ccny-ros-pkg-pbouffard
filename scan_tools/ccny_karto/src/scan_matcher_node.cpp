@@ -281,7 +281,7 @@ void ScanMatcherNode::publishMapToOdomTf(const geometry_msgs::Pose2D& estimatedP
   origin.setValue (estimatedPose.x, estimatedPose.y, 0.0);
   transform.setOrigin (origin);
 
-  //transform = transform.inverse();
+  transform = transform.inverse();
 
   tf::StampedTransform transformMsg (transform, time, worldFrame_, odomFrame_);
   tfBroadcaster_.sendTransform (transformMsg);
