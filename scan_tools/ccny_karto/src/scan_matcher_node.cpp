@@ -14,8 +14,8 @@
 namespace karto_scan_matcher
 {
 
-const double DEFAULT_SMEAR_DEVIATION = 0.03;
-const double DEFAULT_RANGE_THRESHOLD = 12.0;
+const double DEFAULT_SMEAR_DEVIATION = 0.005;
+const double DEFAULT_RANGE_THRESHOLD = 6.0;
 
 typedef boost::mutex::scoped_lock Lock;
 
@@ -40,6 +40,9 @@ class ScanMatcherNode
     std::string odomFrame_;
     std::string worldFrame_;
     std::string baseFrame_;
+
+    double distanceVariancePenalty_;
+    double smearDeviation_;
 
     int historyIndex_;
     bool historyReady_;
@@ -89,6 +92,10 @@ ScanMatcherNode::ScanMatcherNode()
 
   if (!nh_private.getParam ("history_length", historyLength_))
     historyLength_ = 15;
+  if (!nh_private.getParam ("smear_deviation", smearDeviation_))
+    smearDeviation_ = 0.01;
+  if (!nh_private.getParam ("distance_variance_penalty", distanceVariancePenalty_))
+    distanceVariancePenalty_ = 1.0;
   if (!nh_private.getParam ("search_sizes", searchSizesString))
     searchSizesString = "1.0";
   if (!nh_private.getParam ("resolutions", resolutionsString))
@@ -321,8 +328,10 @@ bool ScanMatcherNode::initialize (const sensor_msgs::LaserScan& scanMsg)
     }
 
     mappers_[i].reset(new karto::Mapper());
+    mappers_[i]->SetParameter("DistanceVariancePenalty", distanceVariancePenalty_);
+
     matchers_[i].reset(karto::ScanMatcher::Create(mappers_[i].get(), searchSizes_[i], resolutions_[i],
-                                                  DEFAULT_SMEAR_DEVIATION, DEFAULT_RANGE_THRESHOLD));
+                                                  smearDeviation_, DEFAULT_RANGE_THRESHOLD));
 
     ROS_INFO ("ScanMatcherNode: matcher %zu: searchspace is %.2f; resolution is %.2f", i, searchSizes_[i], resolutions_[i]);
   }
