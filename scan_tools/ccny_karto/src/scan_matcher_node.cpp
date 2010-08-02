@@ -175,7 +175,7 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
   tf::StampedTransform odomToBaseTf;
   try
   {
-     tfListener_.lookupTransform (odomFrame_, baseFrame_, scanMsg.header.stamp, odomToBaseTf);
+     tfListener_.lookupTransform (worldFrame_, baseFrame_, scanMsg.header.stamp, odomToBaseTf);
   }
   catch (tf::TransformException ex)
   {
