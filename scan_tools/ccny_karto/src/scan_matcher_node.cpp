@@ -172,6 +172,27 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
   
   geometry_msgs::Pose2D currentEstimate = lastEstimate_;
 
+  tf::StampedTransform odomToBaseTf;
+  try
+  {
+     tfListener_.lookupTransform (odomFrame_, baseFrame_, scanMsg.header.stamp, odomToBaseTf);
+  }
+  catch (tf::TransformException ex)
+  {
+    // transform unavailable - skip scan
+    ROS_WARN("Transform unavailable, skipping scan (%s)", ex.what());
+    return;
+  }
+  btTransform odomToBase = odomToBaseTf;
+
+  btMatrix3x3 m(odomToBase.getRotation());
+  double roll, pitch, yaw;
+  m.getRPY(roll, pitch, yaw);
+
+  currentEstimate.x = odomToBase.getOrigin().getX();
+  currentEstimate.y = odomToBase.getOrigin().getY();
+  currentEstimate.theta = yaw;
+
   // **** scan match
 
   for (unsigned int i = 0; i < matchers_.size(); ++i)
@@ -253,7 +274,7 @@ void ScanMatcherNode::publishMapToOdomTf(const geometry_msgs::Pose2D& estimatedP
   btTransform transform;
 
   btQuaternion rotation;
-  rotation.setRPY (0.0, 0.0,estimatedPose.theta);
+  rotation.setRPY (0.0, 0.0, 0.0);
   transform.setRotation (rotation);
 
   btVector3 origin;
@@ -267,7 +288,7 @@ void ScanMatcherNode::publishMapToOdomTf(const geometry_msgs::Pose2D& estimatedP
 
   // publish pose2D
 
-  posePublisher_.publish(estimatedPose);
+  //posePublisher_.publish(estimatedPose);
 }
 
 void ScanMatcherNode::tokenize(const std::string& str, std::vector<std::string>& tokens)
