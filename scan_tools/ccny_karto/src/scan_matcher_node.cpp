@@ -169,9 +169,9 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
   boost::mutex::scoped_lock lock(mutex_);
 
   // **** get estimate for current pose
-  /*
-  geometry_msgs::Pose2D currentEstimate = lastEstimate_;
 
+  geometry_msgs::Pose2D currentEstimate = lastEstimate_;
+  /*
   tf::StampedTransform odomToBaseTf;
   try
   {
