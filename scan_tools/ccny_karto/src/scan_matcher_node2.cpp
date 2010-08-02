@@ -218,7 +218,7 @@ void ScanMatcherNode::publishMapToOdomTf(const geometry_msgs::Pose2D& estimatedP
   btTransform transform;
 
   btQuaternion rotation;
-  rotation.setRPY (0.0, 0.0, estimatedPose.theta);
+  rotation.setRPY (0.0, 0.0, 0.0);
   transform.setRotation (rotation);
 
   btVector3 origin;
