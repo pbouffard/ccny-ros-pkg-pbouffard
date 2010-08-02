@@ -1,11 +1,19 @@
 <launch>
   <node pkg="ccny_karto" type="scan_matcher_node" name="scan_matcher_node" output="screen">
     <param name="history_length" value="10"/>
-    <param name="search_sizes" type="string" value="1.00 0.20"/>
-    <param name="resolutions" type="string" value="0.05 0.01"/>
-    <param name="history_skip" value="5"/>
-
-    <param name="odom_frame" value="laser"/>
-    <param name="base_frame" value="laser"/>
+    <param name="search_sizes" type="string" value="0.50"/>
+    <param name="resolutions" type="string" value="0.01"/>
+    <param name="history_skip" value="4"/>
   </node>
+  
+  <node pkg="hokuyo_node" type="hokuyo_node" name="hokuyo_node" output="screen"/>
+
+  <node pkg="rviz" type="rviz" name="rviz"/>
+
+  <node pkg="tf" type="static_transform_publisher" name="base_link_to_laser" 
+    args="0 0 0.15 0 0 0 /base_link /laser 40" />
+
+  <node pkg="tf" type="static_transform_publisher" name="odom_to_base_link" 
+    args="0 0 0 0 0 0 /odom /base_link 40" />
+
 </launch>

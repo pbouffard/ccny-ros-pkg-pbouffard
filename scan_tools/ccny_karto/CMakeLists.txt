@@ -22,4 +22,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_gensrv()
 
 rosbuild_add_executable(scan_matcher_node src/scan_matcher_node.cpp)
+rosbuild_add_executable(scan_matcher_node2 src/scan_matcher_node2.cpp)
+
 target_link_libraries(scan_matcher_node karto_scan_matcher)
+target_link_libraries(scan_matcher_node2 karto_scan_matcher)
