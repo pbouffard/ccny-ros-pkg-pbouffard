@@ -29,11 +29,21 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
-
 include($ENV{ROS_ROOT}/core/rosbuild/FindPkgConfig.cmake)
 
-set(GROUNDSTATION groundstation_without_gps)
+set(GAUGEGROUNDSTATION groundstation_without_gps)
+set(GAUGEGROUNDSTATION_SRC src/gui/gtkaltimeter.c
+									src/gui/gtkvariometer.c
+									src/gui/gtkcompass.c
+									src/gui/gtkgauge.c	
+									src/gui/gtkbargauge.c	
+									src/gui/gtkartificialhorizon.c	
+									src/gui/gtkturncoordinator.c																							
+									src/gui/gauges_ground_station_appdata.cpp
+									src/gauges_ground_station.cpp)
+rosbuild_add_executable(${GAUGEGROUNDSTATION}  ${GAUGEGROUNDSTATION_SRC})
 
+set(GROUNDSTATION groundstation)
 set(GROUNDSTATION_SRC   src/gui/gtkaltimeter.c
 								src/gui/gtkvariometer.c
 								src/gui/gtkcompass.c
@@ -41,19 +51,35 @@ set(GROUNDSTATION_SRC   src/gui/gtkaltimeter.c
 								src/gui/gtkbargauge.c	
 								src/gui/gtkartificialhorizon.c	
 								src/gui/gtkturncoordinator.c																							
-								src/gui/gauges_ground_station_appdata.cpp
-								src/gauges_ground_station.cpp)
-
+								src/gui/gpsd_viewer_osd.c																							
+								src/gui/ground_station_appdata.cpp		
+								src/gui/ground_station_callbacks.cpp						
+								src/ground_station.cpp)
 rosbuild_add_executable(${GROUNDSTATION}  ${GROUNDSTATION_SRC})
+
 
 set(FAKEPOSE fakepose)
 set(FAKEPOSEN_SRC   src/fake_alti.cpp)
-
 rosbuild_add_executable(${FAKEPOSE}  ${FAKEPOSEN_SRC})
 
 ########## EXTERNAL DEPENDENCIES ##################
 
 pkg_check_modules(GTK      REQUIRED gtk+-2.0)
+pkg_check_modules(GMODULE  REQUIRED gmodule-2.0)
+pkg_check_modules(LIBGLADE REQUIRED libglade-2.0)
+
 include_directories(${GTK_INCLUDE_DIRS})
+include_directories(${GMODULE_INCLUDE_DIRS})
+include_directories(${LIBGLADE_INCLUDE_DIRS})
+
 link_directories(${GTK_LIBRARY_DIRS})
+link_directories(${GMODULE_LIBRARY_DIRS})
+link_directories(${LIBGLADE_LIBRARY_DIRS})
+
 target_link_libraries(${GROUNDSTATION} ${GTK_LIBRARIES})
+target_link_libraries(${GROUNDSTATION} ${GMODULE_LIBRARIES})
+target_link_libraries(${GROUNDSTATION} ${LIBGLADE_LIBRARIES})
+target_link_libraries(${GROUNDSTATION} libosmgpsmap.so)
+
+target_link_libraries(${GAUGEGROUNDSTATION} ${GTK_LIBRARIES})
+

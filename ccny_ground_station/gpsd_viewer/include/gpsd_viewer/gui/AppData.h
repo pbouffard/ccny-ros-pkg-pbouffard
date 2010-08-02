@@ -22,7 +22,8 @@
 #define APP_DATA_H_
 
 #include <gtk/gtk.h>
-#include <osmgpsmap/osm-gps-map.h>
+#include <osm-gps-map.h>
+#include <gpsd_viewer/gui/gpsd_viewer_osd.h>
 
 class AppData
 {
@@ -31,12 +32,15 @@ public:
   GtkWidget * window;
   GtkWidget *map_box;
   GtkWidget *map_container;
-  GtkWidget *statusbar;
-  GtkWidget *range_zoom;
-  GdkEventButton *event;
+  
+  bool ros_param_read;
+  bool widget_created;
 
   OsmGpsMap *map;
   OsmGpsMapSource_t map_provider;
+  OsmGpsMapTrack * current_track;
+  GpsdViewerOsd * osd;
+    
   bool draw_path;
   int map_zoom_max;
   int map_current_zoom;

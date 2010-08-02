@@ -25,74 +25,140 @@
 
 AppData *data;
 
-int main (int argc, char **argv)
-{
-  pthread_create (&guiThread, NULL, startGUI, NULL);
-  sleep (1);
-  pthread_create (&rosThread, NULL, startROS, NULL);
-
-  // wait all threads to continu
-  pthread_join (guiThread, NULL);
-  pthread_join (rosThread, NULL);
-  //ros::shutdown ();
-
-  return (0);
-}
-
 void gpsFixCallback (const gps_common::GPSFix::ConstPtr & msg)
 {
-
-  ROS_INFO ("Receiving gps data");
-
-  //Center osmmap on gps data received
-  osm_gps_map_set_center (data->map, msg->latitude, msg->longitude);
-
-  //Draw point 
-  osm_gps_map_draw_gps (data->map, msg->latitude, msg->longitude, 10);
-
-  gchar *msg_statusbar =
-    g_strdup_printf ("lat:%f, lon:%f", (float) msg->latitude, (float) msg->longitude);
-  gtk_statusbar_push (GTK_STATUSBAR (data->statusbar), 1, msg_statusbar);
-
-  if (!data->draw_path)
-    osm_gps_map_clear_gps (data->map);
+  // **** get GTK thread lock
+  gdk_threads_enter ();
+  
+  gint pixel_x,pixel_y;
+  
+  OsmGpsMapPoint * point = osm_gps_map_point_new_degrees(msg->latitude,msg->longitude);
+  osm_gps_map_convert_geographic_to_screen(data->map, point, &pixel_x, &pixel_y);
+     
+  if (OSM_IS_GPS_MAP (data->map)){
+		// **** Center map on gps data received
+		//osm_gps_map_set_center (data->map, msg->latitude, msg->longitude);
+		update_uav_pose_osd(data->osd,FALSE, pixel_x, pixel_y);
+      osm_gps_map_gps_clear(data->map);
+	
+		// **** Add point to the track
+		osm_gps_map_track_add_point (data->current_track, point);
+	}
+	
+  // **** release GTK thread lock 
+  gdk_threads_leave ();
 }
 
-void *startROS (void *)
+/**
+ * @fn void *startROS (void *user)
+ * @brief ROS thread.
+ * 
+ * The main program wait until "ros_param_read" in order to allow the <br>
+ * ROS params to be also the Gtk Window and Widgets params.
+ * Then the ROS thread wait to the widgets creation before subcribing<br>
+ * to any topics, avoid to call public widget function for a widget not<br>
+ * yet created.
+ */
+void *startROS (void *user)
 {
-  int argc = 0;
-  char **argv;
+  if (user != NULL)
+  {
+    struct arg *p_arg = (arg *) user;
 
-  ros::init (argc, argv, "gpsd_viewer");
+    ros::init (p_arg->argc, p_arg->argv, "gpsd_viewer");
+    ros::NodeHandle n;
 
-  ros::NodeHandle n;
-  ros::Subscriber fix_sub;
-  fix_sub = n.subscribe ("/fix", 1, &gpsFixCallback);
+    std::string local_path;
+    std::string package_path = ros::package::getPath (ROS_PACKAGE_NAME);
+    ros::NodeHandle n_param ("~");
+    XmlRpc::XmlRpcValue xml_marker_center;
 
-  ROS_INFO ("Spinning");
-  ros::spin ();
-  pthread_cancel(guiThread);
+    ROS_INFO ("Starting GPSD Viewer");
+
+	 // -----------------------------------------------------------------      
+    // **** allow widget creation
+    data->ros_param_read = true;
+
+    // **** wait to widget creation
+    while (!data->widget_created)
+    {
+      ROS_DEBUG ("Waiting widgets creation");
+    }
+
+    // -----------------------------------------------------------------      
+    // **** topics subscribing
+	 ros::Subscriber fix_sub;
+    fix_sub = n.subscribe ("/fix", 1, &gpsFixCallback);
+    
+    ROS_INFO ("Spinning");
+    ros::spin ();
+  }
+
+  // **** stop the gtk main loop
+  if (GTK_IS_WINDOW (data->window))
+  {
+    gtk_main_quit ();
+  }
   pthread_exit (NULL);
 }
 
-void *startGUI (void *)
+/**
+ * @fn int main (int argc, char **argv)
+ * @brief Main program & Gtk thread.
+ * 
+ * Create window and all widgets, then set there parameters to be the <br>
+ * ROS params.
+ */
+int main (int argc, char **argv)
 {
   GtkBuilder *builder;
   GError *error = NULL;
-  GtkObject *gtk_adj;
   char gui_filename[FILENAME_MAX];
   int start_zoom = 15;
-  coord_t ccny_coord = { 40.818551, -73.948674 };
-  int argc = 0;
-  char **argv;
+  OsmGpsMapPoint ccny_coord = { 40.818551, -73.948674 };
 
+  struct arg param;
+  param.argc = argc;
+  param.argv = argv;
+
+  pthread_t rosThread;
+
+  // **** init threads 
+  g_thread_init (NULL);
+  gdk_threads_init ();
+  gdk_threads_enter ();
+
+  // **** init gtk 
+  gtk_init (&argc, &argv);
+
+  // **** get the glade gui file
   std::string package_path = ros::package::getPath (ROS_PACKAGE_NAME);
   sprintf (gui_filename, "%s/%s", package_path.c_str (), "gui.glade");
 
-  gtk_init (&argc, &argv);
-
   // Allocate data structure
   data = g_slice_new (AppData);
+
+  // Create new GtkBuilder object
+  builder = gtk_builder_new ();
+  // Load UI from file
+  if (!gtk_builder_add_from_file (builder, gui_filename, &error))
+  {
+    g_warning ("%s", error->message);
+    g_free (error);
+    pthread_exit (NULL);
+  }
+
+  // Get main window pointer from UI
+  data->window = GTK_WIDGET (gtk_builder_get_object (builder, "window"));
+
+  // **** create ROS thread
+  pthread_create (&rosThread, NULL, startROS, &param);
+
+  // **** wait ros finish read params
+  while (!data->ros_param_read)
+  {
+    ROS_DEBUG ("Waiting ROS params");
+  }
 
   // Some initialisation
   gdk_window_set_debug_updates (false);
@@ -108,37 +174,37 @@ void *startGUI (void *)
   data->cachedir = g_build_filename (mapcachedir, data->friendly_name, NULL);
   g_free (mapcachedir);
 
-  // Create new GtkBuilder object
-  builder = gtk_builder_new ();
-  // Load UI from file
-  if (!gtk_builder_add_from_file (builder, gui_filename, &error))
-  {
-    g_warning ("%s", error->message);
-    g_free (error);
-    pthread_exit (NULL);
-  }
-
-  // Get main window pointer from UI
-  data->window = GTK_WIDGET (gtk_builder_get_object (builder, "window"));
-
   // Create the OsmGpsMap object
-  data->map = (OsmGpsMap *) g_object_new (OSM_TYPE_GPS_MAP, "map-source", data->map_provider,
-                                          "tile-cache", data->cachedir, "proxy-uri", g_getenv ("http_proxy"), NULL);
+  data->map = (OsmGpsMap *) g_object_new (OSM_TYPE_GPS_MAP, 
+								"map-source", data->map_provider,
+                        "tile-cache", data->cachedir, 
+                        "proxy-uri", g_getenv ("http_proxy"),
+                        "auto-center",FALSE, NULL);
 
   //Set the starting coordinates and zoom level for the map
   osm_gps_map_set_zoom (data->map, start_zoom);
   osm_gps_map_set_center (data->map, ccny_coord.rlat, ccny_coord.rlon);
 
+  data->osd = gpsd_viewer_osd_new();
+  g_object_set(GPSD_VIEWER_OSD(data->osd),
+								"show-scale",true,
+                        "show-coordinates",true,
+                        "show-dpad",true,
+                        "show-zoom",true,
+                        "show-gps-in-dpad",true,
+                        "show-gps-in-zoom",false,
+                        "dpad-radius", 30,
+                        NULL);
+                                                                     
+  osm_gps_map_layer_add(OSM_GPS_MAP(data->map), OSM_GPS_MAP_LAYER(data->osd));
+    
+  data->current_track = osm_gps_map_track_new();
+
   // Add the map to the box
-  data->map_box = GTK_WIDGET (gtk_builder_get_object (builder, "hbox3"));
+  data->map_box = GTK_WIDGET (gtk_builder_get_object (builder, "hbox2"));
   gtk_box_pack_start (GTK_BOX (data->map_box), GTK_WIDGET (data->map), TRUE, TRUE, 0);
 
-  data->statusbar = GTK_WIDGET (gtk_builder_get_object (builder, "statusbar1"));
-  data->map_container = GTK_WIDGET (gtk_builder_get_object (builder, "hbox2"));
-
-  data->range_zoom = GTK_WIDGET (gtk_builder_get_object (builder, "vscale1"));
-  gtk_adj = gtk_adjustment_new (start_zoom, 1, data->map_zoom_max + 1, 1, 1, 1);
-  gtk_range_set_adjustment (GTK_RANGE (data->range_zoom), GTK_ADJUSTMENT (gtk_adj));
+  data->map_container = GTK_WIDGET (gtk_builder_get_object (builder, "hbox1"));
 
   // Connect signals
   gtk_builder_connect_signals (builder, data);
@@ -149,9 +215,11 @@ void *startGUI (void *)
   // Show window. All other widgets are automatically shown by GtkBuilder
   gtk_widget_show_all (data->window);
 
+  // **** allow ROS spinning
+  data->widget_created = true;
+  
   // Start main loop
   gtk_main ();
-  
-  pthread_cancel(rosThread);
-  pthread_exit (NULL);
+  gdk_threads_leave ();
+  return 0;
 }

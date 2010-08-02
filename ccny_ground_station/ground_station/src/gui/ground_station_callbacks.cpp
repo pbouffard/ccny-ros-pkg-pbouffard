@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "gpsd_viewer/gui/callbacks.h"
+#include "ground_station/gui/ground_station_callbacks.h"
 
 extern "C" G_MODULE_EXPORT void on_mainwindow_destroy (GtkObject * object, gpointer user_data)
 {
@@ -44,6 +44,18 @@ extern "C" G_MODULE_EXPORT void on_menuitem_ClearPath_activate (GtkMenuItem * to
   osm_gps_map_gps_clear (data->map);
 }
 
+extern "C" G_MODULE_EXPORT void on_button_ClearUAVTrack_clicked(GtkButton * button, AppData * data)
+{
+	
+}
+
+extern "C" G_MODULE_EXPORT void on_combobox_MapProvider_changed(GtkComboBox * box, AppData * data)
+{
+	
+}
+
+
+/*
 extern "C" G_MODULE_EXPORT void on_menuitemMapProvider_group_changed (GtkRadioMenuItem * radiobutton, AppData * data)
 {
   GSList *tmp_list;
@@ -152,3 +164,4 @@ extern "C" G_MODULE_EXPORT void on_menuitemMapProvider_group_changed (GtkRadioMe
     gtk_widget_show_all (data->window);
   }
 }
+*/

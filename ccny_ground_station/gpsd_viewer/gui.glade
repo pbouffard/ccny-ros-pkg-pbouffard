@@ -35,27 +35,64 @@
               </object>
             </child>
             <child>
-              <object class="GtkMenuItem" id="menuitem_Path">
+              <object class="GtkMenuItem" id="menuitem_View">
                 <property name="visible">True</property>
-                <property name="label" translatable="yes">Path</property>
+                <property name="label" translatable="yes">View</property>
                 <property name="use_underline">True</property>
                 <child type="submenu">
-                  <object class="GtkMenu" id="menu3">
+                  <object class="GtkMenu" id="menu6">
                     <property name="visible">True</property>
                     <child>
-                      <object class="GtkCheckMenuItem" id="menuitem_ShowPath">
+                      <object class="GtkCheckMenuItem" id="menuitem_LockView">
                         <property name="visible">True</property>
-                        <property name="label" translatable="yes">Show</property>
+                        <property name="tooltip_text" translatable="yes">Lock map center to the UAV.</property>
+                        <property name="label" translatable="yes">Lock view</property>
                         <property name="use_underline">True</property>
-                        <signal name="toggled" handler="on_checkbuttonDrawPath_toggled"/>
                       </object>
                     </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="menuitem_Track">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">Track</property>
+                <property name="use_underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu" id="menu4">
+                    <property name="visible">True</property>
                     <child>
-                      <object class="GtkMenuItem" id="menuitem_ClearPath">
+                      <object class="GtkMenuItem" id="menuitem_TrackList">
                         <property name="visible">True</property>
-                        <property name="label" translatable="yes">Clear</property>
+                        <property name="label" translatable="yes">Track list</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="on_menuitem_ClearPath_activate"/>
+                        <child type="submenu">
+                          <object class="GtkMenu" id="menu3">
+                            <property name="visible">True</property>
+                            <child>
+                              <object class="GtkMenuItem" id="menuitem_UAVTrack">
+                                <property name="visible">True</property>
+                                <property name="label" translatable="yes">Current UAV track</property>
+                                <property name="use_underline">True</property>
+                                <child type="submenu">
+                                  <object class="GtkMenu" id="menu5">
+                                    <property name="visible">True</property>
+                                    <child>
+                                      <object class="GtkCheckMenuItem" id="menuitem_ShowTrack">
+                                        <property name="visible">True</property>
+                                        <property name="tooltip_text" translatable="yes">Show the current UAV track.</property>
+                                        <property name="label" translatable="yes">Show track</property>
+                                        <property name="use_underline">True</property>
+                                        <signal name="toggled" handler="on_checkbuttonDrawCurrentUAVTrack_toggled"/>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
                       </object>
                     </child>
                   </object>
@@ -189,33 +226,11 @@
                   <object class="GtkHBox" id="hbox2">
                     <property name="visible">True</property>
                     <child>
-                      <object class="GtkHBox" id="hbox3">
-                        <property name="visible">True</property>
-                        <child>
-                          <placeholder/>
-                        </child>
-                      </object>
-                      <packing>
-                        <property name="position">0</property>
-                      </packing>
+                      <placeholder/>
                     </child>
                   </object>
                   <packing>
                     <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkVScale" id="vscale1">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="digits">2</property>
-                    <property name="draw_value">False</property>
-                    <signal name="change_value" handler="on_vscaleZoom_change_value"/>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="padding">5</property>
-                    <property name="position">1</property>
                   </packing>
                 </child>
               </object>
