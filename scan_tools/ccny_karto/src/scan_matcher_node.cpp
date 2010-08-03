@@ -1,118 +1,63 @@
-//#include <karto_scan_matcher/karto_scan_matcher.h>
+#include "ccny_karto/scan_matcher_node.h"
 
-#include <string>
-#include <boost/thread.hpp>
-#include <boost/shared_ptr.hpp>
-
-#include <ros/ros.h>
-#include <karto/Mapper.h>
-#include <geometry_msgs/Pose2D.h>
-#include <sensor_msgs/LaserScan.h>
-#include <tf/transform_listener.h>
-#include <tf/transform_broadcaster.h>
-
-namespace karto_scan_matcher
+int main (int argc, char** argv)
 {
-
-const double DEFAULT_SMEAR_DEVIATION = 0.005;
-const double DEFAULT_RANGE_THRESHOLD = 6.0;
-
-typedef boost::mutex::scoped_lock Lock;
-
-class ScanMatcherNode
-{
-  private:
-
-    ros::NodeHandle nh_;
-    tf::TransformBroadcaster tfBroadcaster_;
-    tf::TransformListener    tfListener_;
-    ros::Subscriber scan_sub_;
-    ros::Publisher  posePublisher_;
-
-    boost::mutex mutex_;
-    boost::mutex historyMutex_;
-
-    int historyLength_;
-    std::vector<double> searchSizes_;
-    std::vector<double> resolutions_;
-    int historySkip_;
-    std::string mapFrame_;
-    std::string odomFrame_;
-    std::string worldFrame_;
-    std::string baseFrame_;
-
-    double distanceVariancePenalty_;
-    double smearDeviation_;
-
-    int historyIndex_;
-    bool historyReady_;
-    bool initialized_;
-
-    int scansReceived_;
-    geometry_msgs::Pose2D initPose_; 
-    geometry_msgs::Pose2D lastEstimate_; 
-   
-    void scanCallback(const sensor_msgs::LaserScan& scan);
-    void addToHistory(const sensor_msgs::LaserScan& scanMsg, const geometry_msgs::Pose2D& scanPose);
-    void publishMapToOdomTf(const geometry_msgs::Pose2D& estimatedPose, const ros::Time& time);
-    void tokenize (const std::string& str, std::vector<std::string>& tokens);
-
-    bool initialize (const sensor_msgs::LaserScan& scanMsg);
-
-    geometry_msgs::Pose2D subtractLaserOffset (const karto::Pose2& pose, 
-                                               const karto::Pose2& offset);
-
-    typedef boost::shared_ptr<karto::ScanMatcher> MatcherPtr;
-    typedef boost::shared_ptr<karto::Mapper> MapperPtr;
-
-    boost::shared_ptr<karto::Dataset> dataset_;
-    std::vector<MatcherPtr> matchers_;
-    std::vector<MapperPtr> mappers_;
-    karto::LaserRangeFinder* laser_;
-
-    karto::LocalizedRangeScanVector localizedReferenceScans_;
-
-  public:
-
-    ScanMatcherNode();
-};
+  ros::init(argc, argv, "ScanMatcherNode");
+  ScanMatcherNode node;
+  ros::spin();
+}
 
 ScanMatcherNode::ScanMatcherNode()
 {
   ROS_INFO("Starting ScanMatcherNode");
 
-  initialized_ = false;
+  initialized_    = false;
+  scansReceived_  = 0;
+  historyIndex_   = 0;
+  initPose_.x     = 0.0;
+  initPose_.y     = 0.0;
+  initPose_.theta = 0.0;
 
+  ros::NodeHandle nh;
   ros::NodeHandle nh_private("~");
 
   std::string searchSizesString;
   std::string resolutionsString;
+  std::string smearDeviationsString;
   std::vector<std::string> searchSizesTokens;
   std::vector<std::string> resolutionsTokens;
+  std::vector<std::string> smearDeviationsTokens;
 
-  if (!nh_private.getParam ("history_length", historyLength_))
-    historyLength_ = 15;
-  if (!nh_private.getParam ("smear_deviation", smearDeviation_))
-    smearDeviation_ = 0.01;
+  int historyLength;
+
+  if (!nh_private.getParam ("history_length", historyLength))
+    historyLength = 15;
+  if (!nh_private.getParam ("history_skip", historySkip_))
+    historySkip_ = 0;
   if (!nh_private.getParam ("distance_variance_penalty", distanceVariancePenalty_))
     distanceVariancePenalty_ = 1.0;
   if (!nh_private.getParam ("search_sizes", searchSizesString))
-    searchSizesString = "1.0";
+    searchSizesString = "0.50";
   if (!nh_private.getParam ("resolutions", resolutionsString))
-    resolutionsString = "0.03";
-  if (!nh_private.getParam ("history_skip", historySkip_))
-    historySkip_ = 0;
-  if (!nh_private.getParam ("map_frame", mapFrame_))
-    mapFrame_ = "map";
+    resolutionsString = "0.01";
+  if (!nh_private.getParam ("smear_deviations", smearDeviationsString))
+    smearDeviationsString = "0.01";
   if (!nh_private.getParam ("odom_frame", odomFrame_))
     odomFrame_ = "odom";
   if (!nh_private.getParam ("world_frame", worldFrame_))
     worldFrame_ = "world";
   if (!nh_private.getParam ("base_frame", baseFrame_))
     baseFrame_ = "base_link";
+  if (!nh_private.getParam ("publish_tf", publishTf_))
+    publishTf_ = true;
+  if (!nh_private.getParam ("publish_pose", publishPose_))
+    publishPose_ = true;
+
+  historyLength_ = historyLength;
 
   tokenize(searchSizesString, searchSizesTokens);
   tokenize(resolutionsString, resolutionsTokens);
+  tokenize(smearDeviationsString, smearDeviationsTokens);
 
   for(unsigned int i = 0; i < searchSizesTokens.size(); ++i)
   {
@@ -126,20 +71,23 @@ ScanMatcherNode::ScanMatcherNode()
     resolutions_.push_back(res);
   }
 
+  for(unsigned int i = 0; i < smearDeviationsTokens.size(); ++i)
+  {
+    double dev = std::strtod(smearDeviationsTokens[i].c_str(), NULL);
+    smearDeviations_.push_back(dev);
+  }
+
   ROS_ASSERT (resolutions_.size() == searchSizes_.size());
+  ROS_ASSERT (resolutions_.size() == smearDeviations_.size());
   ROS_ASSERT (historyLength_ > 1);
 
-  scansReceived_ = 0;
+  scan_sub_ = nh.subscribe("scan", 10, &ScanMatcherNode::scanCallback, this);
+  posePublisher_ = nh.advertise<geometry_msgs::Pose2D>("pose2D", 10);
+}
 
-  initPose_.x     = 0.0;
-  initPose_.y     = 0.0;
-  initPose_.theta = 0.0;
-
-  historyIndex_ = 0;
-
-  scan_sub_ = nh_.subscribe("scan", 10, &ScanMatcherNode::scanCallback, this);
-
-  posePublisher_ = nh_.advertise<geometry_msgs::Pose2D>("pose2D", 10);
+ScanMatcherNode::~ScanMatcherNode()
+{
+  ROS_INFO("Destroying ScanMatcherNode");
 }
 
 void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
@@ -154,24 +102,85 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
   if (!initialized_) 
   {
     initialized_ = initialize(scanMsg);
-    if (initialized_) ROS_INFO("ScanMatcherNode: Initialized successfully.");
-    else ROS_INFO("ScanMatcherNode: Failed to initialize.");
+    if (initialized_)
+    { 
+      ROS_INFO("ScanMatcherNode: Initialized successfully.");
+
+      // Fill up the history
+      historyMutex_.lock();
+      while (localizedReferenceScans_.size() < historyLength_)
+      {
+        karto::RangeReadingsVector kartoReadings(scanMsg.ranges.begin(), scanMsg.ranges.end());
+        karto::LocalizedRangeScan* localizedScan = new karto::LocalizedRangeScan(laser_->GetName(), kartoReadings);
+
+        karto::Pose2 kartoPose(initPose_.x, initPose_.y, initPose_.theta);
+        localizedScan->SetOdometricPose(kartoPose);
+        localizedScan->SetCorrectedPose(kartoPose);
+
+        localizedReferenceScans_.push_back(localizedScan);
+      }
+      historyMutex_.unlock();      
+    }
+    else
+    { 
+      ROS_WARN("ScanMatcherNode: Failed to initialize. Skipping scan");
+      return;
+    }
   }
-
-  // **** Fill up the history
-
-  if (localizedReferenceScans_.size() < historyLength_)
-  {
-    addToHistory(scanMsg, initPose_);
-    return;
-  }
-
-  boost::mutex::scoped_lock lock(mutex_);
 
   // **** get estimate for current pose
 
-  geometry_msgs::Pose2D currentEstimate = lastEstimate_;
-  /*
+  geometry_msgs::Pose2D currentEstimate;
+  getCurrentEstimatedPose(currentEstimate, scanMsg);
+
+  // **** scan match
+
+  karto::RangeReadingsVector kartoReadings(scanMsg.ranges.begin(), scanMsg.ranges.end());
+  karto::LocalizedRangeScan* localizedScan = new karto::LocalizedRangeScan(laser_->GetName(), kartoReadings);
+
+  for (unsigned int i = 0; i < matchers_.size(); ++i)
+  {
+    karto::Pose2 kartoPose(currentEstimate.x, currentEstimate.y, currentEstimate.theta);
+    localizedScan->SetOdometricPose(kartoPose);
+    localizedScan->SetCorrectedPose(kartoPose);
+
+    karto::Pose2 mean;
+    karto::Matrix3 cov;
+
+    historyMutex_.lock();
+    double lastResponse = matchers_[i]->MatchScan(localizedScan, localizedReferenceScans_, 
+                                                  mean, cov, false, true);
+    historyMutex_.unlock();
+
+    currentEstimate = subtractLaserOffset(mean, laser_->GetOffsetPose());
+  }
+
+  lastEstimate_ = currentEstimate;
+
+  karto::Pose2 kartoPose(currentEstimate.x, currentEstimate.y, currentEstimate.theta);
+  localizedScan->SetOdometricPose(kartoPose);
+  localizedScan->SetCorrectedPose(kartoPose);
+
+  // **** add to history, if we're not skipping this one
+
+  if (historySkip_ < 1 || scansReceived_ % historySkip_ == 0)
+    addToHistory(localizedScan);
+
+  // **** publish tf & pose to ros if needed
+
+  if (publishTf_)   publishTf(currentEstimate, scanMsg.header.stamp);
+  if (publishPose_) publishPose(currentEstimate);
+
+  // **** timing
+  
+  gettimeofday(&end, NULL);
+  double dur = (end.tv_sec * 1000000 + end.tv_usec) - (start.tv_sec * 1000000 + start.tv_usec);
+  printf("dur:\t %d ms\n", (int)(dur/1000.0));
+}
+
+void ScanMatcherNode::getCurrentEstimatedPose(geometry_msgs::Pose2D& currentEstimate, 
+                                              const sensor_msgs::LaserScan& scanMsg)
+{
   tf::StampedTransform odomToBaseTf;
   try
   {
@@ -179,10 +188,12 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
   }
   catch (tf::TransformException ex)
   {
-    // transform unavailable - skip scan
-    ROS_WARN("Transform unavailable, skipping scan (%s)", ex.what());
+    // transform unavailable - use the pose from our last estimation
+    ROS_WARN("Transform unavailable, using last estimated pose (%s)", ex.what());
+    currentEstimate = lastEstimate_;
     return;
   }
+
   btTransform odomToBase = odomToBaseTf;
 
   btMatrix3x3 m(odomToBase.getRotation());
@@ -192,38 +203,6 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
   currentEstimate.x = odomToBase.getOrigin().getX();
   currentEstimate.y = odomToBase.getOrigin().getY();
   currentEstimate.theta = yaw;
-*/
-  // **** scan match
-
-  for (unsigned int i = 0; i < matchers_.size(); ++i)
-  {
-    karto::Pose2 kartoPose(currentEstimate.x, currentEstimate.y, currentEstimate.theta);
-    karto::RangeReadingsVector kartoReadings(scanMsg.ranges.begin(), scanMsg.ranges.end());
-
-    karto::LocalizedRangeScan* localizedScan = new karto::LocalizedRangeScan(laser_->GetName(), kartoReadings);
-    localizedScan->SetOdometricPose(kartoPose);
-    localizedScan->SetCorrectedPose(kartoPose);
-
-    //ScanPtr scan_ptr(localized_scan); 
-
-    karto::Pose2 mean;
-    karto::Matrix3 cov;
-
-    double lastResponse = matchers_[i]->MatchScan(localizedScan, localizedReferenceScans_, mean, cov);
-
-    printf ("lastresponse= %f\n", lastResponse);
-
-    currentEstimate = subtractLaserOffset(mean, laser_->GetOffsetPose());
-  }
-
-  lastEstimate_ = currentEstimate;
-  addToHistory(scanMsg, currentEstimate);
-
-  publishMapToOdomTf(currentEstimate, scanMsg.header.stamp);
-
-  gettimeofday(&end, NULL);
-  double dur = (end.tv_sec * 1000000 + end.tv_usec) - (start.tv_sec * 1000000 + start.tv_usec);
-  printf("dur:\t %d ms\n", (int)(dur/1000.0));
 }
 
 geometry_msgs::Pose2D ScanMatcherNode::subtractLaserOffset (const karto::Pose2& pose, const karto::Pose2& offset)
@@ -242,25 +221,12 @@ geometry_msgs::Pose2D ScanMatcherNode::subtractLaserOffset (const karto::Pose2& 
   return result;
 }
 
-void ScanMatcherNode::addToHistory(const sensor_msgs::LaserScan& scanMsg, 
-                                   const geometry_msgs::Pose2D& scanPose)
+void ScanMatcherNode::addToHistory(karto::LocalizedRangeScan* localizedScan)
 {
-  karto::Pose2 kartoPose(scanPose.x, scanPose.y, scanPose.theta);
-  karto::RangeReadingsVector kartoReadings(scanMsg.ranges.begin(), scanMsg.ranges.end());
-
-  karto::LocalizedRangeScan* localizedScan = new karto::LocalizedRangeScan(laser_->GetName(), kartoReadings);
-  localizedScan->SetOdometricPose(kartoPose);
-  localizedScan->SetCorrectedPose(kartoPose);
-  
   historyMutex_.lock();
 
-  if (localizedReferenceScans_.size() < historyLength_)
-      localizedReferenceScans_.push_back(localizedScan);
-  else
-  {
-    delete localizedReferenceScans_[historyIndex_]; 
-    localizedReferenceScans_[historyIndex_] = localizedScan;
-  }
+  delete localizedReferenceScans_[historyIndex_]; 
+  localizedReferenceScans_[historyIndex_] = localizedScan;
 
   historyIndex_++;    
   if (historyIndex_ == historyLength_) historyIndex_ = 0;
@@ -268,27 +234,25 @@ void ScanMatcherNode::addToHistory(const sensor_msgs::LaserScan& scanMsg,
   historyMutex_.unlock();
 }
 
-void ScanMatcherNode::publishMapToOdomTf(const geometry_msgs::Pose2D& estimatedPose, const ros::Time& time)
+void ScanMatcherNode::publishTf(const geometry_msgs::Pose2D& estimatedPose, const ros::Time& time)
 {
-
   btTransform transform;
 
   btQuaternion rotation;
-  rotation.setRPY (0.0, 0.0, 0.0);
+  rotation.setRPY (0.0, 0.0, estimatedPose.theta);
   transform.setRotation (rotation);
 
   btVector3 origin;
   origin.setValue (estimatedPose.x, estimatedPose.y, 0.0);
   transform.setOrigin (origin);
 
-  transform = transform.inverse();
-
   tf::StampedTransform transformMsg (transform, time, worldFrame_, odomFrame_);
   tfBroadcaster_.sendTransform (transformMsg);
+}
 
-  // publish pose2D
-
-  //posePublisher_.publish(estimatedPose);
+void ScanMatcherNode::publishPose(const geometry_msgs::Pose2D& estimatedPose)
+{
+  posePublisher_.publish(estimatedPose);
 }
 
 void ScanMatcherNode::tokenize(const std::string& str, std::vector<std::string>& tokens)
@@ -352,9 +316,13 @@ bool ScanMatcherNode::initialize (const sensor_msgs::LaserScan& scanMsg)
     mappers_[i]->SetParameter("DistanceVariancePenalty", distanceVariancePenalty_);
 
     matchers_[i].reset(karto::ScanMatcher::Create(mappers_[i].get(), searchSizes_[i], resolutions_[i],
-                                                  smearDeviation_, DEFAULT_RANGE_THRESHOLD));
+                                                  smearDeviations_[i], DEFAULT_RANGE_THRESHOLD));
 
-    ROS_INFO ("ScanMatcherNode: matcher %zu: searchspace is %.2f; resolution is %.2f", i, searchSizes_[i], resolutions_[i]);
+    ROS_INFO ("ScanMatcherNode: matcher %zu:", i);
+    ROS_INFO ("\tsearchspace is %.3f", searchSizes_[i]);
+    ROS_INFO ("\tresolution is %.3f", resolutions_[i]);
+    ROS_INFO ("\tsmear deviation is %.3f", smearDeviations_[i]);   
+
   }
 
   // This is copied over from slam_karto.cpp
@@ -377,12 +345,3 @@ bool ScanMatcherNode::initialize (const sensor_msgs::LaserScan& scanMsg)
 }
 
 
-} // namespace karto_scan_matcher
-
-int main (int argc, char** argv)
-{
-
-  ros::init(argc, argv, "ScanMatcherNode");
-  karto_scan_matcher::ScanMatcherNode node;
-  ros::spin();
-}
