@@ -89,17 +89,22 @@ public:
   // **** Tab 2: GpsdViewer
   OsmGpsMap * map;
   OsmGpsMapSource_t map_provider;
-  OsmGpsMapTrack * current_track;
+  OsmGpsMapTrack * uav_track;
   GpsdViewerOsd * osd;
   GtkWidget *map_box;
   GtkWidget *map_container;
+  GtkWidget *box_gpsd_viewer;
+  GtkWidget *gpsd_option_popup;
+  GtkWidget *btn_gpsd_option_popup;
   
   bool draw_path;
+  bool lock_view;
   int map_zoom_max;
   int map_current_zoom;
   const char *repo_uri;
   const char *friendly_name;
   char *cachedir;
+
 
 };
 

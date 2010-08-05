@@ -30,100 +30,93 @@ extern "C" G_MODULE_EXPORT void on_checkbuttonDrawCurrentUAVTrack_toggled (GtkTo
   if (data->draw_path)
   {
 		data->draw_path = false;
-		osm_gps_map_track_remove(data->map, data->current_track);
+		osm_gps_map_track_remove(data->map, data->uav_track);
   }
   else
   {
 		data->draw_path = true;
-		osm_gps_map_track_add(data->map, data->current_track);
+		osm_gps_map_track_add(data->map, data->uav_track);
   }
 }
 
-extern "C" G_MODULE_EXPORT void on_menuitem_ClearPath_activate (GtkMenuItem * togglebutton, AppData * data)
+extern "C" G_MODULE_EXPORT void on_checkbuttonLockViewUAV_toggled (GtkToggleButton * togglebutton, AppData * data)
 {
-  osm_gps_map_gps_clear (data->map);
+  if (data->lock_view)
+		data->lock_view = false;
+  else
+		data->lock_view = true;
 }
 
 extern "C" G_MODULE_EXPORT void on_button_ClearUAVTrack_clicked(GtkButton * button, AppData * data)
 {
-	
+	osm_gps_map_track_remove(data->map, data->uav_track);
+   data->uav_track = osm_gps_map_track_new();
+   if (data->draw_path)
+   	osm_gps_map_track_add(data->map, data->uav_track);
+}
+
+extern "C" G_MODULE_EXPORT void on_button_OpenGpsdOptionPopup_clicked(GtkButton * button, AppData * data)
+{
+  gtk_container_remove(GTK_CONTAINER(data->box_gpsd_viewer),GTK_WIDGET (data->btn_gpsd_option_popup));
+  gtk_box_pack_end (GTK_BOX (data->box_gpsd_viewer), GTK_WIDGET (data->gpsd_option_popup), FALSE, TRUE, 0); 
+}
+
+extern "C" G_MODULE_EXPORT void on_button_CloseGpsdOptionPopup_clicked(GtkButton * button, AppData * data)
+{
+  gtk_container_remove(GTK_CONTAINER(data->box_gpsd_viewer),GTK_WIDGET (data->gpsd_option_popup));
+  gtk_box_pack_end (GTK_BOX (data->box_gpsd_viewer), GTK_WIDGET (data->btn_gpsd_option_popup), FALSE, TRUE, 0); 
 }
 
 extern "C" G_MODULE_EXPORT void on_combobox_MapProvider_changed(GtkComboBox * box, AppData * data)
 {
-	
-}
-
-
-/*
-extern "C" G_MODULE_EXPORT void on_menuitemMapProvider_group_changed (GtkRadioMenuItem * radiobutton, AppData * data)
-{
-  GSList *tmp_list;
-  GtkCheckMenuItem *check_menu_item;
-  GtkCheckMenuItem *tmp_menu_item;
+  int i;
   char *mapcachedir;
   OsmGpsMapPoint current_coord;
+   
+  osm_gps_map_convert_screen_to_geographic(data->map,(gint)(data->map_container)->allocation.width / 2, 
+												       (gint)(data->map_container)->allocation.height / 2, &current_coord);
+    
+  i=gtk_combo_box_get_active(box);
 
-  check_menu_item = GTK_CHECK_MENU_ITEM (radiobutton);
-
-  if (!check_menu_item->active)
+  switch (i)
   {
-    tmp_menu_item = NULL;
-    tmp_list = radiobutton->group;
-    int i = g_slist_length (tmp_list) + 1;
-    
-    osm_gps_map_convert_screen_to_geographic(data->map,(gint)(data->map_container)->allocation.width / 2, 
-															(gint)(data->map_container)->allocation.height / 2, &current_coord);
-    
-    while (tmp_list)
-    {
-      tmp_menu_item = GTK_CHECK_MENU_ITEM (tmp_list->data);
-      tmp_list = tmp_list->next;
-      i--;
-      if (tmp_menu_item->active && (tmp_menu_item != check_menu_item))
-        break;
-      tmp_menu_item = NULL;
-    }
-
-    switch (i)
-    {
-      case 1:
+      case 0:
         data->map_provider = OSM_GPS_MAP_SOURCE_OPENSTREETMAP;
         data->map_zoom_max = 18;
         break;
-      case 2:
+      case 1:
         data->map_provider = OSM_GPS_MAP_SOURCE_OPENSTREETMAP_RENDERER;
         data->map_zoom_max = 18;
         break;
-      case 3:
+      case 2:
         data->map_provider = OSM_GPS_MAP_SOURCE_OSM_PUBLIC_TRANSPORT;
         data->map_zoom_max = 18;
         break;
-      case 4:
+      case 3:
         data->map_provider = OSM_GPS_MAP_SOURCE_OPENCYCLEMAP;
         data->map_zoom_max = 18;
         break;
-      case 5:
+      case 4:
         data->map_provider = OSM_GPS_MAP_SOURCE_MAPS_FOR_FREE;
         data->map_zoom_max = 11;
         break;
-      case 6:
+      case 5:
         data->map_provider = OSM_GPS_MAP_SOURCE_GOOGLE_STREET;
         data->map_zoom_max = 17;
         break;
-      case 7:
+      case 6:
         data->map_provider = OSM_GPS_MAP_SOURCE_GOOGLE_SATELLITE;
         data->map_zoom_max = 18;
         break;
-      case 8:
+      case 7:
         data->map_provider = OSM_GPS_MAP_SOURCE_VIRTUAL_EARTH_STREET;
         data->map_zoom_max = 17;
         break;
-      case 9:
+      case 8:
         data->map_provider = OSM_GPS_MAP_SOURCE_VIRTUAL_EARTH_SATELLITE;
         data->map_zoom_max = 17;
         break;
-      case 10:
+      case 9:
         data->map_provider = OSM_GPS_MAP_SOURCE_VIRTUAL_EARTH_HYBRID;
         data->map_zoom_max = 17;
         break;
@@ -139,15 +132,12 @@ extern "C" G_MODULE_EXPORT void on_menuitemMapProvider_group_changed (GtkRadioMe
     data->friendly_name = osm_gps_map_source_get_friendly_name (data->map_provider);
     mapcachedir = osm_gps_map_get_default_cache_directory ();
     data->cachedir = g_build_filename (mapcachedir, data->friendly_name, NULL);
-
-
     
     // Change map source and update box & window 
     data->map = (OsmGpsMap *) g_object_new (OSM_TYPE_GPS_MAP, 
 								"map-source", data->map_provider,
                         "tile-cache", data->cachedir, 
-                        "proxy-uri", g_getenv ("http_proxy"),
-                        "auto-center",FALSE, NULL);
+                        "proxy-uri", g_getenv ("http_proxy"),NULL);
     gtk_container_remove (GTK_CONTAINER (data->map_container), data->map_box);
     data->map_box = gtk_hbox_new (TRUE, 0);
     gtk_box_pack_start (GTK_BOX (data->map_container), data->map_box, TRUE, TRUE, 0);
@@ -159,9 +149,7 @@ extern "C" G_MODULE_EXPORT void on_menuitemMapProvider_group_changed (GtkRadioMe
     osm_gps_map_layer_add(OSM_GPS_MAP(data->map), OSM_GPS_MAP_LAYER(data->osd));
     
 	 if(data->draw_path)
-		osm_gps_map_track_add(data->map, data->current_track);
+		osm_gps_map_track_add(data->map, data->uav_track);
 
     gtk_widget_show_all (data->window);
-  }
 }
-*/

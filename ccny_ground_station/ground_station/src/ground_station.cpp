@@ -76,12 +76,19 @@ void gpsFixCallback (const gps_common::GPSFix::ConstPtr & msg)
   if (OSM_IS_GPS_MAP (data->map)){
 
 		// **** Center map on gps data received
-		update_uav_pose_osd(data->osd,TRUE, pixel_x, pixel_y);
-		osm_gps_map_set_center (data->map, msg->latitude, msg->longitude);
-      //osm_gps_map_gps_clear(data->map);
+		if(data->lock_view)
+		{
+			update_uav_pose_osd(data->osd,TRUE, pixel_x, pixel_y);
+			osm_gps_map_set_center (data->map, msg->latitude, msg->longitude);
+		}
+		else
+		{
+			update_uav_pose_osd(data->osd,FALSE, pixel_x, pixel_y);
+			osm_gps_map_gps_clear(data->map);
+		}
 	
 		// **** Add point to the track
-		osm_gps_map_track_add_point (data->current_track, point);
+		osm_gps_map_track_add_point (data->uav_track, point);
 	}
 	
   // **** release GTK thread lock 
@@ -393,7 +400,7 @@ int main (int argc, char **argv)
   data->map_current_zoom = start_zoom;
   data->repo_uri = osm_gps_map_source_get_repo_uri (data->map_provider);
   data->friendly_name = osm_gps_map_source_get_friendly_name (data->map_provider);
-  data->current_track = osm_gps_map_track_new();
+  data->uav_track = osm_gps_map_track_new();
   mapcachedir = osm_gps_map_get_default_cache_directory ();
   data->cachedir = g_build_filename (mapcachedir, data->friendly_name, NULL);
   g_free (mapcachedir);  
@@ -402,8 +409,7 @@ int main (int argc, char **argv)
   data->map = (OsmGpsMap *) g_object_new (OSM_TYPE_GPS_MAP, 
 					"map-source", data->map_provider,
                "tile-cache", data->cachedir, 
-               "proxy-uri", g_getenv ("http_proxy"),
-               "auto-center",FALSE, NULL);
+               "proxy-uri", g_getenv ("http_proxy"),NULL);
 
   //Set the starting coordinates and zoom level for the map
   osm_gps_map_set_zoom (data->map, start_zoom);
@@ -425,6 +431,13 @@ int main (int argc, char **argv)
   data->map_container = GTK_WIDGET (gtk_builder_get_object (builder, "hbox_map_container"));
   gtk_box_pack_start (GTK_BOX (data->map_box), GTK_WIDGET (data->map), TRUE, TRUE, 0);
  
+  data->box_gpsd_viewer = GTK_WIDGET (gtk_builder_get_object (builder, "hbox_GpsdViewer"));
+  data->gpsd_option_popup = GTK_WIDGET (gtk_builder_get_object (builder, "hbox_GpsdOptionPopup"));
+  data->btn_gpsd_option_popup = GTK_WIDGET (gtk_builder_get_object (builder, "button_OpenGpsdOptionPopup"));
+  g_object_ref(GTK_WIDGET (data->gpsd_option_popup));  		// **** avoid widget to be destroyed when removed from window
+  g_object_ref(GTK_WIDGET (data->btn_gpsd_option_popup));	// **** avoid widget to be destroyed when removed from window
+  gtk_container_remove(GTK_CONTAINER(data->box_gpsd_viewer),GTK_WIDGET (data->gpsd_option_popup));
+  
   // Connect signals
   gtk_builder_connect_signals (builder, data);
 
@@ -438,7 +451,7 @@ int main (int argc, char **argv)
   data->widget_created = true;
 
   // **** udpate all widgets    
-  g_timeout_add (200, widgets_update, NULL);
+  g_timeout_add (400, widgets_update, NULL);
   
   //gtk_window_fullscreen(GTK_WINDOW(data->window));
   //gtk_window_unfullscreen(GTK_WINDOW(data->window));

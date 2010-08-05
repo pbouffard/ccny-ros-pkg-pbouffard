@@ -2,20 +2,79 @@
 <interface>
   <requires lib="gtk+" version="2.16"/>
   <!-- interface-naming-policy project-wide -->
-  <object class="GtkListStore" id="liststore2">
+  <object class="GtkListStore" id="liststore_MapProvider">
     <columns>
-      <!-- column-name gchararray1 -->
+      <!-- column-name provider -->
       <column type="gchararray"/>
     </columns>
     <data>
       <row>
-        <col id="0" translatable="yes">toto</col>
+        <col id="0" translatable="yes">OpenStreetMap</col>
       </row>
       <row>
-        <col id="0" translatable="yes">titi</col>
+        <col id="0" translatable="yes">OpenStreetMap Renderer</col>
       </row>
       <row>
-        <col id="0" translatable="yes">comprend po</col>
+        <col id="0" translatable="yes">OpenStreetMap Public Transport</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">OpenCycleMap</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Maps-for-free</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Google Street</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Google Satellite</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Virtual Earth Street</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Virtual Earth Satellite</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Virtual Earth Hybrid</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkListStore" id="liststore_TopicList">
+    <columns>
+      <!-- column-name topics -->
+      <column type="gchararray"/>
+      <!-- column-name state -->
+      <column type="gboolean"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">/camera/image_raw</col>
+        <col id="1">False</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">/asctec/imu</col>
+        <col id="1">False</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">tytyt</col>
+        <col id="1">False</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">ertert</col>
+        <col id="1">False</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">erterter</col>
+        <col id="1">False</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">ertertert</col>
+        <col id="1">False</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">ertertet</col>
+        <col id="1">False</col>
       </row>
     </data>
   </object>
@@ -73,7 +132,7 @@
               <object class="GtkAlignment" id="alignment2">
                 <property name="visible">True</property>
                 <child>
-                  <object class="GtkHBox" id="hbox2">
+                  <object class="GtkHBox" id="hbox_GpsdViewer">
                     <property name="visible">True</property>
                     <child>
                       <object class="GtkHBox" id="hbox_map_container">
@@ -95,10 +154,48 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkAlignment" id="alignment6">
+                      <object class="GtkButton" id="button_OpenGpsdOptionPopup">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <signal name="clicked" handler="on_button_OpenGpsdOptionPopup_clicked"/>
+                        <child>
+                          <object class="GtkImage" id="image6">
+                            <property name="visible">True</property>
+                            <property name="stock">gtk-goto-first</property>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkHBox" id="hbox_GpsdOptionPopup">
                         <property name="visible">True</property>
                         <child>
-                          <object class="GtkFrame" id="frame1">
+                          <object class="GtkButton" id="button_CloseGpsdOptionPopup">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">True</property>
+                            <signal name="clicked" handler="on_button_CloseGpsdOptionPopup_clicked"/>
+                            <child>
+                              <object class="GtkImage" id="image4">
+                                <property name="visible">True</property>
+                                <property name="stock">gtk-goto-last</property>
+                              </object>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkFrame" id="frame_GpsdViewerOption">
                             <property name="visible">True</property>
                             <property name="label_xalign">0</property>
                             <property name="shadow_type">out</property>
@@ -106,17 +203,126 @@
                               <object class="GtkVButtonBox" id="vbuttonbox1">
                                 <property name="visible">True</property>
                                 <property name="homogeneous">True</property>
-                                <property name="layout_style">center</property>
+                                <property name="layout_style">start</property>
                                 <child>
-                                  <object class="GtkComboBox" id="combobox_MapProvider">
+                                  <object class="GtkHBox" id="hbox2">
                                     <property name="visible">True</property>
-                                    <property name="model">liststore2</property>
-                                    <signal name="changed" handler="on_combobox_MapProvider_changed"/>
+                                    <child>
+                                      <object class="GtkLabel" id="label8">
+                                        <property name="visible">True</property>
+                                        <property name="label" translatable="yes">Map provider</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkHSeparator" id="hseparator2">
+                                        <property name="visible">True</property>
+                                      </object>
+                                      <packing>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
                                     <property name="fill">False</property>
                                     <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkComboBox" id="combobox_MapProvider">
+                                    <property name="visible">True</property>
+                                    <property name="model">liststore_MapProvider</property>
+                                    <property name="active">0</property>
+                                    <signal name="changed" handler="on_combobox_MapProvider_changed"/>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="cellrenderertext2"/>
+                                      <attributes>
+                                        <attribute name="text">0</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkHBox" id="hbox6">
+                                    <property name="visible">True</property>
+                                    <child>
+                                      <object class="GtkLabel" id="label9">
+                                        <property name="visible">True</property>
+                                        <property name="label" translatable="yes">View</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkHSeparator" id="hseparator4">
+                                        <property name="visible">True</property>
+                                      </object>
+                                      <packing>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">2</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkCheckButton" id="checkbutton2">
+                                    <property name="label" translatable="yes">Lock on UAV</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">False</property>
+                                    <property name="draw_indicator">True</property>
+                                    <signal name="toggled" handler="on_checkbuttonLockViewUAV_toggled"/>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">3</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkHBox" id="hbox7">
+                                    <property name="visible">True</property>
+                                    <child>
+                                      <object class="GtkLabel" id="label10">
+                                        <property name="visible">True</property>
+                                        <property name="label" translatable="yes">Track</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkHSeparator" id="hseparator3">
+                                        <property name="visible">True</property>
+                                      </object>
+                                      <packing>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">4</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -132,21 +338,7 @@
                                   <packing>
                                     <property name="expand">False</property>
                                     <property name="fill">False</property>
-                                    <property name="position">1</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkCheckButton" id="checkbutton2">
-                                    <property name="label" translatable="yes">Lock view on UAV</property>
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">False</property>
-                                    <property name="draw_indicator">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">False</property>
-                                    <property name="position">2</property>
+                                    <property name="position">5</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -160,11 +352,18 @@
                                   <packing>
                                     <property name="expand">False</property>
                                     <property name="fill">False</property>
-                                    <property name="position">3</property>
+                                    <property name="position">6</property>
                                   </packing>
                                 </child>
                                 <child>
-                                  <placeholder/>
+                                  <object class="GtkHSeparator" id="hseparator1">
+                                    <property name="visible">True</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">7</property>
+                                  </packing>
                                 </child>
                               </object>
                             </child>
@@ -176,12 +375,13 @@
                               </object>
                             </child>
                           </object>
+                          <packing>
+                            <property name="position">-1</property>
+                          </packing>
                         </child>
                       </object>
                       <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">False</property>
-                        <property name="position">1</property>
+                        <property name="position">2</property>
                       </packing>
                     </child>
                   </object>
@@ -227,6 +427,29 @@
                                       <object class="GtkTreeView" id="treeview2">
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
+                                        <property name="model">liststore_TopicList</property>
+                                        <property name="hadjustment">adjust_TopicList</property>
+                                        <property name="rules_hint">True</property>
+                                        <child>
+                                          <object class="GtkTreeViewColumn" id="treeviewcolumn1">
+                                            <property name="title">Topics</property>
+                                            <property name="expand">True</property>
+                                            <child>
+                                              <object class="GtkCellRendererText" id="cellrenderertoggle1"/>
+                                              <attributes>
+                                                <attribute name="text">0</attribute>
+                                              </attributes>
+                                            </child>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="GtkTreeViewColumn" id="treeviewcolumn2">
+                                            <property name="title">Selected</property>
+                                            <child>
+                                              <object class="GtkCellRendererToggle" id="cellrenderertext1"/>
+                                            </child>
+                                          </object>
+                                        </child>
                                       </object>
                                       <packing>
                                         <property name="position">0</property>
@@ -235,6 +458,7 @@
                                     <child>
                                       <object class="GtkVScrollbar" id="vscrollbar1">
                                         <property name="visible">True</property>
+                                        <property name="adjustment">adjust_TopicList</property>
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
@@ -259,7 +483,13 @@
                           </packing>
                         </child>
                         <child>
-                          <placeholder/>
+                          <object class="GtkImage" id="image2">
+                            <property name="visible">True</property>
+                            <property name="stock">gtk-missing-image</property>
+                          </object>
+                          <packing>
+                            <property name="position">1</property>
+                          </packing>
                         </child>
                       </object>
                       <packing>
@@ -267,7 +497,13 @@
                       </packing>
                     </child>
                     <child>
-                      <placeholder/>
+                      <object class="GtkImage" id="image3">
+                        <property name="visible">True</property>
+                        <property name="stock">gtk-missing-image</property>
+                      </object>
+                      <packing>
+                        <property name="position">1</property>
+                      </packing>
                     </child>
                   </object>
                 </child>
@@ -291,7 +527,7 @@
               <object class="GtkAlignment" id="alignment5">
                 <property name="visible">True</property>
                 <child>
-                  <object class="GtkImage" id="image2">
+                  <object class="GtkImage" id="image1">
                     <property name="visible">True</property>
                     <property name="stock">gtk-missing-image</property>
                   </object>
@@ -516,5 +752,10 @@
       </object>
     </child>
   </object>
-  <object class="GtkAction" id="action1"/>
+  <object class="GtkAdjustment" id="adjust_TopicList">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+    <property name="page_size">10</property>
+  </object>
 </interface>
