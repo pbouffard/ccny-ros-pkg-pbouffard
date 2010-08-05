@@ -181,6 +181,7 @@ void ScanMatcherNode::scanCallback (const sensor_msgs::LaserScan& scanMsg)
 void ScanMatcherNode::getCurrentEstimatedPose(geometry_msgs::Pose2D& currentEstimate, 
                                               const sensor_msgs::LaserScan& scanMsg)
 {
+/*
   tf::StampedTransform odomToBaseTf;
   try
   {
@@ -203,6 +204,9 @@ void ScanMatcherNode::getCurrentEstimatedPose(geometry_msgs::Pose2D& currentEsti
   currentEstimate.x = odomToBase.getOrigin().getX();
   currentEstimate.y = odomToBase.getOrigin().getY();
   currentEstimate.theta = yaw;
+*/
+
+    currentEstimate = lastEstimate_;
 }
 
 geometry_msgs::Pose2D ScanMatcherNode::subtractLaserOffset (const karto::Pose2& pose, const karto::Pose2& offset)

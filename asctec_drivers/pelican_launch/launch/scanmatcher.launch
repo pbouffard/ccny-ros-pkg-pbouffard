@@ -2,10 +2,11 @@
   <node pkg="ccny_karto" type="scan_matcher_node" name="scan_matcher_node" output="screen">
     <param name="history_length" value="15"/>
     <param name="history_skip"   value="3"/>
-    <param name="publish_tf"     value="true"/>
-    <param name="search_sizes"     type="string" value="0.40 0.10"/>
-    <param name="resolutions"      type="string" value="0.04 0.01"/>
-    <param name="smear_deviations" type="string" value="0.04 0.01"/>
+    <param name="publish_tf"     value="false"/>
+    <param name="publish_pose"     value="true"/>
+    <param name="search_sizes"     type="string" value="1.000 0.200"/>
+    <param name="resolutions"      type="string" value="0.100 0.010"/>
+    <param name="smear_deviations" type="string" value="0.100 0.010"/>
 
     <remap from="/scan" to="/splitter/mvs"/>   
   </node>
