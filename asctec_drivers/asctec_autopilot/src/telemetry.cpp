@@ -162,11 +162,10 @@ namespace asctec
     pollingEnabled_ = true;
   }
 
-  void Telemetry::enableControl (uint8_t interval, uint8_t offset)
+  void Telemetry::enableControl (Telemetry * telemetry_, uint8_t interval, uint8_t offset)
   {
     ros::NodeHandle nh_private ("~");
-    Telemetry telemetry_object;
-    controlSubscriber_ = nh_private.subscribe("CTRL_INPUT", 100, &Telemetry::copyCTRL_INPUT, &telemetry_object);
+    controlSubscriber_ = nh_private.subscribe("CTRL_INPUT", 10, &Telemetry::copyCTRL_INPUT, telemetry_);
     ROS_INFO("Listening to %s data on topic: %s", "CTRL_INPUT","CTRL_INPUT");
     ROS_DEBUG ("Telemetry::enableCommanding()");
     controlInterval_ = interval;
@@ -459,18 +458,13 @@ namespace asctec
     GPSDataAdvanced_.speed_x_best_estimate = GPS_DATA_ADVANCED_.speed_x_best_estimate;
     GPSDataAdvanced_.speed_y_best_estimate = GPS_DATA_ADVANCED_.speed_y_best_estimate;
   }
-  void Telemetry::copyCTRL_INPUT(const asctec_msgs::CtrlInput& msg){
-    dumpCTRL_INPUT();
-    ROS_INFO("copying CTRL_INPUT to local structure!!!");
-    ROS_INFO("msg.pitch: %d", msg.pitch);
-    ROS_INFO("CTRL_INPUT_.pitch: %d", CTRL_INPUT_.pitch);
+  void Telemetry::copyCTRL_INPUT(asctec_msgs::CtrlInput msg){
     CTRL_INPUT_.pitch = msg.pitch;
-    ROS_INFO("CTRL_INPUT_.pitch: %d", CTRL_INPUT_.pitch);
     CTRL_INPUT_.roll = msg.roll;
     CTRL_INPUT_.yaw = msg.yaw;
     CTRL_INPUT_.thrust = msg.thrust;
     CTRL_INPUT_.ctrl = msg.ctrl;
     CTRL_INPUT_.chksum = msg.chksum;
-    dumpCTRL_INPUT();
+    //dumpCTRL_INPUT();
   }
 }

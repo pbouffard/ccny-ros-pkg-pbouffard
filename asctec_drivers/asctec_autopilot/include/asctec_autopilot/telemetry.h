@@ -113,7 +113,7 @@ namespace asctec
     std::string requestToString(RequestTypes::RequestType t);
     void publishPackets();
 
-    void enableControl (uint8_t interval = 1, uint8_t offset = 0);
+    void enableControl (Telemetry * telemetry_, uint8_t interval = 1, uint8_t offset = 0);
         
     void dumpLL_STATUS();
     void dumpIMU_RAWDATA();
@@ -131,7 +131,7 @@ namespace asctec
     void copyCONTROLLER_OUTPUT();
     void copyGPS_DATA();
     void copyGPS_DATA_ADVANCED();
-    void copyCTRL_INPUT(const asctec_msgs::CtrlInput& msg);
+    void copyCTRL_INPUT(asctec_msgs::CtrlInput msg);
     
     bool pollingEnabled_;
     bool controlEnabled_;
@@ -391,7 +391,6 @@ namespace asctec
         short ctrl;
         short chksum;
     };
-    //}__attribute__((__packed__));
 
 /*
 
@@ -436,7 +435,7 @@ You will receive an acknowledge if a command or a waypoint was received correctl
     asctec_msgs::ControllerOutput ControllerOutput_;
     asctec_msgs::GPSData GPSData_;
     asctec_msgs::GPSDataAdvanced GPSDataAdvanced_;
-    asctec_msgs::CtrlInput CtrlInput_;
+    //asctec_msgs::CtrlInput CtrlInput_;
     
   };                            // end class Telemetry
 }                               //end namespace asctec
