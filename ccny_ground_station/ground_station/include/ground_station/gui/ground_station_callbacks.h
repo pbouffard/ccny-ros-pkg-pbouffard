@@ -1,5 +1,5 @@
 /*
- *  ROS GPSD Map Viewer using OpenStreetMap & OSMGpsMap
+ *  CityFlyer ground_station
  *  Copyright (C) 2010, CCNY Robotics Lab
  *  Gautier Dumonteil <gautier.dumonteil@gmail.com>
  *  http://robotics.ccny.cuny.edu
@@ -18,8 +18,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CALLBACKS_H
-#define CALLBACKS_H
+#ifndef _GROUND_STATION_CALLBACKS_H
+#define _GROUND_STATION_CALLBACKS_H
 
 #include <iostream>
 #include <stdio.h>
@@ -29,16 +29,20 @@
 #include <glade/glade.h>
 #include <math.h>
 
-#include "gpsd_viewer/gui/AppData.h"
+#include "ground_station/gui/ground_station_appdata.h"
 
 using namespace std;
 
-#include "gpsd_viewer/gui/callbacks.h"
-
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+// **** GPS Options callbacks
 extern "C" G_MODULE_EXPORT void on_mainwindow_destroy (GtkObject * object, gpointer user_data);
-
 extern "C" G_MODULE_EXPORT void on_checkbuttonDrawCurrentUAVTrack_toggled (GtkToggleButton * togglebutton, AppData * data);
+extern "C" G_MODULE_EXPORT void on_checkbuttonLockViewUAV_toggled (GtkToggleButton * togglebutton, AppData * data);
+extern "C" G_MODULE_EXPORT void on_button_ClearUAVTrack_clicked(GtkButton * button, AppData * data);
+extern "C" G_MODULE_EXPORT void on_button_OpenGpsdOptionPopup_clicked(GtkButton * button, AppData * data);
+extern "C" G_MODULE_EXPORT void on_button_CloseGpsdOptionPopup_clicked(GtkButton * button, AppData * data);
+extern "C" G_MODULE_EXPORT void on_combobox_MapProvider_changed(GtkComboBox * box, AppData * data);
 
-extern "C" G_MODULE_EXPORT void on_menuitemMapProvider_group_changed (GtkRadioMenuItem * radiobutton, AppData * data);
 
 #endif
