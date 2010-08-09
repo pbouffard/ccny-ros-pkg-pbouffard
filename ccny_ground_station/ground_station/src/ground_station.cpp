@@ -438,6 +438,10 @@ int main (int argc, char **argv)
   g_object_ref(GTK_WIDGET (data->btn_gpsd_option_popup));	// **** avoid widget to be destroyed when removed from window
   gtk_container_remove(GTK_CONTAINER(data->box_gpsd_viewer),GTK_WIDGET (data->gpsd_option_popup));
   
+  data->rosbag_record_cmd="rosbag record";
+  data->topicsList = GTK_LIST_STORE(gtk_builder_get_object (builder, "liststore_TopicList"));
+  data->cmd_line_entry = GTK_WIDGET(gtk_builder_get_object (builder, "entry_CommandLine"));
+  
   // Connect signals
   gtk_builder_connect_signals (builder, data);
 

@@ -43,6 +43,8 @@ extern "C" G_MODULE_EXPORT void on_button_ClearUAVTrack_clicked(GtkButton * butt
 extern "C" G_MODULE_EXPORT void on_button_OpenGpsdOptionPopup_clicked(GtkButton * button, AppData * data);
 extern "C" G_MODULE_EXPORT void on_button_CloseGpsdOptionPopup_clicked(GtkButton * button, AppData * data);
 extern "C" G_MODULE_EXPORT void on_combobox_MapProvider_changed(GtkComboBox * box, AppData * data);
-
+extern "C" G_MODULE_EXPORT void on_treeview2_topics_row_activated(GtkTreeView * test,GtkTreePath *path, GtkTreeViewColumn *column, AppData * data);
+extern "C" G_MODULE_EXPORT void on_button_UpdateTopicList_clicked(GtkButton * button, AppData * data);
+extern "C" G_MODULE_EXPORT void on_entry_Prefix_activate(GtkEntry * entry, AppData * data);
 
 #endif
