@@ -14,6 +14,7 @@ LaserHeightEstimation::LaserHeightEstimation()
 
   initialized_ = false;
   floorHeight_ = 0.0;
+  prevHeight_ = 0.0;
 
   ros::NodeHandle nh;
   ros::NodeHandle nh_private("~");
@@ -93,15 +94,17 @@ void LaserHeightEstimation::scanCallback(const sensor_msgs::LaserScanConstPtr& s
   // **** estimate height
 
   double rawHeight = sum / validRanges;
-  double height;
 
   if (initialized_)
   {
-    if (abs(rawHeight - prevHeight_) > 0.10)
+    if (abs(rawHeight - prevHeight_) > 0.05)
+    {
       floorHeight_ += (prevHeight_ - rawHeight);
+      printf ("%f\n", floorHeight_); 
+    }
   }
 
-  height = rawHeight - floorHeight_;
+  double height = rawHeight - floorHeight_;
   prevHeight_ = height;
 
   // **** publish height message
