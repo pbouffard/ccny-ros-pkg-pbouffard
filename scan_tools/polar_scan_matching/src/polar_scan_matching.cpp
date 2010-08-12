@@ -202,16 +202,12 @@ void PolarScanMatching::scanCallback (const sensor_msgs::LaserScan& scan)
 void PolarScanMatching::publishTf(const btTransform& transform, 
                                   const ros::Time& time)
 {
-  ROS_INFO("Publishing TF");
-
   tf::StampedTransform transformMsg (transform, time, worldFrame_, baseFrame_);
   tfBroadcaster_.sendTransform (transformMsg);
 }
 
 void PolarScanMatching::publishPose(const btTransform& transform)
 {
-  ROS_INFO("Publishing POSE");
-
   geometry_msgs::Pose2D pose;
   tfToPose2D(transform, pose);
 
