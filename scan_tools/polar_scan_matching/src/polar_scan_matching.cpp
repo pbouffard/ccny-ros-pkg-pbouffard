@@ -182,7 +182,7 @@ void PolarScanMatching::scanCallback (const sensor_msgs::LaserScan& scan)
   if (publishTf_  ) publishTf  (currWorldToBase, scan.header.stamp);
   if (publishPose_) publishPose(currWorldToBase);
 
-  printf("x, y: %f, %f\n", currWorldToBase.getOrigin().getX(), 
+  printf("tf x, y: %f, %f\n", currWorldToBase.getOrigin().getX(), 
                            currWorldToBase.getOrigin().getY());
 
   // **** swap old and new
@@ -227,6 +227,8 @@ void PolarScanMatching::rosToPMScan(const sensor_msgs::LaserScan& scan,
 {
   geometry_msgs::Pose2D pose;
   tfToPose2D(change, pose);
+
+  printf("pose x, y: %f, %f\n", pose.x, pose.y);
 
   // FIXME: rotate x & y by 90 degree?
 
