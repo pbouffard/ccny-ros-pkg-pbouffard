@@ -162,7 +162,7 @@ void PolarScanMatching::scanCallback (const sensor_msgs::LaserScan& scan)
 
   // **** calculate change in position
 
-  // rotate by 90 degrees, since polar scan matcher assumes different laser frame
+  // rotate by -90 degrees, since polar scan matcher assumes different laser frame
   // and scale down by 100
   double dx =  currPMScan->ry / ROS_TO_PM;
   double dy = -currPMScan->rx / ROS_TO_PM;
@@ -220,6 +220,8 @@ void PolarScanMatching::rosToPMScan(const sensor_msgs::LaserScan& scan,
 {
   geometry_msgs::Pose2D pose;
   tfToPose2D(change, pose);
+
+  printf("x, y: %f, %f\n", pose.x, pose.y);
 
   pmScan->rx = pose.x;
   pmScan->ry = pose.y;
