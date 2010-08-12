@@ -177,7 +177,7 @@ void PolarScanMatching::scanCallback (const sensor_msgs::LaserScan& scan)
   
   // **** publish the new estimated pose as a tf
    
-  currWorldToBase = currWorldToBase * baseToLaser_ * change * laserToBase_;
+  currWorldToBase = prevWorldToBase_ * baseToLaser_ * change * laserToBase_;
 
   if (publishTf_  ) publishTf  (currWorldToBase, scan.header.stamp);
   if (publishPose_) publishPose(currWorldToBase);
