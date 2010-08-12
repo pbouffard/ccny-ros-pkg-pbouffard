@@ -12,7 +12,8 @@ LaserHeightEstimation::LaserHeightEstimation()
 {
 	ROS_INFO("Starting LaserHeightEstimation"); 
 
-  scanReceived_ = false;
+  initialized_ = false;
+  floorHeight_ = 0.0;
 
   ros::NodeHandle nh;
   ros::NodeHandle nh_private("~");
@@ -45,7 +46,7 @@ void LaserHeightEstimation::scanCallback(const sensor_msgs::LaserScanConstPtr& s
 {
   ROS_DEBUG("Received scan");
 
-  if (!scanReceived_)
+  if (!initialized_)
   {
     // if this is the first scan, lookup the static base to lase tf
     // if tf is not available yet, skip this scan
@@ -89,18 +90,32 @@ void LaserHeightEstimation::scanCallback(const sensor_msgs::LaserScanConstPtr& s
     }
   }
 
+  // **** estimate height
+
+  double rawHeight = sum / validRanges;
+  double height;
+
+  if (initialized_)
+  {
+    if (abs(rawHeight - prevHeight_) > 10)
+      floorHeight_ += (prevHeight_ - rawHeight);
+  }
+
+  height = rawHeight - floorHeight_;
+  prevHeight_ = height;
+
   // **** publish height message
 
   if (validRanges > 0)
   {
-    double ave = sum / validRanges;
-
     asctec_msgs::Height heightMsg;
 
-    heightMsg.height = ave;
+    heightMsg.height = height;
     heightMsg.height_variance = 0;
     heightPublisher_.publish(heightMsg);
   }
+
+  initialized_ = true;
 }
 
 bool LaserHeightEstimation::setBaseToLaserTf(const sensor_msgs::LaserScanConstPtr& scan)

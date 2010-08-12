@@ -24,7 +24,10 @@ class LaserHeightEstimation
 
     boost::mutex imuMutex_;
     sensor_msgs::Imu lastImuMsg_;
-    bool scanReceived_;
+
+    bool initialized_;
+    double prevHeight_;
+    double floorHeight_;
 
     btTransform baseToLaser_;
 
