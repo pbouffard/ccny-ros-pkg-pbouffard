@@ -12,5 +12,7 @@
 
   <include file="$(find pelican_launch)/launch/pose_estimation.launch"/>
 
+  <include file="$(find pelican_launch)/launch/pcm_scanmatcher.launch"/>
+
 </launch>
 

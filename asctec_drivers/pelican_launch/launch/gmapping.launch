@@ -36,7 +36,7 @@
     <param name="ymin" value="-40.0"/>
     <param name="xmax" value="40.0"/>
     <param name="ymax" value="40.0"/>
-    <param name="delta" value="0.02"/>
+    <param name="delta" value="0.04"/>
     <param name="llsamplerange" value="0.01"/>
     <param name="llsamplestep" value="0.01"/>
     <param name="lasamplerange" value="0.005"/>
@@ -48,7 +48,7 @@
     <param name="odom_frame" value="/odom"/>
     <param name="laser_frame" value="/laser_ortho"/>
 
-    <param name="map_update_interval" value="3.0"/>
+    <param name="map_update_interval" value="1.0"/>
   </node>
 
 
