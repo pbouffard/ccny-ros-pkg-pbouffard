@@ -223,6 +223,8 @@ void PolarScanMatching::rosToPMScan(const sensor_msgs::LaserScan& scan,
 
   printf("x, y: %f, %f\n", pose.x, pose.y);
 
+  // FIXME: rotate x & y by 90 degree?
+
   pmScan->rx = pose.x;
   pmScan->ry = pose.y;
   pmScan->th = pose.theta;
@@ -266,6 +268,11 @@ void PolarScanMatching::getCurrentEstimatedPose(btTransform& worldToBase,
   }
 
   worldToBase = worldToBaseTf;
+
+  // remove z, roll, pitch
+  geometry_msgs::Pose2D pose;
+  tfToPose2D(worldToBase, pose);
+  pose2DToTf(pose, worldToBase);
 }
 
 void PolarScanMatching::pose2DToTf(const geometry_msgs::Pose2D& pose, btTransform& t)
