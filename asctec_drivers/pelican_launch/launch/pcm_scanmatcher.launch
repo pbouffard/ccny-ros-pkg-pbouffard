@@ -1,6 +1,7 @@
 <launch>
   <node pkg="polar_scan_matching" type="polar_scan_matching" name="polar_scan_matching" output="screen">
     <param name="max_error" value="0.15"/>
+    <param name="publish_tf" type="bool" value="false"/>
 
     <remap from="/scan" to="/splitter/mvs"/>   
   </node>
