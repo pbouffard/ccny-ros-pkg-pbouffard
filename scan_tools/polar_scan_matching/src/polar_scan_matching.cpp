@@ -73,7 +73,7 @@ bool PolarScanMatching::initialize(const sensor_msgs::LaserScan& scan)
   baseToLaser_ = baseToLaserTf;
   laserToBase_ = baseToLaser_.inverse();
 
-  // pass parameters to matcher and initialise
+  // **** pass parameters to matcher and initialise
 
   matcher_.PM_L_POINTS         = scan.ranges.size();
 
@@ -93,7 +93,11 @@ bool PolarScanMatching::initialize(const sensor_msgs::LaserScan& scan)
 
   matcher_.pm_init();
 
-  // create the first pm scan from the laser scan message
+  // **** get the initial worldToBase tf
+
+  getCurrentEstimatedPose(prevWorldToBase_, scan);
+
+  // **** create the first pm scan from the laser scan message
 
   btTransform t;
   t.setIdentity();
