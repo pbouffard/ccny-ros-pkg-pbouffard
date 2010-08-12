@@ -232,9 +232,13 @@ void PolarScanMatching::rosToPMScan(const sensor_msgs::LaserScan& scan,
 
   // FIXME: rotate x & y by 90 degree?
 
-  pmScan->rx = pose.x * ROS_TO_PM;
-  pmScan->ry = pose.y * ROS_TO_PM;
-  pmScan->th = pose.theta;
+  //pmScan->rx = pose.x * ROS_TO_PM;
+  //pmScan->ry = pose.y * ROS_TO_PM;
+  //pmScan->th = pose.theta;
+
+  pmScan->rx = 0;
+  pmScan->ry = 0;
+  pmScan->th = 0;
 
   for (int i = 0; i < scan.ranges.size(); ++i)
   {
