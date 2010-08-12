@@ -142,8 +142,11 @@ void PolarScanMatching::scanCallback (const sensor_msgs::LaserScan& scan)
   prevPMScan_->ry = 0;
   prevPMScan_->th = 0; 
 
-  btTransform change = 
-    laserToBase_ * prevWorldToBase_.inverse() * currWorldToBase * baseToLaser_;
+//  btTransform change = 
+//    laserToBase_ * prevWorldToBase_.inverse() * currWorldToBase * baseToLaser_;
+
+  btTransform change;
+  change.setIdentity();
 
   PMScan * currPMScan = new PMScan(scan.ranges.size());
   rosToPMScan(scan, change, currPMScan);
