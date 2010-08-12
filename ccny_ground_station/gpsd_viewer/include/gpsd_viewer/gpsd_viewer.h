@@ -32,13 +32,21 @@
 
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
-#include <osmgpsmap/osm-gps-map.h>
+#include <osm-gps-map.h>
 #include <gpsd_viewer/gui/AppData.h>
+#include <gpsd_viewer/gui/gpsd_viewer_osd.h>
 
-pthread_t rosThread;
-pthread_t guiThread;
+/**
+ * @struct arg
+ * @brief Allow to pass the arguments of the program to a pthread.<br>
+ * Allow to use ROS params even ROS is in a child thread of Gtk.
+ */
+struct arg
+{
+  int argc;
+  char **argv;
+};
 
-void *startGUI (void *);
 void *startROS (void *);
 void gpsOdomCallback (const nav_msgs::Odometry::ConstPtr &);
 

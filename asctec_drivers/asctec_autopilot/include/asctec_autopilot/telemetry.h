@@ -22,9 +22,14 @@
 #ifndef ASCTEC_AUTOPILOT_TELEMETRY_H
 #define ASCTEC_AUTOPILOT_TELEMETRY_H
 
-#include "asctec_msgs/IMUCalcData.h"
 #include "asctec_msgs/LLStatus.h"
+#include "asctec_msgs/IMURawData.h"
+#include "asctec_msgs/IMUCalcData.h"
+#include "asctec_msgs/RCData.h"
+#include "asctec_msgs/ControllerOutput.h"
 #include "asctec_msgs/GPSData.h"
+#include "asctec_msgs/GPSDataAdvanced.h"
+#include "asctec_msgs/CtrlInput.h"
 
 namespace asctec
 {
@@ -44,7 +49,6 @@ namespace asctec
     };
   }
   typedef RequestTypes::RequestType RequestType;
-
 
 /**
  * \brief Telemetry interface for the AscTec AutoPilot.
@@ -108,22 +112,34 @@ namespace asctec
     void enablePolling (RequestType msg, uint8_t interval = 1, uint8_t offset = 0);
     std::string requestToString(RequestTypes::RequestType t);
     void publishPackets();
-    
+
+    void enableControl (uint8_t interval = 1, uint8_t offset = 0);
+        
     void dumpLL_STATUS();
     void dumpIMU_RAWDATA();
     void dumpIMU_CALCDATA();
     void dumpRC_DATA();
+    void dumpCONTROLLER_OUTPUT();
     void dumpGPS_DATA();
+    void dumpGPS_DATA_ADVANCED();
+    void dumpCTRL_INPUT();
 
     void copyLL_STATUS();
-//    void copyIMU_RAWDATA();
+    void copyIMU_RAWDATA();
     void copyIMU_CALCDATA();
-//    void copyRC_DATA();
+    void copyRC_DATA();
+    void copyCONTROLLER_OUTPUT();
     void copyGPS_DATA();
+    void copyGPS_DATA_ADVANCED();
+    void copyCTRL_INPUT();
     
     bool pollingEnabled_;
+    bool controlEnabled_;
     uint16_t requestCount_;
+    uint16_t controlCount_;
     std::bitset < 16 > requestPackets_;
+
+
     
     static const uint8_t REQUEST_TYPES = 9;
 /*
@@ -134,6 +150,11 @@ namespace asctec
     uint8_t requestInterval_[REQUEST_TYPES];
     uint8_t requestOffset_[REQUEST_TYPES];
     ros::Publisher requestPublisher_[REQUEST_TYPES];
+    ros::Time timestamps_[REQUEST_TYPES];
+
+    uint8_t controlInterval_;
+    uint8_t controlOffset_;
+    ros::Publisher controlPublisher_;
 
     //packet descriptors
     static const uint8_t PD_IMURAWDATA = 0x01;
@@ -155,6 +176,12 @@ namespace asctec
     static const uint8_t PD_CURRENTWAY = 0x21;
     static const uint8_t PD_NMEADATA = 0x22;
     static const uint8_t PD_GPSDATA = 0x23;
+    static const uint8_t PD_SINGLEWAYPOINT = 0x24;
+    static const uint8_t PD_GOTOCOMMAND = 0x25;
+    static const uint8_t PD_LAUNCHCOMMAND = 0x26;
+    static const uint8_t PD_LANDCOMMAND = 0x27;
+    static const uint8_t PD_HOMECOMMAND = 0x28;
+    static const uint8_t PD_GPSDATAADVANCED = 0x29;
 
     static const uint8_t PD_CAMERACOMMANDS = 0x30;
 
@@ -245,26 +272,46 @@ namespace asctec
       int height_reference;
     };
 
+    struct RC_DATA
+    {
+      //channels as read from R/C receiver
+      unsigned short channels_in[8];
+      //channels bias free, remapped and scaled to 0..4095
+      unsigned short channels_out[8];
+      //Indicator for valid R/C receiption
+      unsigned char lock;
+    };
+
+    struct CONTROLLER_OUTPUT
+    {
+      //attitude controller outputs; 0..200 = -100 ..+100%
+      int nick;
+      int roll;
+      int yaw;
+      //current thrust (height controller output); 0..200 = 0..100%
+      int thrust;
+    };
+
     struct GPS_DATA
     {
       //latitude/longitude in deg * 10ˆ7
-      int32_t latitude;
-      int32_t longitude;
+      int latitude;
+      int longitude;
       //GPS height in mm
-      int32_t height;
+      int height;
       //speed in x (E/W) and y(N/S) in mm/s
-      int32_t speed_x;
-      int32_t speed_y;
+      int speed_x;
+      int speed_y;
       //GPS heading in deg * 1000
-      int32_t heading;
+      int heading;
       //accuracy estimates in mm and mm/s
-      uint32_t horizontal_accuracy;
-      uint32_t vertical_accuracy;
-      uint32_t speed_accuracy;
+      unsigned int horizontal_accuracy;
+      unsigned int vertical_accuracy;
+      unsigned int speed_accuracy;
       //number of satellite vehicles used in NAV solution
-      uint32_t numSV;
+      unsigned int numSV;
       // GPS status information; 0x03 = valid GPS fix
-      int32_t status;
+      int status;
     };
 
     struct GPS_DATA_ADVANCED
@@ -288,32 +335,12 @@ namespace asctec
 
       //GPS status information; 0x03 = valid GPS fix
       int status;
-      //coordinates of current origin in deg * 10ˆ7
+      //coordinates of current origin in deg * 10ˆ7RCData_
       int latitude_best_estimate;
       int longitude_best_estimate;
       //velocities in X (E/W) and Y (N/S) after data fusion
       int speed_x_best_estimate;
       int speed_y_best_estimate;
-    };
-
-    struct RC_DATA
-    {
-      //channels as read from R/C receiver
-      unsigned short channels_in[8];
-      //channels bias free, remapped and scaled to 0..4095
-      unsigned short channels_out[8];
-      //Indicator for valid R/C receiption
-      unsigned char lock;
-    };
-
-    struct CONTROLLER_OUTPUT
-    {
-      //attitude controller outputs; 0..200 = -100 ..+100%
-      int nick;
-      int roll;
-      int yaw;
-      //current thrust (height controller output); 0..200 = 0..100%
-      int thrust;
     };
 
     struct WAYPOINT
@@ -342,6 +369,29 @@ namespace asctec
       //height over 0 reference in mm
       int height;
     };
+    struct CTRL_INPUT
+    {
+        //serial commands (= Scientific Interface)
+        //pitch input: -2047..2047 (0=neutral)
+        short pitch;
+        //roll input: -2047..2047 (0=neutral)
+        short roll;
+        //R/C stick input: -2047..2047 (0=neutral)
+        short yaw;
+        //collective: 0..4095 = 0..100%
+        short thrust;
+        //control byte:
+        //  bit 0: pitch control enabled
+        //  bit 1: roll control enabled
+        //  bit 2: yaw control enabled
+        //  bit 3: thrust control enabled
+        //  These bits can be used to only enable one axis at a time and thus to
+        //  control the other axes manually. This usually helps a lot to set up
+        //  and finetune controllers for each axis seperately.
+        short ctrl;
+        short chksum;
+    };
+    //}__attribute__((__packed__));
 
 /*
 
@@ -378,9 +428,15 @@ You will receive an acknowledge if a command or a waypoint was received correctl
     struct GPS_DATA GPS_DATA_;
     struct WAYPOINT WAYPOINT_;
     struct GPS_DATA_ADVANCED GPS_DATA_ADVANCED_;
+    struct CTRL_INPUT CTRL_INPUT_;
     asctec_msgs::LLStatus LLStatus_;
+    asctec_msgs::IMURawData IMURawData_;
     asctec_msgs::IMUCalcData IMUCalcData_;
+    asctec_msgs::RCData RCData_;
+    asctec_msgs::ControllerOutput ControllerOutput_;
     asctec_msgs::GPSData GPSData_;
+    asctec_msgs::GPSDataAdvanced GPSDataAdvanced_;
+    asctec_msgs::CtrlInput CtrlInput_;
     
   };                            // end class Telemetry
 }                               //end namespace asctec
