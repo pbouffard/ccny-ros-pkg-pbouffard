@@ -26,6 +26,7 @@ class LaserHeightEstimation
     sensor_msgs::Imu lastImuMsg_;
 
     bool initialized_;
+    bool haveFloorReference_;
     double prevHeight_;
     double floorHeight_;
 
@@ -50,6 +51,11 @@ class LaserHeightEstimation
 		void scanCallback(const sensor_msgs::LaserScanConstPtr& scan);
 
     bool setBaseToLaserTf(const sensor_msgs::LaserScanConstPtr& scan);
+
+    void getStats(const std::vector<double> values, double& ave, double& stdev);
+
+    void getWorldToBaseTf(const sensor_msgs::LaserScanConstPtr& scan,
+                                btTransform& worldToLaser);
 
 	public:
   

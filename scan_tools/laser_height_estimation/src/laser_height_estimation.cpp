@@ -12,9 +12,10 @@ LaserHeightEstimation::LaserHeightEstimation()
 {
 	ROS_INFO("Starting LaserHeightEstimation"); 
 
-  initialized_ = false;
-  floorHeight_ = 0.0;
-  prevHeight_ = 0.0;
+  initialized_        = false;
+  haveFloorReference_ = false;
+  floorHeight_        = 0.0;
+  prevHeight_         = 0.0;
 
   ros::NodeHandle nh;
   ros::NodeHandle nh_private("~");
@@ -52,30 +53,19 @@ void LaserHeightEstimation::scanCallback(const sensor_msgs::LaserScanConstPtr& s
     // if this is the first scan, lookup the static base to lase tf
     // if tf is not available yet, skip this scan
     if (!setBaseToLaserTf(scan)) return;
+    initialized_ = true;
   }
 
-  tf::StampedTransform worldToBaseTf;
-  try
-  {
-     tfListener_.lookupTransform (worldFrame_, baseFrame_, scan->header.stamp, worldToBaseTf);
-  }
-  catch (tf::TransformException ex)
-  {
-    // transform unavailable - skip scan
-    ROS_WARN("Transform unavailable, skipping scan (%s)", ex.what());
-    return;
-  }
-  btTransform worldToBase = worldToBaseTf;
+  // **** get required transforms
 
+  btTransform worldToBase;
+  getWorldToBaseTf(scan, worldToBase);
+  btVector3 basePose  = worldToBase  * btVector3(0,0,0);
   btTransform worldToLaser = worldToBase * baseToLaser_;
 
-  btVector3 basePose  = worldToBase  * btVector3(0,0,0);
-
-  // **** calculate
+  // **** get vector of height values
   
-  double sum = 0.0;
-  int validRanges = 0;
-
+  std::vector<double> values;
   for(unsigned int i = 0; i < scan->ranges.size(); i++)
   {
     if (scan->ranges[i] > scan->range_min && scan->ranges[i] < scan->range_max)
@@ -86,21 +76,27 @@ void LaserHeightEstimation::scanCallback(const sensor_msgs::LaserScanConstPtr& s
       
       double diff = basePose.getZ() -  p.getZ();
 
-      validRanges++;
-      sum += diff;
+      values.push_back(diff);
     }
   }
 
+  double rawHeight, stdev;
+  getStats(values, rawHeight, stdev);
+  
+  ROS_INFO("Height: %f, %f", rawHeight, stdev);
+
   // **** estimate height
-
-  double rawHeight = sum / validRanges;
-
-  if (initialized_)
+  
+  if (!haveFloorReference_)
+  {
+    floorHeight_ = 0.0;
+    haveFloorReference_ = true;
+  }
+  else
   {
     if (abs(rawHeight - prevHeight_) > 0.05)
     {
       floorHeight_ += (prevHeight_ - rawHeight);
-      printf ("%f\n", floorHeight_); 
     }
   }
 
@@ -109,7 +105,7 @@ void LaserHeightEstimation::scanCallback(const sensor_msgs::LaserScanConstPtr& s
 
   // **** publish height message
 
-  if (validRanges > 0)
+  if (values.size() > 0)
   {
     asctec_msgs::Height heightMsg;
 
@@ -117,8 +113,6 @@ void LaserHeightEstimation::scanCallback(const sensor_msgs::LaserScanConstPtr& s
     heightMsg.height_variance = 0;
     heightPublisher_.publish(heightMsg);
   }
-
-  initialized_ = true;
 }
 
 bool LaserHeightEstimation::setBaseToLaserTf(const sensor_msgs::LaserScanConstPtr& scan)
@@ -139,4 +133,37 @@ bool LaserHeightEstimation::setBaseToLaserTf(const sensor_msgs::LaserScanConstPt
   
   baseToLaser_ = baseToLaserTf;
   return true;
+}
+
+void LaserHeightEstimation::getStats(const std::vector<double> values, double& ave, double& stdev)
+{
+  double sum   = 0.0;
+  double sumsq = 0.0;
+
+  for (size_t i = 0; i < values.size(); ++i)
+    sum += values[i];
+
+  ave = sum/values.size();
+
+  for (size_t i = 0; i < values.size(); ++i)
+    sumsq += (values[i] - ave) * (values[i] - ave);
+
+  stdev = sqrt(sumsq/values.size());
+}
+
+void LaserHeightEstimation::getWorldToBaseTf(const sensor_msgs::LaserScanConstPtr& scan,
+                                                    btTransform& worldToBase)
+{
+  tf::StampedTransform worldToBaseTf;
+  try
+  {
+     tfListener_.lookupTransform (worldFrame_, baseFrame_, scan->header.stamp, worldToBaseTf);
+  }
+  catch (tf::TransformException ex)
+  {
+    // transform unavailable - skip scan
+    ROS_WARN("Transform unavailable, skipping scan (%s)", ex.what());
+    return;
+  }
+  worldToBase = worldToBaseTf;
 }
