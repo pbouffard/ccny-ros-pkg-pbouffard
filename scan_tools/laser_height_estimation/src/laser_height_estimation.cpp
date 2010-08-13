@@ -93,14 +93,18 @@ void LaserHeightEstimation::scanCallback(const sensor_msgs::LaserScanConstPtr& s
 
   // **** estimate height
   
+  double height;
+
   if (!haveFloorReference_)
   {
     floorHeight_ = 0.0;
     haveFloorReference_ = true;
+
+    height = rawHeight;
   }
   else
   {
-    double height = rawHeight - floorHeight_;
+    height = rawHeight - floorHeight_;
 
     if (fabs(height - prevHeight_) > 0.05)
     {
