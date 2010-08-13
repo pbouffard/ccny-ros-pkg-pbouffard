@@ -109,7 +109,7 @@ bool PolarScanMatching::initialize(const sensor_msgs::LaserScan& scan)
 
 void PolarScanMatching::scanCallback (const sensor_msgs::LaserScan& scan)
 {
-  ROS_INFO("Received scan");
+  ROS_DEBUG("Received scan");
   scansCount_++;
 
   struct timeval start, end;
@@ -196,7 +196,7 @@ void PolarScanMatching::scanCallback (const sensor_msgs::LaserScan& scan)
   totalDuration_ += dur;
   double ave = totalDuration_/scansCount_;
 
-  printf("dur:\t %.3f ms \t ave:\t %.3f ms\n", dur, ave);
+  ROS_DEBUG("dur:\t %.3f ms \t ave:\t %.3f ms", dur, ave);
 }
 
 void PolarScanMatching::publishTf(const btTransform& transform, 
