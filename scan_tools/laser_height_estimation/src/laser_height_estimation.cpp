@@ -100,14 +100,16 @@ void LaserHeightEstimation::scanCallback(const sensor_msgs::LaserScanConstPtr& s
   }
   else
   {
-    if (fabs(rawHeight - prevHeight_) > 0.05)
+    double height = rawHeight - floorHeight_;
+
+    if (fabs(height - prevHeight_) > 0.05)
     {
       printf("*********************************************\n");
       floorHeight_ += (prevHeight_ - rawHeight);
+      height = prevHeight_;
     }
   }
 
-  double height = rawHeight - floorHeight_;
   prevHeight_ = height;
 
   // **** publish height message
