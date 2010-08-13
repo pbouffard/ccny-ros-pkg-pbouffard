@@ -82,8 +82,14 @@ void LaserHeightEstimation::scanCallback(const sensor_msgs::LaserScanConstPtr& s
 
   double rawHeight, stdev;
   getStats(values, rawHeight, stdev);
-  
-  ROS_INFO("Height: %f, %f", rawHeight, prevHeight_);
+ 
+  ROS_INFO("Height: %f, %f, %f", rawHeight, prevHeight_, stdev);
+
+  if (values.size() < 5 || stdev > 0.10)
+  {
+    ROS_WARN("Not enough information to determine height, skipping");
+    return;
+  }
 
   // **** estimate height
   
@@ -96,7 +102,7 @@ void LaserHeightEstimation::scanCallback(const sensor_msgs::LaserScanConstPtr& s
   {
     if (fabs(rawHeight - prevHeight_) > 0.05)
     {
-      printf("*********************************************");
+      printf("*********************************************\n");
       floorHeight_ += (prevHeight_ - rawHeight);
     }
   }
