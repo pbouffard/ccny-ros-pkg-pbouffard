@@ -105,6 +105,15 @@ public:
   const char *friendly_name;
   char *cachedir;
 
+  // -------------------------------------------------------------------
+  // -------------------------------------------------------------------
+  // **** Tab 3: ROSBag Record
+  GtkListStore *topicsList;
+  GtkWidget * cmd_line_entry;
+  char * rosbag_record_cmd;
+  char * file_prefix;
+  char cmd_line[255];
+  char list_topic[255];
 
 };
 

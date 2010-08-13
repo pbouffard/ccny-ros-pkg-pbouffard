@@ -1,0 +1,18 @@
+<package>
+  <description brief="laser_height_estimation">
+
+     laser_height_estimation
+
+  </description>
+  <author>Ivan Dryanovski</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/laser_height_estimation</url>
+  <depend package="tf"/>
+  <depend package="roscpp"/>
+  <depend package="sensor_msgs"/>
+  <depend package="asctec_msgs"/>
+  <depend package="geometry_msgs"/>
+</package>
+
+

@@ -1,0 +1,17 @@
+<package>
+  <description brief="polar_scan_matching">
+
+     polar_scan_matching
+
+  </description>
+  <author>Ivan Dryanovski</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/polar_scan_matching</url>
+  <depend package="tf"/>
+  <depend package="roscpp"/>
+  <depend package="sensor_msgs"/>
+  <depend package="geometry_msgs"/>
+</package>
+
+

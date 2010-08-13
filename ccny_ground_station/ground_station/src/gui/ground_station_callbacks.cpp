@@ -55,6 +55,89 @@ extern "C" G_MODULE_EXPORT void on_button_ClearUAVTrack_clicked(GtkButton * butt
    	osm_gps_map_track_add(data->map, data->uav_track);
 }
 
+extern "C" G_MODULE_EXPORT void on_button_UpdateTopicList_clicked(GtkButton * button, AppData * data)
+{
+  GtkTreeIter iter;
+  GValue topic_name = {0}, topic_selected = {0};
+  char topics_list[255];
+  char * pch;
+  
+  g_value_init (&topic_name, G_TYPE_STRING);
+  g_value_init (&topic_selected, G_TYPE_BOOLEAN);
+  
+  gtk_list_store_clear(GTK_LIST_STORE(data->topicsList));  
+  
+  FILE * topics = popen("rostopic list","r");
+  
+  while (fgets(topics_list, sizeof(topics_list), topics))
+  {
+	   pch=strchr(topics_list,'\n');
+	   topics_list[pch-topics_list]=' ';
+	   
+		g_value_set_string (&topic_name, topics_list);
+		g_value_set_boolean (&topic_selected, FALSE);
+		
+		gtk_list_store_append (GTK_LIST_STORE(data->topicsList), &iter);
+		gtk_list_store_set_value (GTK_LIST_STORE(data->topicsList), &iter, 0, &topic_name);
+		gtk_list_store_set_value (GTK_LIST_STORE(data->topicsList), &iter, 1, &topic_selected);    
+  }
+  pclose(topics);
+   
+}
+
+extern "C" G_MODULE_EXPORT void on_treeview2_topics_row_activated(GtkTreeView * test,GtkTreePath *path, GtkTreeViewColumn *column, AppData * data)
+{
+  GValue topic_name = {0, }, topic_selected = {0, };
+  GtkTreeIter iter;
+  gboolean valid;
+
+  // **** change the state of topic corresponding to the row
+  gtk_tree_model_get_iter (GTK_TREE_MODEL (data->topicsList), &iter, path);
+  gtk_tree_model_get_value (GTK_TREE_MODEL (data->topicsList), &iter, 1,&topic_selected);
+  if(g_value_get_boolean(&topic_selected))
+		gtk_list_store_set (data->topicsList, &iter, 1, FALSE, -1);
+  else
+  		gtk_list_store_set (data->topicsList, &iter, 1, TRUE, -1);
+  g_value_unset(&topic_selected);
+  	
+  // **** generates list of topic to be recorded
+  data->list_topic[0]='\0'; 
+  valid = gtk_tree_model_get_iter_first (GTK_TREE_MODEL (data->topicsList), &iter);
+  while (valid)
+  {
+      gtk_tree_model_get_value (GTK_TREE_MODEL (data->topicsList), &iter,0, &topic_name);
+ 	   gtk_tree_model_get_value (GTK_TREE_MODEL (data->topicsList), &iter,1, &topic_selected);
+ 	   
+ 	   if(g_value_get_boolean(&topic_selected))
+			if(strcmp(g_value_get_string(&topic_name),"")==0)
+				sprintf(data->list_topic,"%s",g_value_get_string(&topic_name));
+			else
+				sprintf(data->list_topic,"%s%s",data->list_topic,g_value_get_string(&topic_name));
+			
+      valid = gtk_tree_model_iter_next (GTK_TREE_MODEL (data->topicsList), &iter);
+      g_value_unset(&topic_name);  		
+      g_value_unset(&topic_selected);  	
+  }
+  
+  sprintf(data->cmd_line,"%s %s",data->rosbag_record_cmd,data->list_topic);
+  gtk_entry_set_text(GTK_ENTRY(data->cmd_line_entry),data->cmd_line);
+}
+
+extern "C" G_MODULE_EXPORT void on_entry_Prefix_activate(GtkEntry * entry, AppData * data)
+{
+  data->file_prefix=(char*)gtk_entry_get_text (entry);
+  if(!strcmp(data->file_prefix,"")==0)
+  {
+		sprintf(data->cmd_line,"%s -o %s %s",data->rosbag_record_cmd,data->file_prefix,data->list_topic);
+		gtk_entry_set_text(GTK_ENTRY(data->cmd_line_entry),data->cmd_line);
+  }
+}
+
+extern "C" G_MODULE_EXPORT void on_button_RecordPause_clicked(GtkButton * button, AppData * data)
+{
+	//~ gtk_button_set_image(button,gtk-media-stop);
+}
+
 extern "C" G_MODULE_EXPORT void on_button_OpenGpsdOptionPopup_clicked(GtkButton * button, AppData * data)
 {
   gtk_container_remove(GTK_CONTAINER(data->box_gpsd_viewer),GTK_WIDGET (data->btn_gpsd_option_popup));

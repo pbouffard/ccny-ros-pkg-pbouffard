@@ -10,7 +10,6 @@ int main (int argc, char **argv)
 
 namespace asctec
 {
-
   AsctecProc::AsctecProc ()
   {
     ROS_INFO ("Starting AsctecProc");
@@ -105,3 +104,4 @@ namespace asctec
   }
 
 }                               // end namespace asctec
+
