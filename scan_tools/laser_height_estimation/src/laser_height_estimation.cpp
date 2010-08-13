@@ -83,7 +83,7 @@ void LaserHeightEstimation::scanCallback(const sensor_msgs::LaserScanConstPtr& s
   double rawHeight, stdev;
   getStats(values, rawHeight, stdev);
   
-  ROS_INFO("Height: %f, %f", rawHeight, stdev);
+  ROS_INFO("Height: %f, %f", rawHeight, prevHeight_);
 
   // **** estimate height
   
