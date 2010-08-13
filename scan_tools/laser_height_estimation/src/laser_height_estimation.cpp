@@ -110,7 +110,7 @@ void LaserHeightEstimation::scanCallback(const sensor_msgs::LaserScanConstPtr& s
     {
       printf("*********************************************\n");
       floorHeight_ += (prevHeight_ - rawHeight);
-      height = prevHeight_;
+      height = rawHeight + prevHeight_ ;
     }
   }
 
