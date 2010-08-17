@@ -165,7 +165,7 @@ namespace asctec
     serialInterface_->serialport_bytes_tx_ = 0;
     telemetry_->buildRequest ();
     telemetry_->requestCount_++;
-    if (telemetry_->requestPackets_.count > 0 )
+    if (telemetry_->requestPackets_.count() > 0 )
     {
       serialInterface_->getPackets (telemetry_);
     }
