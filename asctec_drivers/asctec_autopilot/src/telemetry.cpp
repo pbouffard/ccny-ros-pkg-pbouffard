@@ -1,8 +1,11 @@
 /*
  *  AscTec Autopilot Telemetry
  *  Copyright (C) 2010, CCNY Robotics Lab
- *  Ivan Dryanovski <ivan.dryanovski@gmail.com>
  *  William Morris <morris@ee.ccny.cuny.edu>
+ *  Ivan Dryanovski <ivan.dryanovski@gmail.com>
+ *  Steven Bellens <steven.bellens@mech.kuleuven.be>
+ *  Patrick Bouffard <bouffard@eecs.berkeley.edu>
+ *
  *  http://robotics.ccny.cuny.edu
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -162,11 +165,11 @@ namespace asctec
     pollingEnabled_ = true;
   }
 
-  void Telemetry::enableControl (uint8_t interval, uint8_t offset)
+  void Telemetry::enableControl (Telemetry * telemetry_, uint8_t interval, uint8_t offset)
   {
     ros::NodeHandle nh_private ("~");
-    controlPublisher_ = nh_private.advertise < asctec_msgs::CtrlInput > ("CTRL_INPUT", 10);
-    ROS_INFO ("Publishing %s data on topics: %s", "CTRL_INPUT", "CTRL_INPUT");
+    controlSubscriber_ = nh_private.subscribe("CTRL_INPUT", 10, &Telemetry::copyCTRL_INPUT, telemetry_);
+    ROS_INFO("Listening to %s data on topic: %s", "CTRL_INPUT","CTRL_INPUT");
     ROS_DEBUG ("Telemetry::enableCommanding()");
     controlInterval_ = interval;
     controlOffset_ = offset;
@@ -457,5 +460,14 @@ namespace asctec
     GPSDataAdvanced_.longitude_best_estimate = GPS_DATA_ADVANCED_.longitude_best_estimate;
     GPSDataAdvanced_.speed_x_best_estimate = GPS_DATA_ADVANCED_.speed_x_best_estimate;
     GPSDataAdvanced_.speed_y_best_estimate = GPS_DATA_ADVANCED_.speed_y_best_estimate;
+  }
+  void Telemetry::copyCTRL_INPUT(asctec_msgs::CtrlInput msg){
+    CTRL_INPUT_.pitch = msg.pitch;
+    CTRL_INPUT_.roll = msg.roll;
+    CTRL_INPUT_.yaw = msg.yaw;
+    CTRL_INPUT_.thrust = msg.thrust;
+    CTRL_INPUT_.ctrl = msg.ctrl;
+    CTRL_INPUT_.chksum = msg.chksum;
+    //dumpCTRL_INPUT();
   }
 }

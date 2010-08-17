@@ -1,8 +1,11 @@
 /*
  *  AscTec Autopilot Interface
  *  Copyright (C) 2010, CCNY Robotics Lab
- *  Ivan Dryanovski <ivan.dryanovski@gmail.com>
  *  William Morris <morris@ee.ccny.cuny.edu>
+ *  Ivan Dryanovski <ivan.dryanovski@gmail.com>
+ *  Steven Bellens <steven.bellens@mech.kuleuven.be>
+ *  Patrick Bouffard <bouffard@eecs.berkeley.edu>
+ *
  *  http://robotics.ccny.cuny.edu
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -41,7 +44,7 @@ namespace asctec
     // **** get parameters
 
     if (!nh_private.getParam ("freq", freq_))
-      freq_ = 10.0;
+      freq_ = 50.0;
 
     if (!nh_private.getParam ("port", port_))
       port_ = "/dev/ttyUSB0";
@@ -63,6 +66,8 @@ namespace asctec
       enable_GPS_DATA_ = false;
     if (!nh_private.getParam ("enable_GPS_DATA_ADVANCED", enable_GPS_DATA_ADVANCED_))
       enable_GPS_DATA_ADVANCED_ = false;
+    if (!nh_private.getParam ("enable_CONTROL", enable_CONTROL_))
+      enable_CONTROL_ = false;
 
     if (!nh_private.getParam ("interval_LL_STATUS", interval_LL_STATUS_))
       interval_LL_STATUS_ = 1;
@@ -78,6 +83,8 @@ namespace asctec
       interval_GPS_DATA_ = 1;
     if (!nh_private.getParam ("interval_GPS_DATA_ADVANCED", interval_GPS_DATA_ADVANCED_))
       interval_GPS_DATA_ADVANCED_ = 1;
+    if (!nh_private.getParam ("interval_CONTROL", interval_CONTROL_))
+      interval_CONTROL_ = 1;
 
     if (!nh_private.getParam ("offset_LL_STATUS", offset_LL_STATUS_))
       offset_LL_STATUS_ = 0;
@@ -93,6 +100,8 @@ namespace asctec
       offset_GPS_DATA_ = 0;
     if (!nh_private.getParam ("offset_GPS_DATA_ADVANCED", offset_GPS_DATA_ADVANCED_))
       offset_GPS_DATA_ADVANCED_ = 0;
+    if (!nh_private.getParam ("offset_CONTROL", offset_CONTROL_))
+      offset_CONTROL_ = 0;
 
     if (freq_ <= 0.0)
       ROS_FATAL ("Invalid frequency param");
@@ -129,17 +138,16 @@ namespace asctec
     if(enable_GPS_DATA_ADVANCED_)
       telemetry_->enablePolling (asctec::RequestTypes::GPS_DATA_ADVANCED, interval_GPS_DATA_ADVANCED_,  offset_GPS_DATA_ADVANCED_);
 
-    telemetry_->enableControl(10, 2);
-    telemetry_->CTRL_INPUT_.pitch = 0;
-    telemetry_->CTRL_INPUT_.roll = 0;
-    telemetry_->CTRL_INPUT_.yaw = 0;
-    telemetry_->CTRL_INPUT_.thrust = 0;
-    telemetry_->CTRL_INPUT_.ctrl = 0x0000;
-    telemetry_->CTRL_INPUT_.chksum =
-      telemetry_->CTRL_INPUT_.pitch + telemetry_->CTRL_INPUT_.roll + telemetry_->CTRL_INPUT_.yaw +
-      telemetry_->CTRL_INPUT_.thrust + telemetry_->CTRL_INPUT_.ctrl + 0xAAAA;
-    ROS_INFO ("CTRL_INPUT_.chksum: %i", (short) telemetry_->CTRL_INPUT_.chksum);
-
+    // **** enable control
+    if(enable_CONTROL_ == true)
+    {
+      ROS_INFO("Control Enabled");
+      telemetry_->enableControl(telemetry_, interval_CONTROL_, offset_CONTROL_);
+    }
+    else
+    {
+      ROS_INFO("Control Disabled");
+    }
     timer_ = nh_private.createTimer (d, &AutoPilot::spin, this);
   }
 
@@ -150,9 +158,9 @@ namespace asctec
 
   void AutoPilot::spin (const ros::TimerEvent & e)
   {
-    ROS_INFO ("spin()");
-    ROS_INFO ("RX: %03.3f Bps",float(serialInterface_->serialport_bytes_rx_)/1000*freq_);
-    ROS_INFO ("TX: %03.3f Bps",float(serialInterface_->serialport_bytes_tx_)/1000*freq_);
+    //ROS_INFO ("spin()");
+    //ROS_INFO ("RX: %03.3f Bps",float(serialInterface_->serialport_bytes_rx_)/1000*freq_);
+    //ROS_INFO ("TX: %03.3f Bps",float(serialInterface_->serialport_bytes_tx_)/1000*freq_);
     serialInterface_->serialport_bytes_rx_ = 0;
     serialInterface_->serialport_bytes_tx_ = 0;
     telemetry_->buildRequest ();

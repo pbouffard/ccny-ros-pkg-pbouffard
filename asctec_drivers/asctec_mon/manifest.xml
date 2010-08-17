@@ -1,8 +1,7 @@
 <package>
-  <description brief="asctec_ctrl">
-
-     asctec_mon
-
+	<description brief="AscTec AutoPilot Console Monitor">
+		AscTec AutoPilot Console Monitor
+		This is a curses based groundstation.
   </description>
   <author>William Morris</author>
   <license>GPL</license>

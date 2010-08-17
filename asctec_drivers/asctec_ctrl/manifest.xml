@@ -1,0 +1,17 @@
+<package>
+  <description brief="asctec_ctrl">
+
+     asctec_ctrl
+
+  </description>
+  <author>Lucid One</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/asctec_ctrl</url>
+  <depend package="rospy"/>
+  <depend package="std_msgs"/>
+  <depend package="asctec_msgs"/>
+
+</package>
+
+
