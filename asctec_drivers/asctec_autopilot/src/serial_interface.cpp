@@ -1,8 +1,11 @@
 /*
  *  AscTec Autopilot Serial Interface
  *  Copyright (C) 2010, CCNY Robotics Lab
- *  Ivan Dryanovski <ivan.dryanovski@gmail.com>
  *  William Morris <morris@ee.ccny.cuny.edu>
+ *  Ivan Dryanovski <ivan.dryanovski@gmail.com>
+ *  Steven Bellens <steven.bellens@mech.kuleuven.be>
+ *  Patrick Bouffard <bouffard@eecs.berkeley.edu>
+ *
  *  http://robotics.ccny.cuny.edu
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -97,6 +100,17 @@ namespace asctec
     ROS_ASSERT_MSG (tcdrain (fileno (dev_)) == 0, "Drain Error: %s", strerror (errno));
   }
 
+  void SerialInterface::wait (int bytes_requested)
+  {
+    int bytes_available=0;
+    int i;
+
+    while (bytes_available < bytes_requested)
+    {
+      ioctl(fileno (dev_),FIONREAD,&bytes_available);
+      usleep(100);
+    }
+  }
   void SerialInterface::stall (bool wait)
   {
     struct termios tio;
@@ -143,6 +157,7 @@ namespace asctec
     char ssize[2];
     char stype[1];
     char scrc[2];
+    int bytes;
 
     int i;
 
@@ -153,6 +168,9 @@ namespace asctec
     stoken[3] = '\0';
 
     stall (true);
+    //wait(3);
+    //ioctl(fileno (dev_),FIONREAD,&bytes);
+    //ROS_INFO("getPacket Bytes Available %d", bytes);
     i = fread (stoken, sizeof (char), 3, dev_);
     if (i == 0 || strncmp (stoken, ">*>", 3) != 0)
     {
@@ -232,7 +250,7 @@ namespace asctec
   {
     int i;
     serialport_bytes_tx_ += len;
-    //ROS_INFO ("Writing %d element(s): %s", len, output);
+    ROS_INFO ("Writing %d element(s): %s", len, output);
     ROS_DEBUG ("dev: %zd", (size_t) dev_);
     flush ();
     i = fwrite (output, sizeof (char), len, dev_);
@@ -259,19 +277,24 @@ namespace asctec
   }
   void SerialInterface::sendControl (Telemetry * telemetry)
   {
-    if (!telemetry->controlEnabled_)
-      return;
+    int bytes;
+    if(!telemetry->controlEnabled_) return;
     ROS_DEBUG ("sendControl started");
     unsigned char cmd[] = ">*>di";
-
-    if (telemetry->controlInterval_ != 0
-        && ((telemetry->controlCount_ - telemetry->controlOffset_) % telemetry->controlInterval_ == 0))
-    {
-      //ROS_INFO("writing control to pelican: size of &CTRL_INPUT_ %zd", sizeof (&telemetry->CTRL_INPUT_));
-      flush ();
-      write (cmd, 5);
-      write ((unsigned char *) &telemetry->CTRL_INPUT_, 12);
-      ROS_INFO ("writing control to pelican: size of CTRL_INPUT_ %zd", sizeof (telemetry->CTRL_INPUT_));
+    //telemetry->dumpCTRL_INPUT();
+    if (telemetry->controlInterval_ != 0 && ((telemetry->controlCount_ - telemetry->controlOffset_) % telemetry->controlInterval_ == 0)) {
+      if(telemetry->CTRL_INPUT_.chksum != telemetry->CTRL_INPUT_.pitch + telemetry->CTRL_INPUT_.roll + telemetry->CTRL_INPUT_.yaw + telemetry->CTRL_INPUT_.thrust + telemetry->CTRL_INPUT_.ctrl + (short) 0xAAAA){
+        ROS_INFO("invalid CtrlInput checksum: %d !=  %d", telemetry->CTRL_INPUT_.chksum, telemetry->CTRL_INPUT_.pitch + telemetry->CTRL_INPUT_.roll + telemetry->CTRL_INPUT_.yaw + telemetry->CTRL_INPUT_.thrust + telemetry->CTRL_INPUT_.ctrl + (short) 0xAAAA);
+        return;
+      }
+      flush();
+      write(cmd,5);
+      write((unsigned char*) &telemetry->CTRL_INPUT_, 12);
+      ROS_INFO("writing control to pelican: size of CTRL_INPUT_ %zd", sizeof(telemetry->CTRL_INPUT_));
+      //usleep(100000);
+      ioctl(fileno (dev_),FIONREAD,&bytes);
+      ROS_INFO("sendControl Bytes Available %d", bytes);
+      drain(); // FIXME we should actually check the response but who really has time for error checking.
     }
     //ROS_INFO ("sendControl completed" );
   }
@@ -287,8 +310,8 @@ namespace asctec
     unsigned short packet_size;
     unsigned int i;
 
-    ROS_INFO ("Packet Request: %04x %zd packets", (short) telemetry->requestPackets_.to_ulong (),
-              telemetry->requestPackets_.count ());
+    //ROS_INFO ("Packet Request: %04x %zd packets", (short) telemetry->requestPackets_.to_ulong (),
+    //          telemetry->requestPackets_.count ());
     sprintf (cmd, ">*>p%c", (short) telemetry->requestPackets_.to_ulong ());
     write (cmd, 6);
     drain ();
