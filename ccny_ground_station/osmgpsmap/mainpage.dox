@@ -1,0 +1,11 @@
+/**
+\mainpage
+\htmlinclude manifest.html
+
+\b osmgpsmap is a package providing a local ROS installation of <a href="http://nzjrs.github.com/osm-gps-map/">osm-gps-map</a>.
+
+\section codeapi Code API
+
+<a href="http://nzjrs.github.com/osm-gps-map/docs/reference/html/index.html">osm-gps-map code api</a>.
+
+*/

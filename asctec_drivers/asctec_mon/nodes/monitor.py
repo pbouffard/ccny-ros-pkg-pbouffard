@@ -1,5 +1,23 @@
 #!/usr/bin/env python
-# AscTec Console Monitor
+# AscTec Autopilot Console Monitor
+# Copyright (C) 2010, CCNY Robotics Lab
+# William Morris <morris@ee.ccny.cuny.edu>
+#
+# http://robotics.ccny.cuny.edu
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 ################################
 # This code may not be pretty but is seems to work.
 # Commands
@@ -375,9 +393,9 @@ def listener():
     global rec_enable
 
     rospy.init_node('cursed_controller', anonymous=True)
-    rospy.Subscriber("/LL_STATUS", LLStatus, callback)
-    rospy.Subscriber("/IMU_CALCDATA", IMUCalcData, imu_callback)
-    rospy.Subscriber("/GPS_DATA", GPSData, gps_callback)
+    rospy.Subscriber("/autopilot/LL_STATUS", LLStatus, callback)
+    rospy.Subscriber("/autopilot/IMU_CALCDATA", IMUCalcData, imu_callback)
+    rospy.Subscriber("/autopilot/GPS_DATA", GPSData, gps_callback)
     curses.init_pair(1, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
     curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
     curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)
