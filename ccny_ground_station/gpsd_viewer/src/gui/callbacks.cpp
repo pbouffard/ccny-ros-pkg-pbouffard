@@ -39,9 +39,16 @@ extern "C" G_MODULE_EXPORT void on_checkbuttonDrawCurrentUAVTrack_toggled (GtkTo
   }
 }
 
-extern "C" G_MODULE_EXPORT void on_menuitem_ClearPath_activate (GtkMenuItem * togglebutton, AppData * data)
+extern "C" G_MODULE_EXPORT void on_menuitem_ClearPath_activate (GtkMenuItem * item, AppData * data)
 {
   osm_gps_map_gps_clear (data->map);
+}
+
+extern "C" G_MODULE_EXPORT void on_menuitem_LockView_toggled (GtkToggleButton * togglebutton, AppData * data){
+  if (data->lock_view)
+		data->lock_view = false;
+  else
+		data->lock_view = true;
 }
 
 extern "C" G_MODULE_EXPORT void on_menuitemMapProvider_group_changed (GtkRadioMenuItem * radiobutton, AppData * data)
