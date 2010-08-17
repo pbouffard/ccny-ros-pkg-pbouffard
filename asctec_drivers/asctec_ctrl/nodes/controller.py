@@ -30,17 +30,33 @@ import roslib; roslib.load_manifest('asctec_ctrl')
 import rospy
 import os
 import signal
+import curses
 
 from asctec_msgs.msg import CtrlInput
+
+myscreen = curses.initscr()
 
 def talker():
     pub = rospy.Publisher('/CtrlInput', CtrlInput)
     rospy.init_node('asctec_ctrl')
+    thrust = 0
     while not rospy.is_shutdown():
+        k = myscreen.getch()
+        if k == ord('q'):
+            break
+        if k == ord('z'):
+            thrust = 0
+        if k == ord('w'):
+            thrust = thrust + 16
+        if k == ord('s'):
+            thrust = thrust - 16
+        if thrust > 4096:
+            thrust = 4096
+        if thrust < 0:
+            thrust = 0
         pitch = 0
         roll = 0
         yaw = 0
-        thrust = 2048
         # ctrl
         #   bit 0: pitch control enabled
         #   bit 1: roll control enabled
@@ -51,10 +67,12 @@ def talker():
         # helps a lot to set up and finetune controllers for each
         # axis seperately.
         ctrl = int(0b1000)
-#        rospy.loginfo(".")
         csum = pitch + roll + yaw + thrust + int(ctrl) - 21846
         pub.publish(pitch,roll,yaw,thrust,ctrl,csum)
         rospy.sleep(0.05)
+    curses.nocbreak(); myscreen.keypad(0); curses.echo(); curses.curs_set(1)
+    curses.endwin()
+
 
 if __name__ == '__main__':
     try:
