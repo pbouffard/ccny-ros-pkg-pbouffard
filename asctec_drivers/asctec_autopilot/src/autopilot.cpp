@@ -1,8 +1,11 @@
 /*
  *  AscTec Autopilot Interface
  *  Copyright (C) 2010, CCNY Robotics Lab
- *  Ivan Dryanovski <ivan.dryanovski@gmail.com>
  *  William Morris <morris@ee.ccny.cuny.edu>
+ *  Ivan Dryanovski <ivan.dryanovski@gmail.com>
+ *  Steven Bellens <steven.bellens@mech.kuleuven.be>
+ *  Patrick Bouffard <bouffard@eecs.berkeley.edu>
+ *
  *  http://robotics.ccny.cuny.edu
  *
  *  This program is free software: you can redistribute it and/or modify

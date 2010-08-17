@@ -63,6 +63,7 @@ namespace asctec
     void flush ();
     void drain ();
     void stall (bool);
+    void wait (int);
 
     FILE *dev_;
     std::string serialport_name_;

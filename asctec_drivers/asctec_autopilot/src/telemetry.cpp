@@ -1,8 +1,11 @@
 /*
  *  AscTec Autopilot Telemetry
  *  Copyright (C) 2010, CCNY Robotics Lab
- *  Ivan Dryanovski <ivan.dryanovski@gmail.com>
  *  William Morris <morris@ee.ccny.cuny.edu>
+ *  Ivan Dryanovski <ivan.dryanovski@gmail.com>
+ *  Steven Bellens <steven.bellens@mech.kuleuven.be>
+ *  Patrick Bouffard <bouffard@eecs.berkeley.edu>
+ *
  *  http://robotics.ccny.cuny.edu
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -80,7 +83,7 @@ namespace asctec
           case RequestTypes::LL_STATUS:
             copyLL_STATUS ();
             LLStatus_.header.stamp = timestamps_[RequestTypes::LL_STATUS];
-            dumpLL_STATUS ();
+            //dumpLL_STATUS ();
             requestPublisher_[i].publish (LLStatus_);
             break;
           case RequestTypes::IMU_RAWDATA:
