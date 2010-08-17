@@ -49,7 +49,7 @@ Map.Topic=/map
 Mid\ Virtual\ Scan.Alpha=1
 Mid\ Virtual\ Scan.Billboard\ Size=0.01
 Mid\ Virtual\ Scan.Color\ Transformer=Height map
-Mid\ Virtual\ Scan.Decay\ Time=300
+Mid\ Virtual\ Scan.Decay\ Time=10
 Mid\ Virtual\ Scan.Enabled=1
 Mid\ Virtual\ Scan.Position\ Transformer=XYZ
 Mid\ Virtual\ Scan.Selectable=1
@@ -97,7 +97,7 @@ Projected\ Scan..IntensityMin\ Intensity=0
 Right\ Virtual\ Scan.Alpha=1
 Right\ Virtual\ Scan.Billboard\ Size=0.01
 Right\ Virtual\ Scan.Color\ Transformer=Height map
-Right\ Virtual\ Scan.Decay\ Time=300
+Right\ Virtual\ Scan.Decay\ Time=10
 Right\ Virtual\ Scan.Enabled=1
 Right\ Virtual\ Scan.Position\ Transformer=XYZ
 Right\ Virtual\ Scan.Selectable=1
@@ -152,8 +152,8 @@ TF.Update\ Interval=0
 Tool\ 2D\ Nav\ GoalTopic=goal
 Tool\ 2D\ Pose\ EstimateTopic=initialpose
 Camera\ Type=rviz::OrbitViewController
-Camera\ Config=0.461 0.421484 14.8873 0.0066469 0.494405 0.291948
-Property\ Grid\ State=selection=TF./laserTree/laser;expanded=.Global Options,TF.Enabled,TF./base_link/base_link,TF./imu/imu,TF./laser/laser,TF./lvl/lvl,TF./lvl_0/lvl_0,TF./lvl_1/lvl_1,TF./lvl_2/lvl_2,TF./lvl_3/lvl_3,TF./odom/odom,TF./rvl/rvl,TF./rvl_0/rvl_0,TF./rvl_1/rvl_1,TF./rvl_2/rvl_2,TF./rvl_3/rvl_3,TF.Enabled.TF.Tree,TF./odomTree/odom,TF./base_linkTree/base_link,TF./imuTree/imu,TF./lvl_0Tree/lvl_0,TF./lvl_1Tree/lvl_1,TF./lvl_2Tree/lvl_2,TF./lvl_3Tree/lvl_3,TF./lvlTree/lvl,TF./rvl_0Tree/rvl_0,TF./rvl_1Tree/rvl_1,TF./rvl_2Tree/rvl_2,TF./rvl_3Tree/rvl_3,TF./rvlTree/rvl,Scan Orig.Enabled.Scan Orig.StatusTopStatus,Mid Virtual Scan.Enabled;scrollpos=0,0;splitterpos=132,251;ispageselected=1
+Camera\ Config=0.876 0.726484 20.9156 0.0066469 0.494405 0.291948
+Property\ Grid\ State=selection=Right Virtual Scan.Enabled.Right Virtual Scan.Decay Time;expanded=.Global Options,TF.Enabled,TF./base_link/base_link,TF./imu/imu,TF./laser/laser,TF./lvl/lvl,TF./lvl_0/lvl_0,TF./lvl_1/lvl_1,TF./lvl_2/lvl_2,TF./lvl_3/lvl_3,TF./odom/odom,TF./rvl/rvl,TF./rvl_0/rvl_0,TF./rvl_1/rvl_1,TF./rvl_2/rvl_2,TF./rvl_3/rvl_3,TF.Enabled.TF.Tree,TF./odomTree/odom,TF./base_linkTree/base_link,TF./imuTree/imu,TF./laserTree/laser,TF./lvl_0Tree/lvl_0,TF./lvl_1Tree/lvl_1,TF./lvl_2Tree/lvl_2,TF./lvl_3Tree/lvl_3,TF./lvlTree/lvl,TF./rvl_0Tree/rvl_0,TF./rvl_1Tree/rvl_1,TF./rvl_2Tree/rvl_2,TF./rvl_3Tree/rvl_3,TF./rvlTree/rvl,Scan Orig.Enabled.Scan Orig.StatusTopStatus,Right Virtual Scan.Enabled,Mid Virtual Scan.Enabled,Left Virtual Scan.Enabled;scrollpos=0,0;splitterpos=132,251;ispageselected=1
 [Display0]
 Name=TF
 Package=rviz
