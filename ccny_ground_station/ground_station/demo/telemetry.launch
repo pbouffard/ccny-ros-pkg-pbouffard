@@ -1,5 +1,5 @@
 <launch>
-	<node name="ground_station" pkg="ground_station" type="groundstation_without_gps" respawn="false" output="screen">
+	<node name="ground_station" pkg="ground_station" type="telemetry_demo" respawn="false" output="screen">
 	
 		<!-- General window parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 		<param name="window_grayscale_color" value="false"/>

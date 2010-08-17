@@ -19,7 +19,7 @@
  */
 
 /**
- * @file gauges_ground_station.h 
+ * @file telemetry_widgets.h 
  * @brief Program that link ROS with Gtk
  * @author Gautier Dumonteil <gautier.dumonteil@gmail.com>
  * @version 0.1
@@ -59,7 +59,7 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 
-#include <ground_station/gui/gauges_ground_station_appdata.h>
+#include <ground_station/gui/telemetry_widgets_appdata.h>
 #include <ground_station/gui/gtkaltimeter.h>
 #include <ground_station/gui/gtkvariometer.h>
 #include <ground_station/gui/gtkcompass.h>

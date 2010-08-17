@@ -29,20 +29,37 @@
 #include <glade/glade.h>
 #include <math.h>
 
+#include "rosbag/recorder.h"
+#include "rosbag/exceptions.h"
+#include "std_msgs/String.h"
+
 #include "ground_station/gui/ground_station_appdata.h"
 
 using namespace std;
 
-//----------------------------------------------------------------------
-//----------------------------------------------------------------------
-// **** GPS Options callbacks
+// -------------------------------------------------------------------
+// -------------------------------------------------------------------
+// **** Main Window Callbacks
 extern "C" G_MODULE_EXPORT void on_mainwindow_destroy (GtkObject * object, gpointer user_data);
+extern "C" G_MODULE_EXPORT void on_notebook1_switch_page (GtkNotebook *notebook, GtkNotebookPage *page, guint page_num, AppData * data);
+
+// -------------------------------------------------------------------
+// -------------------------------------------------------------------
+// **** Tab 1: Telemetry Callbacks
+
+// -------------------------------------------------------------------
+// -------------------------------------------------------------------
+// **** Tab 2: GpsdViewer Callbacks
 extern "C" G_MODULE_EXPORT void on_checkbuttonDrawCurrentUAVTrack_toggled (GtkToggleButton * togglebutton, AppData * data);
 extern "C" G_MODULE_EXPORT void on_checkbuttonLockViewUAV_toggled (GtkToggleButton * togglebutton, AppData * data);
 extern "C" G_MODULE_EXPORT void on_button_ClearUAVTrack_clicked(GtkButton * button, AppData * data);
 extern "C" G_MODULE_EXPORT void on_button_OpenGpsdOptionPopup_clicked(GtkButton * button, AppData * data);
 extern "C" G_MODULE_EXPORT void on_button_CloseGpsdOptionPopup_clicked(GtkButton * button, AppData * data);
 extern "C" G_MODULE_EXPORT void on_combobox_MapProvider_changed(GtkComboBox * box, AppData * data);
+
+// -------------------------------------------------------------------
+// -------------------------------------------------------------------
+// **** Tab 2: ROSBag Record Callbacks
 extern "C" G_MODULE_EXPORT void on_treeview2_topics_row_activated(GtkTreeView * test,GtkTreePath *path, GtkTreeViewColumn *column, AppData * data);
 extern "C" G_MODULE_EXPORT void on_button_UpdateTopicList_clicked(GtkButton * button, AppData * data);
 extern "C" G_MODULE_EXPORT void on_entry_Prefix_activate(GtkEntry * entry, AppData * data);

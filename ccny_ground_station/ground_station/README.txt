@@ -33,6 +33,10 @@ Then, in a shell:
 	roscd ground_station/
 	rosmake --rosdep-install
 	
-Run the example:
+Run example:
 	roscd ground_station/
-	roslaunch demo/demo.launch
+	roslaunch demo/telemetry.launch
+
+Run the gui:
+	roscd ground_station/
+	roslaunch launch/ground_station.launch

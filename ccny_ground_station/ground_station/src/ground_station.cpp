@@ -269,6 +269,37 @@ gboolean widgets_update (gpointer dat)
   return true;
 }
 
+void load_icon()
+{
+	 GtkWidget * img_record, * img_stop, * img_pause, * img_refresh;
+	 GtkWidget * img_leftarrow, * img_rightarrow;
+	  
+    char icon_file[FILENAME_MAX];
+	 sprintf (icon_file,"%s/%s",data->icon_directory,"record-64.png");
+    img_record=gtk_image_new_from_file(icon_file);
+    data->record_icon=gtk_image_get_pixbuf(GTK_IMAGE(img_record));
+    
+    sprintf (icon_file,"%s/%s",data->icon_directory,"pause-64.png");
+    img_pause=gtk_image_new_from_file(icon_file);
+    data->pause_icon=gtk_image_get_pixbuf(GTK_IMAGE(img_pause));
+    
+    sprintf (icon_file,"%s/%s",data->icon_directory,"stop-64.png");
+    img_stop=gtk_image_new_from_file(icon_file);   
+    data->stop_icon=gtk_image_get_pixbuf(GTK_IMAGE(img_stop));
+    
+    sprintf (icon_file,"%s/%s",data->icon_directory,"refresh-64.png");
+    img_refresh=gtk_image_new_from_file(icon_file);
+    data->refresh_icon=gtk_image_get_pixbuf(GTK_IMAGE(img_refresh));
+    
+    sprintf (icon_file,"%s/%s",data->icon_directory,"rightarrow-64.png");
+    img_rightarrow=gtk_image_new_from_file(icon_file);   
+    data->rightarrow_icon=gtk_image_get_pixbuf(GTK_IMAGE(img_rightarrow));
+    
+    sprintf (icon_file,"%s/%s",data->icon_directory,"leftarrow-64.png");
+    img_leftarrow=gtk_image_new_from_file(icon_file);
+    data->leftarrow_icon=gtk_image_get_pixbuf(GTK_IMAGE(img_leftarrow));
+}
+
 /**
  * @fn int main (int argc, char **argv)
  * @brief Main program & Gtk thread.
@@ -280,7 +311,7 @@ int main (int argc, char **argv)
 {
   GtkBuilder *builder;
   GError *error = NULL;
-  char gui_filename[FILENAME_MAX];
+  char glade_gui_file[FILENAME_MAX];
   GdkColor bg_color;
   int start_zoom = 15;
   char *mapcachedir;
@@ -303,14 +334,16 @@ int main (int argc, char **argv)
   // **** allocate data structure
   data = g_slice_new (AppData);
   
-  // **** get the glade gui file
+  // **** set the glade gui file & set icon directory
   std::string package_path = ros::package::getPath (ROS_PACKAGE_NAME);
-  sprintf (gui_filename, "%s/%s", package_path.c_str (), "gui.glade");
-
+  sprintf (glade_gui_file, "%s/gui/%s", package_path.c_str (), "gui.glade");
+  sprintf (data->icon_directory, "%s/gui/icon", package_path.c_str ());
+  load_icon();
+  
   // Create new GtkBuilder object
   builder = gtk_builder_new ();
   // Load UI from file
-  if (!gtk_builder_add_from_file (builder, gui_filename, &error))
+  if (!gtk_builder_add_from_file (builder, glade_gui_file, &error))
   {
     g_warning ("%s", error->message);
     g_free (error);
@@ -382,17 +415,18 @@ int main (int argc, char **argv)
   gtk_table_attach_defaults(GTK_TABLE(data->widget_table),data->comp,1,2,1,2);
   gtk_table_attach_defaults(GTK_TABLE(data->widget_table),data->comp2,2,3,1,2);
   
-  // **** set widget bg color
-  bg_color.red = 0.3 *65535;
-  bg_color.green = 0.3 *65535;
-  bg_color.blue = 0.3 *65535;
-  gtk_widget_modify_bg (data->widget_table, GTK_STATE_NORMAL, &bg_color);
-  //~ gtk_widget_modify_bg (data->comp, GTK_STATE_NORMAL, &bg_color);
-  //~ gtk_widget_modify_bg (data->comp2, GTK_STATE_NORMAL, &bg_color);
-  //~ gtk_widget_modify_bg (data->arh, GTK_STATE_NORMAL, &bg_color);
-  //~ gtk_widget_modify_bg (data->bg, GTK_STATE_NORMAL, &bg_color);
-  //~ gtk_widget_modify_bg (data->vario, GTK_STATE_NORMAL, &bg_color);
-  
+  data->box_telemetry = GTK_WIDGET (gtk_builder_get_object (builder, "hbox_Telemetry"));
+  data->telemetry_option_popup = GTK_WIDGET (gtk_builder_get_object (builder, "hbox_TelemetryOption"));
+  data->btn_open_telemetry_option_popup = GTK_WIDGET (gtk_builder_get_object (builder, "button_OpenTelemetryOptionPopup"));
+  data->btn_close_telemetry_option_popup = GTK_WIDGET (gtk_builder_get_object (builder, "button_CloseTelemetryOptionPopup"));
+  gtk_button_set_image(GTK_BUTTON(data->btn_open_telemetry_option_popup),gtk_image_new_from_pixbuf(gdk_pixbuf_scale_simple(data->leftarrow_icon,24,50,GDK_INTERP_HYPER)));
+  gtk_button_set_image(GTK_BUTTON(data->btn_close_telemetry_option_popup),gtk_image_new_from_pixbuf(gdk_pixbuf_scale_simple(data->rightarrow_icon,24,50,GDK_INTERP_HYPER)));
+
+  g_object_ref(GTK_WIDGET (data->telemetry_option_popup));  		// **** avoid widget to be destroyed when removed from window
+  g_object_ref(GTK_WIDGET (data->btn_open_telemetry_option_popup));	// **** avoid widget to be destroyed when removed from window
+  gtk_container_remove(GTK_CONTAINER(data->box_telemetry),GTK_WIDGET (data->telemetry_option_popup));
+
+
   // Some GpsdViewer initialisation
   data->draw_path = false;
   data->map_provider = OSM_GPS_MAP_SOURCE_OPENSTREETMAP;
@@ -433,14 +467,28 @@ int main (int argc, char **argv)
  
   data->box_gpsd_viewer = GTK_WIDGET (gtk_builder_get_object (builder, "hbox_GpsdViewer"));
   data->gpsd_option_popup = GTK_WIDGET (gtk_builder_get_object (builder, "hbox_GpsdOptionPopup"));
-  data->btn_gpsd_option_popup = GTK_WIDGET (gtk_builder_get_object (builder, "button_OpenGpsdOptionPopup"));
+  data->btn_open_gpsd_option_popup = GTK_WIDGET (gtk_builder_get_object (builder, "button_OpenGpsdOptionPopup"));
+  data->btn_close_gpsd_option_popup = GTK_WIDGET (gtk_builder_get_object (builder, "button_CloseGpsdOptionPopup"));
+  gtk_button_set_image(GTK_BUTTON(data->btn_open_gpsd_option_popup),gtk_image_new_from_pixbuf(gdk_pixbuf_scale_simple(data->leftarrow_icon,24,50,GDK_INTERP_HYPER)));
+  gtk_button_set_image(GTK_BUTTON(data->btn_close_gpsd_option_popup),gtk_image_new_from_pixbuf(gdk_pixbuf_scale_simple(data->rightarrow_icon,24,50,GDK_INTERP_HYPER)));
+
   g_object_ref(GTK_WIDGET (data->gpsd_option_popup));  		// **** avoid widget to be destroyed when removed from window
-  g_object_ref(GTK_WIDGET (data->btn_gpsd_option_popup));	// **** avoid widget to be destroyed when removed from window
+  g_object_ref(GTK_WIDGET (data->btn_open_gpsd_option_popup));	// **** avoid widget to be destroyed when removed from window
   gtk_container_remove(GTK_CONTAINER(data->box_gpsd_viewer),GTK_WIDGET (data->gpsd_option_popup));
   
+   
+  data->record_state=0;
   data->rosbag_record_cmd="rosbag record";
   data->topicsList = GTK_LIST_STORE(gtk_builder_get_object (builder, "liststore_TopicList"));
   data->cmd_line_entry = GTK_WIDGET(gtk_builder_get_object (builder, "entry_CommandLine"));
+  data->prefix_entry = GTK_WIDGET(gtk_builder_get_object (builder, "entry_Prefix"));
+  data->info_textview = GTK_WIDGET(gtk_builder_get_object (builder, "textview_BagInfo"));
+  data->update_btn = GTK_WIDGET(gtk_builder_get_object (builder, "button_UpdateTopicList"));
+  gtk_button_set_image(GTK_BUTTON(data->update_btn),gtk_image_new_from_pixbuf(gdk_pixbuf_scale_simple(data->refresh_icon,24,24,GDK_INTERP_HYPER)));
+  data->record_btn = GTK_WIDGET(gtk_builder_get_object (builder, "button_RecordPause"));  
+  gtk_button_set_image(GTK_BUTTON(data->record_btn),gtk_image_new_from_pixbuf(gdk_pixbuf_scale_simple(data->record_icon,32,32,GDK_INTERP_HYPER)));
+  data->stop_btn = GTK_WIDGET(gtk_builder_get_object (builder, "button_Stop"));
+  gtk_button_set_image(GTK_BUTTON(data->stop_btn),gtk_image_new_from_pixbuf(gdk_pixbuf_scale_simple(data->stop_icon,32,32,GDK_INTERP_HYPER)));
   
   // Connect signals
   gtk_builder_connect_signals (builder, data);

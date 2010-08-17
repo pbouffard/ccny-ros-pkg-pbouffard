@@ -19,7 +19,7 @@
  */
 
 /**
- * @file gauges_ground_station.cpp 
+ * @file telemetry_widgets.cpp 
  * @brief Program that link ROS with Gtk
  * @author Gautier Dumonteil <gautier.dumonteil@gmail.com>
  * @version 0.1
@@ -42,7 +42,7 @@
  *  
  */
 
-#include <ground_station/gauges_ground_station.h>
+#include <ground_station/telemetry_widgets.h>
 
 AppData *data;
 
@@ -415,7 +415,7 @@ int main (int argc, char **argv)
   data->window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_window_set_title (GTK_WINDOW (data->window), "CityFlyer Ground Station");
   gtk_window_set_position (GTK_WINDOW (data->window), GTK_WIN_POS_CENTER);
-  gtk_window_set_default_size (GTK_WINDOW (data->window), 1200, 700);
+  gtk_window_set_default_size (GTK_WINDOW (data->window), 1000, 500);
 
   g_signal_connect (G_OBJECT (data->window), "destroy", G_CALLBACK (gtk_main_quit), NULL);
 
@@ -540,7 +540,7 @@ int main (int argc, char **argv)
   data->widget_created = true;
 
   // **** udpate all widgets
-  g_timeout_add (200, window_update, NULL);
+  g_timeout_add (500, window_update, NULL);
 
   gtk_main ();
   gdk_threads_leave ();
