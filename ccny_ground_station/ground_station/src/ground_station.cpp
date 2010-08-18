@@ -175,56 +175,56 @@ void *startROS (void *user)
     std::string name_bar_gauge1, name_bar_gauge2, name_bar_gauge3;
     std::string unit_bar_gauge1, unit_bar_gauge2, unit_bar_gauge3;
 
-    n_param.param ("widget_name", widget_name, std::string ("Randow Bar Gauges"));
+    n_param.param ("bd_widget_name", widget_name, std::string ("Randow Bar Gauges"));
     sprintf (data->widget_name, "<big>%s</big>", widget_name.c_str ());
     ROS_DEBUG ("\tWidget name : %s", data->name_bar_gauge1_f);
 
-    n_param.param ("name_bar_gauge1", name_bar_gauge1, std::string ("BG1"));
-    n_param.param ("unit_bar_gauge1", unit_bar_gauge1, std::string ("(X)"));
+    n_param.param ("bd_name_bar_gauge1", name_bar_gauge1, std::string ("BG1"));
+    n_param.param ("bd_unit_bar_gauge1", unit_bar_gauge1, std::string ("(X)"));
     sprintf (data->name_bar_gauge1_f, "<big>%s</big>\n<span foreground=\"orange\"><i>(%s)</i></span>",
              name_bar_gauge1.c_str (), unit_bar_gauge1.c_str ());
     ROS_DEBUG ("\tBar Gauge 1 name : %s", data->name_bar_gauge1_f);
 
-    n_param.param ("name_bar_gauge2", name_bar_gauge2, std::string ("BG2"));
-    n_param.param ("unit_bar_gauge2", unit_bar_gauge2, std::string ("(X)"));
+    n_param.param ("bd_name_bar_gauge2", name_bar_gauge2, std::string ("BG2"));
+    n_param.param ("bd_unit_bar_gauge2", unit_bar_gauge2, std::string ("(X)"));
     sprintf (data->name_bar_gauge2_f, "<big>%s</big>\n<span foreground=\"orange\"><i>(%s)</i></span>",
              name_bar_gauge2.c_str (), unit_bar_gauge2.c_str ());
     ROS_DEBUG ("\tBar Gauge 2 name : %s", data->name_bar_gauge2_f);
 
-    n_param.param ("name_bar_gauge3", name_bar_gauge3, std::string ("BG3"));
-    n_param.param ("unit_bar_gauge3", unit_bar_gauge3, std::string ("(X)"));
+    n_param.param ("bd_name_bar_gauge3", name_bar_gauge3, std::string ("BG3"));
+    n_param.param ("bd_unit_bar_gauge3", unit_bar_gauge3, std::string ("(X)"));
     sprintf (data->name_bar_gauge3_f, "<big>%s</big>\n<span foreground=\"orange\"><i>(%s)</i></span>",
              name_bar_gauge3.c_str (), unit_bar_gauge3.c_str ());
     ROS_DEBUG ("\tBar Gauge 3 name : %s", data->name_bar_gauge3_f);
 
-    if (!n_param.getParam ("bar_number", data->bar_number))
+    if (!n_param.getParam ("bd_bar_number", data->bar_number))
       data->bar_number = 1;
     ROS_DEBUG ("\tNum containser of bar gauge: %d", data->bar_number);
 
-    if (!n_param.getParam ("start_value_bar_1", data->start_value_bar_1))
+    if (!n_param.getParam ("bd_start_value_bar_1", data->start_value_bar_1))
       data->start_value_bar_1 = 100;
     ROS_DEBUG ("\tStart value bar 1: %d", data->start_value_bar_1);
 
-    if (!n_param.getParam ("end_value_bar_1", data->end_value_bar_1))
+    if (!n_param.getParam ("bd_end_value_bar_1", data->end_value_bar_1))
       data->end_value_bar_1 = 0;
     ROS_DEBUG ("\tEnd value bar 1: %d", data->end_value_bar_1);
 
-    n_param.getParam ("green_strip_start_1", data->green_strip_start_1);
-    n_param.getParam ("yellow_strip_start_1", data->yellow_strip_start_1);
+    n_param.getParam ("bd_green_strip_start_1", data->green_strip_start_1);
+    n_param.getParam ("bd_yellow_strip_start_1", data->yellow_strip_start_1);
 
-    if (!n_param.getParam ("start_value_bar_2", data->start_value_bar_2))
+    if (!n_param.getParam ("bd_start_value_bar_2", data->start_value_bar_2))
       data->start_value_bar_2 = 100;
     ROS_DEBUG ("\tStart value bar 2: %d", data->start_value_bar_2);
 
-    if (!n_param.getParam ("end_value_bar_2", data->end_value_bar_2))
+    if (!n_param.getParam ("bd_end_value_bar_2", data->end_value_bar_2))
       data->end_value_bar_2 = 0;
     ROS_DEBUG ("\tEnd value bar 2: %d", data->end_value_bar_2);
 
-    if (!n_param.getParam ("start_value_bar_3", data->start_value_bar_3))
+    if (!n_param.getParam ("bd_start_value_bar_3", data->start_value_bar_3))
       data->start_value_bar_3 = 100;
     ROS_DEBUG ("\tStart value bar 3: %d", data->start_value_bar_3);
 
-    if (!n_param.getParam ("end_value_bar_3", data->end_value_bar_3))
+    if (!n_param.getParam ("bd_end_value_bar_3", data->end_value_bar_3))
       data->end_value_bar_3 = 0;
     ROS_DEBUG ("\tEnd value bar 3: %d", data->end_value_bar_3);
 
