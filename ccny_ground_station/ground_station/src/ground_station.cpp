@@ -25,7 +25,7 @@
  * @version 0.1
  * @date 06/06/2010
  *
- * Gauges Ground Station for CityFlyer CCNY project
+ * Ground Station for CityFlyer CCNY project
  * Copyright (C) 2010, CCNY Robotics Lab
  * http://robotics.ccny.cuny.edu
  *  
