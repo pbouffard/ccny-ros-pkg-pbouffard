@@ -26,6 +26,12 @@ LaserHeightEstimation::LaserHeightEstimation()
     baseFrame_ = "base_link";
   if (!nh_private.getParam ("world_frame", worldFrame_))
     worldFrame_ = "world";
+  if (!nh_private.getParam ("min_values", minValues_))
+    minValues_ = 5;
+  if (!nh_private.getParam ("max_stdev", maxStdev_))
+    maxStdev_ = 0.10;
+  if (!nh_private.getParam ("max_height_jump", maxHeightJump_))
+    maxHeightJump_ = 0.05;
 
   // **** subscribers
 
@@ -83,11 +89,20 @@ void LaserHeightEstimation::scanCallback(const sensor_msgs::LaserScanConstPtr& s
   double rawHeight, stdev;
   getStats(values, rawHeight, stdev);
  
-  ROS_INFO("Height: %f, %f, %f", rawHeight, prevHeight_, stdev);
+  //ROS_INFO("Height: %f, %f, %f", rawHeight, prevHeight_, stdev);
 
-  if (values.size() < 5 || stdev > 0.10)
+
+  if (values.size() < minValues_)
   {
-    ROS_WARN("Not enough information to determine height, skipping");
+    ROS_WARN("Not enough valid values to determine height, skipping (%d collected, %d needed)",
+      values.size(), minValues_);
+    return;
+  }
+
+  if (stdev > maxStdev_)
+  {
+    ROS_WARN("Stdev of height readings too big ti determine height, skipping (stdev is %f, max is %f)",
+      stdev, maxStdev_);
     return;
   }
 
@@ -104,9 +119,8 @@ void LaserHeightEstimation::scanCallback(const sensor_msgs::LaserScanConstPtr& s
   }
   else
   {
-    if (fabs(rawHeight - prevHeight_) > 0.05)
+    if (fabs(rawHeight - prevHeight_) > maxHeightJump_)
     {
-      printf("*********************************************\n");
       floorHeight_ += (prevHeight_ - rawHeight);
     }
 

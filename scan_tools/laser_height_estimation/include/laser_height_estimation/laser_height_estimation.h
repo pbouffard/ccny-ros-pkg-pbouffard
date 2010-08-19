@@ -42,6 +42,9 @@ class LaserHeightEstimation
   
     std::string baseFrame_;
     std::string worldFrame_;
+    int minValues_;
+    double maxStdev_;
+    double maxHeightJump_;
 
 		// publishers & subscirbers
 
