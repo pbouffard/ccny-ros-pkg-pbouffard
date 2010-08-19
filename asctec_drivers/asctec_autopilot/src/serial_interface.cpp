@@ -1,8 +1,11 @@
 /*
  *  AscTec Autopilot Serial Interface
  *  Copyright (C) 2010, CCNY Robotics Lab
- *  Ivan Dryanovski <ivan.dryanovski@gmail.com>
  *  William Morris <morris@ee.ccny.cuny.edu>
+ *  Ivan Dryanovski <ivan.dryanovski@gmail.com>
+ *  Steven Bellens <steven.bellens@mech.kuleuven.be>
+ *  Patrick Bouffard <bouffard@eecs.berkeley.edu>
+ *
  *  http://robotics.ccny.cuny.edu
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -23,7 +26,6 @@
 #include <sys/termios.h>
 #include <sys/ioctl.h>
 #include <cstring>
-#include <unistd.h>
 #include <cstdlib>
 #include <time.h>
 #include <errno.h>
@@ -36,6 +38,12 @@
 #include "asctec_autopilot/telemetry.h"
 #include "asctec_autopilot/serialinterface.h"
 
+// C++ is a horrible version of C
+extern "C" {
+  #include <unistd.h>
+  #include <fcntl.h>
+}
+
 namespace asctec
 {
   SerialInterface::SerialInterface (std::string port, uint32_t speed):serialport_name_ (port), serialport_speed_ (speed)
@@ -45,11 +53,11 @@ namespace asctec
       serialport_baud_ = bitrate (serialport_speed_);
       ROS_INFO ("Initializing serial port...");
 
-      dev_ = fopen (serialport_name_.c_str (), "w+");
-      ROS_DEBUG ("dev: %d", (int) fileno (dev_));
-      ROS_ASSERT_MSG (dev_ != NULL, "Failed to open serial port: %s", serialport_name_.c_str ());
+      dev_ = open(serialport_name_.c_str (),O_RDWR | O_NOCTTY | O_NDELAY);
+      ROS_DEBUG ("dev: %d", dev_);
+      ROS_ASSERT_MSG (dev_ != -1, "Failed to open serial port: %s %s", serialport_name_.c_str (), strerror (errno));
 
-      ROS_ASSERT_MSG (tcgetattr (fileno (dev_), &tio) == 0, "Unknown Error: %s", strerror (errno));
+      ROS_ASSERT_MSG (tcgetattr (dev_, &tio) == 0, "Unknown Error: %s", strerror (errno));
 
       cfsetispeed (&tio, serialport_baud_);
       cfsetospeed (&tio, serialport_baud_);
@@ -68,12 +76,11 @@ namespace asctec
       tio.c_lflag |= NOFLSH;
       tio.c_lflag &= ~(ISIG | IEXTEN | ICANON | ECHO | ECHOE);
 
-      ROS_ASSERT_MSG (tcsetattr (fileno (dev_), TCSADRAIN, &tio) == 0, "Unknown Error: %s", strerror (errno));
+      ROS_ASSERT_MSG (tcsetattr (dev_, TCSADRAIN, &tio) == 0, "Unknown Error: %s", strerror (errno));
 
-      stall (true);
+      //stall (true);
 
-      fflush (dev_);
-      tcflush (fileno (dev_), TCIOFLUSH);
+      tcflush (dev_, TCIOFLUSH);
 
       ROS_ASSERT_MSG (dev_ != NULL, "Could not open serial port %s", serialport_name_.c_str ());
       ROS_INFO ("Successfully connected to %s, Baudrate %d\n", serialport_name_.c_str (), serialport_speed_);
@@ -83,24 +90,41 @@ namespace asctec
   {
     ROS_DEBUG ("Destroying Serial Interface");
     flush ();
-    fclose (dev_);
+    close (dev_);
   }
 
   void SerialInterface::flush ()
   {
-    fflush (dev_);
-    tcflush (fileno (dev_), TCIOFLUSH);
+    tcflush (dev_, TCIOFLUSH);
   }
 
   void SerialInterface::drain ()
   {
-    ROS_ASSERT_MSG (tcdrain (fileno (dev_)) == 0, "Drain Error: %s", strerror (errno));
+    ROS_ASSERT_MSG (tcdrain (dev_) == 0, "Drain Error: %s", strerror (errno));
   }
 
+  int SerialInterface::wait (int bytes_requested)
+  {
+    int bytes_available=0;
+    unsigned int i=0;
+
+    while (bytes_available < bytes_requested)
+    {
+      ioctl(dev_,FIONREAD,&bytes_available);
+      usleep(100);
+      if (i>1000)
+      {
+        ROS_ERROR("No more bytes? timeout...");
+        return bytes_available;
+      }
+      i++;
+    }
+    return bytes_available;
+  }
   void SerialInterface::stall (bool wait)
   {
     struct termios tio;
-    ROS_ASSERT_MSG (tcgetattr (fileno (dev_), &tio) == 0, "Unknown Error: %s", strerror (errno));
+    ROS_ASSERT_MSG (tcgetattr (dev_, &tio) == 0, "Unknown Error: %s", strerror (errno));
     if (wait)
     {
       tio.c_cc[VMIN] = 0;
@@ -112,7 +136,7 @@ namespace asctec
       tio.c_cc[VTIME] = 0;
     }
 
-    ROS_ASSERT_MSG (tcsetattr (fileno (dev_), TCSADRAIN, &tio) == 0, "Unknown Error: %s", strerror (errno));
+    ROS_ASSERT_MSG (tcsetattr (dev_, TCSADRAIN, &tio) == 0, "Unknown Error: %s", strerror (errno));
   }
 
   speed_t SerialInterface::bitrate (int Bitrate)
@@ -143,6 +167,7 @@ namespace asctec
     char ssize[2];
     char stype[1];
     char scrc[2];
+    int bytes;
 
     int i;
 
@@ -152,25 +177,30 @@ namespace asctec
     stoken[2] = '\0';
     stoken[3] = '\0';
 
-    stall (true);
-    i = fread (stoken, sizeof (char), 3, dev_);
+    //stall (true);
+    wait(3);
+    ioctl(dev_,FIONREAD,&bytes);
+    ROS_INFO("getPacket Bytes Available %d", bytes);
+    i = read (dev_,stoken, 3);
     if (i == 0 || strncmp (stoken, ">*>", 3) != 0)
     {
       ROS_DEBUG ("dev: %zd", (size_t) dev_);
       ROS_ERROR ("Error Reading Packet Header: %s", strerror (errno));
       ROS_ERROR ("Read (%d): %s", i, stoken);
-      stall (false);
-      while (fread (stoken, sizeof (char), 1, dev_) != 0) {}
+      //ROS_BREAK();
+      //stall (false);
+      while (read (dev_,stoken, 1) != 0) {}
       flush ();
       drain ();
-      stall (true);
+      //stall (true);
       return false;
     }
     serialport_bytes_rx_ += 3;
     ROS_DEBUG ("Packet Header OK");
 
     // get packet size
-    i = fread (ssize, sizeof (char), 2, dev_);
+    wait(2);
+    i = read (dev_,ssize, 2);
     if (i == 0)
     {
       ROS_ERROR ("Error Reading Packet Size: %s", strerror (errno));
@@ -182,7 +212,8 @@ namespace asctec
     ROS_DEBUG ("Packet size: %d", packet_size);
 
     // get packet type
-    i = fread (stype, sizeof (char), 1, dev_);
+    wait(1);
+    i = read (dev_, stype, 1);
     if (i == 0)
       return false;
     serialport_bytes_rx_ += 1;
@@ -190,14 +221,16 @@ namespace asctec
     ROS_DEBUG ("Packet type: %d", packet_type);
 
     // get packet
-    i = fread (spacket, sizeof (char), packet_size, dev_);
+    wait(packet_size);
+    i = read (dev_, spacket, packet_size);
     if (i == 0)
       return false;
     serialport_bytes_rx_ += packet_size;
     ROS_DEBUG ("Packet string: ok");
 
     // get packet crc
-    i = fread (scrc, sizeof (char), sizeof (scrc), dev_);
+    wait(2);
+    i = read (dev_, scrc, 2);
     if (i == 0)
       return false;
     serialport_bytes_rx_ += sizeof (scrc);
@@ -205,20 +238,21 @@ namespace asctec
     ROS_DEBUG ("Packet crc: %d", packet_crc);
 
     // get closing ("<#<")
-    i = fread (stoken, sizeof (char), 3, dev_);
+    wait(3);
+    i = read (dev_, stoken, 3);
     if (i == 0 || strncmp (stoken, "<#<", 3) != 0)
     {
       ROS_ERROR ("Error Reading Packet Footer: %s", strerror (errno));
       ROS_DEBUG ("Read (%d): %s", i, stoken);
-      stall (false);
-      while (fread (stoken, sizeof (char), 1, dev_) != 0)
+      //stall (false);
+      while (read (dev_, stoken, 1) != 0)
       {
         stoken[1] = '\0';
         ROS_DEBUG ("%s", stoken);
       }
       flush ();
       drain ();
-      stall (true);
+      //stall (true);
       ROS_DEBUG ("Packet Footer Corrupt!!");
       return false;
     }
@@ -228,29 +262,30 @@ namespace asctec
     return true;
   }
 
-  void SerialInterface::write (char *output, int len)
+  void SerialInterface::output (char *output, int len)
   {
     int i;
     serialport_bytes_tx_ += len;
-    //ROS_INFO ("Writing %d element(s): %s", len, output);
+    ROS_INFO ("Writing %d element(s): %s", len, output);
     ROS_DEBUG ("dev: %zd", (size_t) dev_);
-    flush ();
-    i = fwrite (output, sizeof (char), len, dev_);
+    //flush ();
+    i = write (dev_, output, len);
     if (i != len)
     {
       ROS_ERROR ("Error wrote %d out of %d element(s): %s", i, len, strerror (errno));
       ROS_BREAK ();
     }
+    ROS_DEBUG ("Write completed");
   }
 
-  void SerialInterface::write (unsigned char *output, int len)
+  void SerialInterface::output (unsigned char *output, int len)
   {
     int i;
     serialport_bytes_tx_ += len;
     ROS_INFO ("Writing %d element(s): %s", len, output);
     ROS_DEBUG ("dev: %zd", (size_t) dev_);
     ROS_DEBUG ("FOO");
-    i = fwrite (output, sizeof (unsigned char), len, dev_);
+    i = write (dev_, output, len);
     if (i != len)
     {
       ROS_ERROR ("Error wrote %d out of %d element(s): %s", i, len, strerror (errno));
@@ -259,19 +294,24 @@ namespace asctec
   }
   void SerialInterface::sendControl (Telemetry * telemetry)
   {
-    if (!telemetry->controlEnabled_)
-      return;
+    int bytes;
+    if(!telemetry->controlEnabled_) return;
     ROS_DEBUG ("sendControl started");
     unsigned char cmd[] = ">*>di";
-
-    if (telemetry->controlInterval_ != 0
-        && ((telemetry->controlCount_ - telemetry->controlOffset_) % telemetry->controlInterval_ == 0))
-    {
-      //ROS_INFO("writing control to pelican: size of &CTRL_INPUT_ %zd", sizeof (&telemetry->CTRL_INPUT_));
-      flush ();
-      write (cmd, 5);
-      write ((unsigned char *) &telemetry->CTRL_INPUT_, 12);
-      ROS_INFO ("writing control to pelican: size of CTRL_INPUT_ %zd", sizeof (telemetry->CTRL_INPUT_));
+    //telemetry->dumpCTRL_INPUT();
+    if (telemetry->controlInterval_ != 0 && ((telemetry->controlCount_ - telemetry->controlOffset_) % telemetry->controlInterval_ == 0)) {
+      if(telemetry->CTRL_INPUT_.chksum != telemetry->CTRL_INPUT_.pitch + telemetry->CTRL_INPUT_.roll + telemetry->CTRL_INPUT_.yaw + telemetry->CTRL_INPUT_.thrust + telemetry->CTRL_INPUT_.ctrl + (short) 0xAAAA){
+        ROS_INFO("invalid CtrlInput checksum: %d !=  %d", telemetry->CTRL_INPUT_.chksum, telemetry->CTRL_INPUT_.pitch + telemetry->CTRL_INPUT_.roll + telemetry->CTRL_INPUT_.yaw + telemetry->CTRL_INPUT_.thrust + telemetry->CTRL_INPUT_.ctrl + (short) 0xAAAA);
+        return;
+      }
+      flush();
+      output(cmd,5);
+      output((unsigned char*) &telemetry->CTRL_INPUT_, 12);
+      ROS_INFO("writing control to pelican: size of CTRL_INPUT_ %zd", sizeof(telemetry->CTRL_INPUT_));
+      usleep(100000);
+      ioctl(dev_,FIONREAD,&bytes);
+      ROS_INFO("sendControl Bytes Available %d", bytes);
+      drain(); // FIXME we should actually check the response but who really has time for error checking.
     }
     //ROS_INFO ("sendControl completed" );
   }
@@ -287,11 +327,11 @@ namespace asctec
     unsigned short packet_size;
     unsigned int i;
 
-    ROS_INFO ("Packet Request: %04x %zd packets", (short) telemetry->requestPackets_.to_ulong (),
-              telemetry->requestPackets_.count ());
+    //ROS_INFO ("Packet Request: %04x %zd packets", (short) telemetry->requestPackets_.to_ulong (),
+    //          telemetry->requestPackets_.count ());
     sprintf (cmd, ">*>p%c", (short) telemetry->requestPackets_.to_ulong ());
-    write (cmd, 6);
-    drain ();
+    output (cmd, 6);
+    //drain ();
 
     bool result = false;
     for (i = 0; i < telemetry->requestPackets_.count (); i++)
@@ -385,8 +425,9 @@ namespace asctec
         break;
       }
     }
-    stall (false);
-    i = fread (spacket, sizeof (char), 1, dev_);
+    //stall (false);
+    //wait(1);
+    i = read (dev_, spacket, 1);
     serialport_bytes_rx_ += i;
     //FIXME~!!
     // If we receive unexpected data then log a warning

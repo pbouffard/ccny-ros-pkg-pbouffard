@@ -35,8 +35,8 @@
  * 
  * @b Pictures:<br>
  * <table><tr>
- * <th><IMG SRC="file:///home/gaitt/Bureau/gtkturncoordinator.png"></th>
- * <th><IMG SRC="file:///home/gaitt/Bureau/gtkturncoordinator_g.png"></th>
+ * <th><IMG SRC="http://www.ros.org/wiki/ground_station?action=AttachFile&do=get&target=gtkturncoordinator.png"></th>
+ * <th><IMG SRC="http://www.ros.org/wiki/ground_station?action=AttachFile&do=get&target=gtkturncoordinator_g.png"></th>
  * </tr></table>
  * 
  * @b Example: <br>

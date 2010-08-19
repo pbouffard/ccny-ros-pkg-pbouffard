@@ -1,7 +1,8 @@
 <package>
   <description brief="ground_station">
 
-     ground_station
+     ground_station is a package for ROS that typicaly subscribe to several topics and update an Gtk+ based GUI.
+     It is made for the CityFlyer research project of the CCNY Robotics lab.
 
   </description>
   <author>Gautier Dumonteil</author>
@@ -12,6 +13,11 @@
   <depend package="roscpp"/>
   <depend package="geometry_msgs"/>
   <depend package="sensor_msgs"/>
+  <depend package="asctec_msgs"/>
+  <depend package="osmgpsmap"/>
+  <depend package="rosbag"/>
+  <depend package="std_msgs"/>
+  <depend package="gps_common"/>
   <rosdep name="libgtk2.0-dev"/>
 
 </package>

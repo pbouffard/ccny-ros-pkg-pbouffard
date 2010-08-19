@@ -1,0 +1,25 @@
+<launch>
+	<node name="ground_station" pkg="ground_station" type="groundstation" respawn="false" output="screen">
+	
+		<!-- General window parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+		<param name="window_grayscale_color" value="false"/>
+		<param name="window_radial_color" value="true"/>
+		
+		<!-- Altimeter parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+		<param name="altimeter_unit_is_feet" value="false"/>	
+		<param name="altimeter_step_value" value="1"/>
+		
+		<!-- Variometer parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+		<param name="variometer_step_value" value="100"/>
+				
+	   <!-- Bar Gauge parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+		<param name="bd_widget_name" value="Battery Gauge"/>	
+		<param name="bd_bar_number" value="1"/>
+		<param name="bd_name_bar_gauge1" value="Batt"/>	
+		<param name="bd_unit_bar_gauge1" value="V"/>	
+		<param name="bd_start_value_bar_1" value="0"/>
+		<param name="bd_end_value_bar_1" value="13"/>
+		<param name="bd_green_strip_start_1" value="10"/>
+		<param name="bd_yellow_strip_start_1" value="8"/>
+	</node>
+</launch>

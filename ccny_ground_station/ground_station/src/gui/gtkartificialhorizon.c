@@ -35,8 +35,8 @@
  * 
  * @b Pictures:<br>
  * <table><tr>
- * <th><IMG SRC="file:///home/gaitt/Bureau/gtkartificialhorizon.png"></th>
- * <th><IMG SRC="file:///home/gaitt/Bureau/gtkartificialhorizon_g.png"></th>
+ * <th><IMG SRC="http://www.ros.org/wiki/ground_station?action=AttachFile&do=get&target=gtkartificialhorizon.png"></th>
+ * <th><IMG SRC="http://www.ros.org/wiki/ground_station?action=AttachFile&do=get&target=gtkartificialhorizon_g.png"></th>
  * </tr></table>
  * 
  * @b Example: <br>
@@ -436,12 +436,12 @@ extern void gtk_artificial_horizon_set_value (GtkArtificialHorizon * arh, gdoubl
   if ((angle >= 0) && (angle <= 360))
     priv->angle = angle;
   else
-    g_warning ("GtkArtificialHorizon : gtk_artificial_horizon_set_arhi : value out of range");
+    g_warning ("GtkArtificialHorizon : gtk_artificial_horizon_set_value : value out of range");
 
   if ((y >= -30) && (y <= 30))
     priv->trans_y = y;
   else
-    g_warning ("GtkArtificialHorizon : gtk_artificial_horizon_set_arhi : value out of range");
+    g_warning ("GtkArtificialHorizon : gtk_artificial_horizon_set_value : value out of range");
 
   return;
 }

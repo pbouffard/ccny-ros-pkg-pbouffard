@@ -33,8 +33,9 @@ include($ENV{ROS_ROOT}/core/rosbuild/FindPkgConfig.cmake)
 
 set(GPSDVIEWER       gpsd_viewer)
 set(GPSDVIEWER_SRC   src/gpsd_viewer.cpp
-					src/gui/AppData.cpp
-	                src/gui/callbacks.cpp)
+							src/gui/AppData.cpp
+							src/gui/gpsd_viewer_osd.c
+							src/gui/callbacks.cpp)
 
 rosbuild_add_executable(${GPSDVIEWER}  ${GPSDVIEWER_SRC})
 

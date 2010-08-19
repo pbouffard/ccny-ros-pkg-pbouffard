@@ -1,0 +1,13 @@
+<package>
+  <description brief="osmgpsmap">
+     osmgpsmap
+  </description>
+  <author>Gautier Dumonteil</author>
+  <license>GPL</license>
+  <review status="3rdparty" notes=""/>
+  <url>http://nzjrs.github.com/osm-gps-map/</url>
+  <rosdep name="libsoup"/>
+  <export>
+  		<cpp cflags="-I${prefix}/include/" lflags="-L${prefix}/lib -Wl,-rpath,${prefix}/lib"/>
+  </export>
+</package>

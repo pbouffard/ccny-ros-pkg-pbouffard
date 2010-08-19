@@ -33,6 +33,3 @@ rosbuild_add_executable(autopilot src/autopilot.cpp
                                   src/serial_interface.cpp
                                   src/crc16.cpp 
                                   src/telemetry.cpp)
-
-rosbuild_add_executable(teletest src/teletest.cpp 
-                                 src/telemetry.cpp)

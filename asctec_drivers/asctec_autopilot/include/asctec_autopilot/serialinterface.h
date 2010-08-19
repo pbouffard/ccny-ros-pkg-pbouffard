@@ -45,8 +45,8 @@ namespace asctec
     SerialInterface (std::string port, uint32_t speed);
     ~SerialInterface ();
 
-    void write (char *output, int len);
-    void write (unsigned char *output, int len);
+    void output (char *output, int len);
+    void output (unsigned char *output, int len);
     bool getPackets (Telemetry *telemetry);
     void sendControl (Telemetry *telemetry);
     void dumpDebug (void);
@@ -63,8 +63,9 @@ namespace asctec
     void flush ();
     void drain ();
     void stall (bool);
+    int wait (int);
 
-    FILE *dev_;
+    int dev_;
     std::string serialport_name_;
     uint32_t serialport_speed_;
     speed_t serialport_baud_;
