@@ -48,6 +48,7 @@
                         <property name="tooltip_text" translatable="yes">Lock map center to the UAV.</property>
                         <property name="label" translatable="yes">Lock view</property>
                         <property name="use_underline">True</property>
+                        <signal name="toggled" handler="on_menuitem_LockView_toggled"/>
                       </object>
                     </child>
                   </object>

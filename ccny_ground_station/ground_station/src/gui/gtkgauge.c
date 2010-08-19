@@ -38,8 +38,8 @@
  * 
  * @b Pictures:<br>
  * <table><tr>
- * <th><IMG SRC="file:///home/gaitt/Bureau/gtkgauge.png"></th>
- * <th><IMG SRC="file:///home/gaitt/Bureau/gtkgauge_g.png"></th>
+ * <th><IMG SRC="http://www.ros.org/wiki/ground_station?action=AttachFile&do=get&target=gtkgauge.png"></th>
+ * <th><IMG SRC="http://www.ros.org/wiki/ground_station?action=AttachFile&do=get&target=gtkgauge_g.png"></th>
  * </tr></table>
  * 
  * \b Example:<br>

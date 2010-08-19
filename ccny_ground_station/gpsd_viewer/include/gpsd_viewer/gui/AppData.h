@@ -41,6 +41,7 @@ public:
   OsmGpsMapTrack * current_track;
   GpsdViewerOsd * osd;
     
+  bool lock_view;
   bool draw_path;
   int map_zoom_max;
   int map_current_zoom;

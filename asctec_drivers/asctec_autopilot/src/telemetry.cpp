@@ -62,7 +62,7 @@ namespace asctec
 
   void Telemetry::buildRequest ()
   {
-    ROS_DEBUG ("Telemetry::buildRequest()");
+    //ROS_DEBUG ("Telemetry::buildRequest()");
     // Clear previous packet request
     requestPackets_ ^= requestPackets_;
     for (int i = 0; i < REQUEST_TYPES; i++)
