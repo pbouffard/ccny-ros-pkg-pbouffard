@@ -1,4 +1,7 @@
 <launch>
+  <node pkg="tf" type="static_transform_publisher" name="base_link_to_laser" 
+   args="0.10 0.00 -0.03 1.571 0 0 /base_link /camera 20" />
+
   <node pkg="usb_cam" type="usb_cam_node" name="camera" respawn="false" output="screen">
     <param name="video_device" value="/dev/video0"/>
     <param name="io_method" value="mmap"/>
