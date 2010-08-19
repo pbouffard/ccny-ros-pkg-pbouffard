@@ -419,12 +419,11 @@ namespace asctec
         break;
       }
     }
-    i = read (dev_, spacket, 1);
-    serialport_bytes_rx_ += i;
+    ioctl(dev_,FIONREAD,&i);
     if (i != 0)
     {
-      flush();
       ROS_ERROR ("  Unexpected Data: Flushing receive buffer");
+      flush();
     }
     return result;
   }
