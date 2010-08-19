@@ -163,14 +163,14 @@ namespace asctec
     //ROS_INFO ("TX: %03.3f Bps",float(serialInterface_->serialport_bytes_tx_)/1000*freq_);
     serialInterface_->serialport_bytes_rx_ = 0;
     serialInterface_->serialport_bytes_tx_ = 0;
+    telemetry_->publishPackets ();
+    telemetry_->controlCount_++;
+    serialInterface_->sendControl (telemetry_);
     telemetry_->buildRequest ();
     telemetry_->requestCount_++;
     if (telemetry_->requestPackets_.count() > 0 )
     {
       serialInterface_->getPackets (telemetry_);
     }
-    telemetry_->publishPackets ();
-    telemetry_->controlCount_++;
-    serialInterface_->sendControl (telemetry_);
   }
 }
