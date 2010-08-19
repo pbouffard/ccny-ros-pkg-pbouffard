@@ -45,6 +45,15 @@ public:
   bool widget_created;
   bool grayscale_color;
   bool radial_color;
+  char icon_directory[FILENAME_MAX];
+  
+  // **** Icon
+  GdkPixbuf * leftarrow_icon;
+  GdkPixbuf * rightarrow_icon;
+  GdkPixbuf * record_icon;
+  GdkPixbuf * pause_icon;
+  GdkPixbuf * stop_icon;
+  GdkPixbuf * refresh_icon;
 
   // -------------------------------------------------------------------
   // -------------------------------------------------------------------
@@ -84,6 +93,12 @@ public:
   // **** artificial horizon 
   GtkWidget * arh;
   
+  // **** Option Popup
+  GtkWidget *box_telemetry;
+  GtkWidget *telemetry_option_popup;
+  GtkWidget *btn_open_telemetry_option_popup;
+  GtkWidget *btn_close_telemetry_option_popup;
+  
   // -------------------------------------------------------------------
   // -------------------------------------------------------------------
   // **** Tab 2: GpsdViewer
@@ -94,9 +109,7 @@ public:
   GtkWidget *map_box;
   GtkWidget *map_container;
   GtkWidget *box_gpsd_viewer;
-  GtkWidget *gpsd_option_popup;
-  GtkWidget *btn_gpsd_option_popup;
-  
+    
   bool draw_path;
   bool lock_view;
   int map_zoom_max;
@@ -104,16 +117,33 @@ public:
   const char *repo_uri;
   const char *friendly_name;
   char *cachedir;
+  
+  // **** Option Popup
+  GtkWidget *gpsd_option_popup;
+  GtkWidget *btn_open_gpsd_option_popup;
+  GtkWidget *btn_close_gpsd_option_popup;
 
   // -------------------------------------------------------------------
   // -------------------------------------------------------------------
   // **** Tab 3: ROSBag Record
+  pid_t rosbag_pid;
+  FILE * rosbag_record;
+  pthread_t rosbagRecordThread;
   GtkListStore *topicsList;
   GtkWidget * cmd_line_entry;
+  GtkWidget * prefix_entry;
+  GtkWidget * info_textview;
+  
   char * rosbag_record_cmd;
   char * file_prefix;
-  char cmd_line[255];
-  char list_topic[255];
+  char cmd_line[FILENAME_MAX];
+  char list_topic[FILENAME_MAX];
+   
+  GtkWidget * update_btn;  
+  GtkWidget * record_btn;
+  GtkWidget * stop_btn;
+  
+  int record_state;
 
 };
 

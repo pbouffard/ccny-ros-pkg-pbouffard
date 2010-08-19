@@ -36,14 +36,22 @@ void gpsFixCallback (const gps_common::GPSFix::ConstPtr & msg)
   osm_gps_map_convert_geographic_to_screen(data->map, point, &pixel_x, &pixel_y);
      
   if (OSM_IS_GPS_MAP (data->map)){
+
 		// **** Center map on gps data received
-		//osm_gps_map_set_center (data->map, msg->latitude, msg->longitude);
-		update_uav_pose_osd(data->osd,FALSE, pixel_x, pixel_y);
-      osm_gps_map_gps_clear(data->map);
+		if(data->lock_view)
+		{
+			update_uav_pose_osd(data->osd,TRUE, pixel_x, pixel_y);
+			osm_gps_map_set_center (data->map, msg->latitude, msg->longitude);
+		}
+		else
+		{
+			update_uav_pose_osd(data->osd,FALSE, pixel_x, pixel_y);
+			osm_gps_map_gps_clear(data->map);
+		}
 	
 		// **** Add point to the track
 		osm_gps_map_track_add_point (data->current_track, point);
-	}
+  }
 	
   // **** release GTK thread lock 
   gdk_threads_leave ();

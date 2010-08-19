@@ -1,5 +1,5 @@
 <launch>
-	<node name="ground_station" pkg="ground_station" type="groundstation_without_gps" respawn="false" output="screen">
+	<node name="ground_station" pkg="ground_station" type="telemetry_demo" respawn="false" output="screen">
 	
 		<!-- General window parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 		<param name="window_grayscale_color" value="false"/>
@@ -35,22 +35,22 @@
 		<param name="gauge2_drawing_step" value="5"/>
 		
 	   <!-- Bar Gauge parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-		<param name="widget_name" value="Random Bar Gauges"/>	
-		<param name="bar_number" value="3"/>
-		<param name="name_bar_gauge1" value="Batt"/>	
-		<param name="unit_bar_gauge1" value="V"/>	
-		<param name="name_bar_gauge2" value="Aux"/>	
-		<param name="unit_bar_gauge2" value="X"/>	
-	   <param name="name_bar_gauge3" value="Aux2"/>	
-		<param name="unit_bar_gauge3" value="X"/>	
-		<param name="start_value_bar_1" value="0"/>
-		<param name="end_value_bar_1" value="12"/>
-		<param name="start_value_bar_2" value="0"/>
-		<param name="end_value_bar_2" value="100"/>
-		<param name="start_value_bar_3" value="0"/>
-		<param name="end_value_bar_3" value="100"/>
-		<param name="green_strip_start_1" value="10"/>
-		<param name="yellow_strip_start_1" value="8"/>
+		<param name="bg_widget_name" value="Random Bar Gauges"/>	
+		<param name="bg_bar_number" value="3"/>
+		<param name="bg_name_bar_gauge1" value="Batt"/>	
+		<param name="bg_unit_bar_gauge1" value="V"/>	
+		<param name="bg_name_bar_gauge2" value="Aux"/>	
+		<param name="bg_unit_bar_gauge2" value="X"/>	
+	   <param name="bg_name_bar_gauge3" value="Aux2"/>	
+		<param name="bg_unit_bar_gauge3" value="X"/>	
+		<param name="bg_start_value_bar_1" value="0"/>
+		<param name="bg_end_value_bar_1" value="12"/>
+		<param name="bg_start_value_bar_2" value="0"/>
+		<param name="bg_end_value_bar_2" value="100"/>
+		<param name="bg_start_value_bar_3" value="0"/>
+		<param name="bg_end_value_bar_3" value="100"/>
+		<param name="bg_green_strip_start_1" value="10"/>
+		<param name="bg_yellow_strip_start_1" value="8"/>
 
 	</node>
 	

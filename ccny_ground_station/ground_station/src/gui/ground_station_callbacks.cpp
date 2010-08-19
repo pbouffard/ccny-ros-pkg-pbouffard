@@ -59,30 +59,49 @@ extern "C" G_MODULE_EXPORT void on_button_UpdateTopicList_clicked(GtkButton * bu
 {
   GtkTreeIter iter;
   GValue topic_name = {0}, topic_selected = {0};
+  GValue topic_name_present = {0};
+  gboolean valid,add_to_list=TRUE;
   char topics_list[255];
   char * pch;
-  
-  g_value_init (&topic_name, G_TYPE_STRING);
-  g_value_init (&topic_selected, G_TYPE_BOOLEAN);
-  
-  gtk_list_store_clear(GTK_LIST_STORE(data->topicsList));  
   
   FILE * topics = popen("rostopic list","r");
   
   while (fgets(topics_list, sizeof(topics_list), topics))
   {
-	   pch=strchr(topics_list,'\n');
-	   topics_list[pch-topics_list]=' ';
+		pch=strchr(topics_list,'\n');
+		topics_list[pch-topics_list]=' ';
 	   
-		g_value_set_string (&topic_name, topics_list);
+	   g_value_init (&topic_name, G_TYPE_STRING);
+		g_value_init (&topic_selected, G_TYPE_BOOLEAN);
+	   g_value_set_string (&topic_name, topics_list);
 		g_value_set_boolean (&topic_selected, FALSE);
-		
-		gtk_list_store_append (GTK_LIST_STORE(data->topicsList), &iter);
-		gtk_list_store_set_value (GTK_LIST_STORE(data->topicsList), &iter, 0, &topic_name);
-		gtk_list_store_set_value (GTK_LIST_STORE(data->topicsList), &iter, 1, &topic_selected);    
-  }
-  pclose(topics);
-   
+					
+		valid = gtk_tree_model_get_iter_first (GTK_TREE_MODEL (data->topicsList), &iter);
+		while (valid)
+		{
+			gtk_tree_model_get_value (GTK_TREE_MODEL (data->topicsList), &iter,0, &topic_name_present);
+			add_to_list=TRUE;
+			if(strcmp(g_value_get_string(&topic_name),g_value_get_string(&topic_name_present))==0)
+			{								
+				add_to_list=FALSE;
+				g_value_unset(&topic_name_present);  		
+				break;
+			}
+			valid = gtk_tree_model_iter_next (GTK_TREE_MODEL (data->topicsList), &iter);
+			g_value_unset(&topic_name_present);  		
+		}
+												
+		if(add_to_list)
+		{
+			gtk_list_store_append (GTK_LIST_STORE(data->topicsList), &iter);
+			gtk_list_store_set_value (GTK_LIST_STORE(data->topicsList), &iter, 0, &topic_name);
+			gtk_list_store_set_value (GTK_LIST_STORE(data->topicsList), &iter, 1, &topic_selected); 
+		}
+		g_value_unset(&topic_name);  		
+		g_value_unset(&topic_selected);  		
+	}
+pclose(topics);
+  
 }
 
 extern "C" G_MODULE_EXPORT void on_treeview2_topics_row_activated(GtkTreeView * test,GtkTreePath *path, GtkTreeViewColumn *column, AppData * data)
@@ -119,35 +138,215 @@ extern "C" G_MODULE_EXPORT void on_treeview2_topics_row_activated(GtkTreeView * 
       g_value_unset(&topic_selected);  	
   }
   
-  sprintf(data->cmd_line,"%s %s",data->rosbag_record_cmd,data->list_topic);
-  gtk_entry_set_text(GTK_ENTRY(data->cmd_line_entry),data->cmd_line);
+  data->file_prefix=(char*)gtk_entry_get_text (GTK_ENTRY(data->prefix_entry));
+  if(strcmp(data->file_prefix,"")!=0)
+  {
+		sprintf(data->cmd_line,"%s -o %s %s",data->rosbag_record_cmd,data->file_prefix,data->list_topic);
+		gtk_entry_set_text(GTK_ENTRY(data->cmd_line_entry),data->cmd_line);
+  }
+  else
+  {
+		sprintf(data->cmd_line,"%s %s",data->rosbag_record_cmd,data->list_topic);
+		gtk_entry_set_text(GTK_ENTRY(data->cmd_line_entry),data->cmd_line);
+  }
+
 }
 
 extern "C" G_MODULE_EXPORT void on_entry_Prefix_activate(GtkEntry * entry, AppData * data)
 {
   data->file_prefix=(char*)gtk_entry_get_text (entry);
-  if(!strcmp(data->file_prefix,"")==0)
+  if(strcmp(data->file_prefix,"")!=0)
   {
 		sprintf(data->cmd_line,"%s -o %s %s",data->rosbag_record_cmd,data->file_prefix,data->list_topic);
 		gtk_entry_set_text(GTK_ENTRY(data->cmd_line_entry),data->cmd_line);
   }
+  else
+  {
+		sprintf(data->cmd_line,"%s %s",data->rosbag_record_cmd,data->list_topic);
+		gtk_entry_set_text(GTK_ENTRY(data->cmd_line_entry),data->cmd_line);
+  }
 }
+
+void rosbagRecord (AppData * data)
+{
+  //~ if (user != NULL)
+  //~ {
+    //~ AppData * data = (AppData *) user;
+    //~ char output_msg[255];
+    //~ int i=0;
+    //~ 
+    //~ pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,NULL);
+    //~ pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);
+	 //~ 
+	 //~ printf("Record cmd : %s\n",gtk_entry_get_text(GTK_ENTRY(data->cmd_line_entry)));
+	 //~ data->rosbag_record = popen(gtk_entry_get_text(GTK_ENTRY(data->cmd_line_entry)),"r");
+	 //~ 
+	 //~ while (fgets(output_msg, sizeof(output_msg), data->rosbag_record))
+    //~ {
+	 //~ printf("rosbag rec input : %s",output_msg);
+	 //~ }
+	 //~ int pclose_err = pclose(data->rosbag_record);
+	 //~ printf("pclose %d\n",pclose_err);
+	 
+	 char * pch, ** argv;
+	 int argc=0;
+	 
+	 ros::init(argc, argv, "record", ros::init_options::AnonymousName);
+
+    // **** Command-line options
+    rosbag::RecorderOptions opts;
+    opts.record_all = false;
+    opts.quiet = true;
+
+    // **** bag prefix
+    opts.prefix = data->file_prefix;
+    opts.append_date = true;
+
+    // **** topics
+    pch = strtok (data->list_topic," ");
+	 while (pch != NULL)
+	 {
+		std::string str(pch);
+		opts.topics.push_back(str);
+      pch = strtok (NULL, " ");
+	 }
+
+    // **** Run the recorder
+	 rosbag::Recorder recorder(opts);
+	 recorder.run();
+}
+
 
 extern "C" G_MODULE_EXPORT void on_button_RecordPause_clicked(GtkButton * button, AppData * data)
 {
-	//~ gtk_button_set_image(button,gtk-media-stop);
+	//~ pthread_create (&data->rosbagRecordThread, NULL, rosbagRecord, data);
+   //~ printf("PID?? %d\n",data->rosbagRecordThread);
+
+	if ((data->rosbag_pid = fork()) == 0) {
+		rosbagRecord(data);
+	}
+	printf("PID ground_station = %d\n",getpid());
+	printf("PID rosbag record = %d\n",data->rosbag_pid);
+}
+
+extern "C" G_MODULE_EXPORT void on_button_Stop_clicked(GtkButton * button, AppData * data)
+{
+	printf("PID = %d\n",data->rosbag_pid);
+	int err = kill(data->rosbag_pid, SIGINT);
+	printf("err = %d\n",err);
+	
+	//~ printf("PID?? %d\n",data->rosbagRecordThread);
+	//~ int err = pthread_kill(data->rosbagRecordThread, SIGINT);
+	//~ printf("res = %d\n",err);
+
+
+  //~ GtkTextBuffer * buffer;
+  //~ GtkTextIter start, end;
+  //~ 
+  //~ buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(data->info_textview));
+  //~ gtk_text_buffer_get_bounds (buffer, &start, &end);
+  //~ gchar * bag_info = gtk_text_buffer_get_text(buffer,&start,&end,FALSE);
+//~ 
+  //~ rosbag::Bag bag;
+  //~ bag.open("/home/gaitt/Work_CCNY/pkgs/ccny-ros-pkg/ccny_ground_station/ground_station/test.bag", rosbag::bagmode::Append);
+//~ 
+  //~ std_msgs::String str;
+  //~ str.data = bag_info;
+//~ 
+  //~ bag.write("metadata", ros::Time::now(), str);
+  //~ bag.close();
+}
+
+extern "C" G_MODULE_EXPORT void on_notebook1_switch_page (GtkNotebook *notebook, GtkNotebookPage *page, guint page_num, AppData * data)
+{
+	GtkTreeIter iter;
+   GValue topic_name = {0}, topic_selected = {0};
+   GValue topic_name_present = {0};
+   gboolean valid,add_to_list=TRUE;
+   char topics_list[255];
+   char * pch;
+	
+	switch(page_num)
+	{
+			case 2:
+				FILE * topics = popen("rostopic list","r");
+  
+				while (fgets(topics_list, sizeof(topics_list), topics))
+				{
+					pch=strchr(topics_list,'\n');
+					topics_list[pch-topics_list]=' ';
+	   
+					g_value_init (&topic_name, G_TYPE_STRING);
+					g_value_init (&topic_selected, G_TYPE_BOOLEAN);
+	   			g_value_set_string (&topic_name, topics_list);
+					g_value_set_boolean (&topic_selected, FALSE);
+					
+					valid = gtk_tree_model_get_iter_first (GTK_TREE_MODEL (data->topicsList), &iter);
+					while (valid)
+					{
+						gtk_tree_model_get_value (GTK_TREE_MODEL (data->topicsList), &iter,0, &topic_name_present);
+						add_to_list=TRUE;
+						if(strcmp(g_value_get_string(&topic_name),g_value_get_string(&topic_name_present))==0)
+						{								
+							add_to_list=FALSE;
+							g_value_unset(&topic_name_present);  		
+							break;
+						}
+						valid = gtk_tree_model_iter_next (GTK_TREE_MODEL (data->topicsList), &iter);
+						g_value_unset(&topic_name_present);  		
+					}
+															
+					if(add_to_list)
+					{
+						gtk_list_store_append (GTK_LIST_STORE(data->topicsList), &iter);
+						gtk_list_store_set_value (GTK_LIST_STORE(data->topicsList), &iter, 0, &topic_name);
+						gtk_list_store_set_value (GTK_LIST_STORE(data->topicsList), &iter, 1, &topic_selected); 
+					}
+					g_value_unset(&topic_name);  		
+					g_value_unset(&topic_selected);  		
+				}
+				pclose(topics);
+			break;
+	}
+}
+
+
+extern "C" G_MODULE_EXPORT void on_colorbutton_BgColor_color_set(GtkColorButton * button, AppData * data)
+{
+  GdkColor bg_color;
+	
+  gtk_color_button_get_color(button,&bg_color);
+  gtk_widget_modify_bg (data->alt, GTK_STATE_NORMAL, &bg_color);
+  gtk_widget_modify_bg (data->comp, GTK_STATE_NORMAL, &bg_color);
+  gtk_widget_modify_bg (data->comp2, GTK_STATE_NORMAL, &bg_color);
+  gtk_widget_modify_bg (data->arh, GTK_STATE_NORMAL, &bg_color);
+  gtk_widget_modify_bg (data->bg, GTK_STATE_NORMAL, &bg_color);
+  gtk_widget_modify_bg (data->vario, GTK_STATE_NORMAL, &bg_color);
+}
+
+
+extern "C" G_MODULE_EXPORT void on_button_OpenTelemetryOptionPopup_clicked(GtkButton * button, AppData * data)
+{
+  gtk_container_remove(GTK_CONTAINER(data->box_telemetry),GTK_WIDGET (data->btn_open_telemetry_option_popup));
+  gtk_box_pack_end (GTK_BOX (data->box_telemetry), GTK_WIDGET (data->telemetry_option_popup), FALSE, TRUE, 0); 
+}
+
+extern "C" G_MODULE_EXPORT void on_button_CloseTelemetryOptionPopup_clicked(GtkButton * button, AppData * data)
+{
+  gtk_container_remove(GTK_CONTAINER(data->box_telemetry),GTK_WIDGET (data->telemetry_option_popup));
+  gtk_box_pack_end (GTK_BOX (data->box_telemetry), GTK_WIDGET (data->btn_open_telemetry_option_popup), FALSE, TRUE, 0); 
 }
 
 extern "C" G_MODULE_EXPORT void on_button_OpenGpsdOptionPopup_clicked(GtkButton * button, AppData * data)
 {
-  gtk_container_remove(GTK_CONTAINER(data->box_gpsd_viewer),GTK_WIDGET (data->btn_gpsd_option_popup));
+  gtk_container_remove(GTK_CONTAINER(data->box_gpsd_viewer),GTK_WIDGET (data->btn_open_gpsd_option_popup));
   gtk_box_pack_end (GTK_BOX (data->box_gpsd_viewer), GTK_WIDGET (data->gpsd_option_popup), FALSE, TRUE, 0); 
 }
 
 extern "C" G_MODULE_EXPORT void on_button_CloseGpsdOptionPopup_clicked(GtkButton * button, AppData * data)
 {
   gtk_container_remove(GTK_CONTAINER(data->box_gpsd_viewer),GTK_WIDGET (data->gpsd_option_popup));
-  gtk_box_pack_end (GTK_BOX (data->box_gpsd_viewer), GTK_WIDGET (data->btn_gpsd_option_popup), FALSE, TRUE, 0); 
+  gtk_box_pack_end (GTK_BOX (data->box_gpsd_viewer), GTK_WIDGET (data->btn_open_gpsd_option_popup), FALSE, TRUE, 0); 
 }
 
 extern "C" G_MODULE_EXPORT void on_combobox_MapProvider_changed(GtkComboBox * box, AppData * data)
