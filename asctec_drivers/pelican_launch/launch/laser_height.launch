@@ -40,15 +40,16 @@
   ####################################################################
 
   <node pkg="laser_scan_splitter" type="laser_scan_splitter" name="splitter" output="screen">
-    <param name="sizes" value="9 17 22 593 23 17"/>
-    <param name="topics" value="m1 rvs m2 mvs m3 lvs"/>
-    <param name="frames" value="/laser /rvl /laser /laser /laser /lvl"/>
+    <param name="sizes"  type="string" value="9 17 22 593 23 17"/>
+    <param name="topics" type="string" value="m1 rvs m2 mvs m3 lvs"/>
+    <param name="frames" type="string" value="/laser /rvl /laser /laser /laser /lvl"/>
   </node>
 
   ####################################################################
 
   <node pkg="laser_height_estimation" type="laser_height_estimation" name="right_floor_altimeter" output="screen">
     <param name="base_frame" value="/base_link"/>
+    <param name="world_frame" value="/odom"/>
     <remap from="/scan"   to="splitter/rvs"/>
     <remap from="/imu"    to="asctec_proc/imu"/>
   </node>

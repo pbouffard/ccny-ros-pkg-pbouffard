@@ -49,6 +49,8 @@ LaserScanSplitter::LaserScanSplitter ()
   if (!nh_private.getParam ("sizes", sizesString))
     sizesString = "256 256";
 
+  ROS_INFO("========SIZES: %s", sizesString.c_str());
+
   // **** tokenize inputs
   tokenize (topicsString, publishedScanTopics_);
   tokenize (framesString, publishedLaserFrames_);
@@ -64,6 +66,8 @@ LaserScanSplitter::LaserScanSplitter ()
 
     ROS_ASSERT_MSG ((sizes_[i] > 0), "LaserScanSplitter: Scan size cannot be zero. Quitting.");
   }
+
+  ROS_INFO("SIZE_SUM: %d", sizeSum_);
 
   // **** check that topic, frames, and sizes vectors have same sizes
 
