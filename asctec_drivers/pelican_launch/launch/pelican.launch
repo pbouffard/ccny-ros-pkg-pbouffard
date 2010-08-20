@@ -14,7 +14,5 @@
 
   <include file="$(find pelican_launch)/launch/pcm_scanmatcher.launch"/>
 
-  <include file="$(find pelican_launch)/launch/usb_cam.launch"/>  
-
 </launch>
 
