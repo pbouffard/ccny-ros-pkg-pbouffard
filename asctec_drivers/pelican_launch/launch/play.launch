@@ -1,9 +1,11 @@
 <launch>
 
+  <arg name="BAG_NAME" value="alltopics_2010-08-23-19-24-28"/>
+
   <param name="use_sim_time" value="true"/>
 
   <node pkg="rosbag" type="play" name="play" output="screen"
-    args="$(env HOME)/ros/bags/alltopics_2010-08-23-19-05-00.bag -d 10 --clock"/>
+    args="$(env HOME)/ros/bags/$(arg BAG_NAME).bag -d 10 --clock"/>
 
   <node pkg="rviz" type="rviz" name="rviz"
     args="-d $(find pelican_launch)/launch/pelican.vcg"/>
