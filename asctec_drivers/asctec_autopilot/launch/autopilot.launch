@@ -2,11 +2,11 @@
   <node name="autopilot" pkg="asctec_autopilot" type="autopilot" respawn="false" required="true" output="screen">
     <param name="serial_port" type="string" value="/dev/ttyUSB0"/>
     <param name="serial_speed" type="int" value="57600"/>
-    <param name="freq" value="50.0"/>
+    <param name="freq" value="10.0"/>
 
     <param name="enable_LL_STATUS" type="bool" value="true"/>
     <param name="interval_LL_STATUS" type="int" value="10"/>
-    <param name="offset_LL_STATUS" type="int" value="1"/>
+    <param name="offset_LL_STATUS" type="int" value="2"/>
 
     <param name="enable_IMU_RAWDATA" type="bool" value="true"/>
     <param name="interval_IMU_RAWDATA" type="int" value="10"/>
@@ -33,8 +33,8 @@
     <param name="offset_GPS_DATA_ADVANCED" type="int" value="3"/>
 
     <param name="enable_CONTROL" type="bool" value="true"/>
-    <param name="interval_CONTROL" type="int" value="10"/>
-    <param name="offset_CONTROL" type="int" value="2"/>
+    <param name="interval_CONTROL" type="int" value="1"/>
+    <param name="offset_CONTROL" type="int" value="0"/>
 
     <remap from="/autopilot/CTRL_INPUT" to="/CtrlInput"/> 
   </node>
