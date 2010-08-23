@@ -49,6 +49,7 @@
     <param name="laser_frame" value="/laser_ortho"/>
 
     <param name="map_update_interval" value="3.0"/>
+    <param name="transform_publish_period" value="0.01"/>
   </node>
 
 

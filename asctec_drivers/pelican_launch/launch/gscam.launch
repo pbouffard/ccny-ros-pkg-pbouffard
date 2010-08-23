@@ -1,0 +1,20 @@
+<launch>
+
+  <env name="ROS_MASTER_URI" value="http://192.168.1.33:11311"/>
+
+  <env name="GSCAM_CONFIG" 
+    value='udpsrc port=5000 caps="application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)RAW, sampling=(string)YCbCr-4:2:0, depth=(string)8, width=(string)320, height=(string)240, payload=(int)96" ! queue ! rtpvrawdepay ! ffmpegcolorspace ! video/x-raw-rgb ! identity name=ros ! fakesink'/>
+
+  <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera_0"
+   args="0.160  0.000 -0.102 -1.570796327  0.000000000 -1.570796327 /base_link /camera_0 20" />
+
+  <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera_1"
+   args="0.000  0.000  0.000  0.000000000  0.040000000  0.000000000 /camera_0 /camera 20" />
+
+  <node pkg="gscam" type="gscam" name="gscam" output="screen">
+    <remap from="/gscam/camera_info" to="/camera/camera_info"/>
+    <remap from="/gscam/image_raw" to="/camera/image_raw"/>
+    <remap from="/gscam/set_camera_info" to="/camera/set_camera_info"/>
+  </node>
+
+</launch>
