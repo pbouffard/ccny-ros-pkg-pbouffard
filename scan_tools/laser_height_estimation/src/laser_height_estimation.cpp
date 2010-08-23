@@ -192,4 +192,24 @@ void LaserHeightEstimation::getWorldToBaseTf(const sensor_msgs::LaserScanConstPt
     return;
   }
   worldToBase = worldToBaseTf;
+
+  //**** temp - for determining transform chain collapse
+
+  tf::StampedTransform rvl;
+  try
+  {
+     tfListener_.lookupTransform ("laser", "/rvl", scan->header.stamp, rvl);
+  }
+  catch (tf::TransformException ex)
+  {
+    // transform unavailable - skip scan
+    ROS_WARN("RVL Transform unavailable, skipping scan (%s)", ex.what());
+    return;
+  }
+  
+  double z, y, x;
+  rvl.getBasis().getEulerZYX(z, y, x);
+
+  ROS_INFO("rvl: %f, %f, %f", z, y, x);
+  
 }
