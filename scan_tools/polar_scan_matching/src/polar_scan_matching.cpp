@@ -40,6 +40,8 @@ PolarScanMatching::PolarScanMatching()
     publishTf_ = true;
   if (!nh_private.getParam ("publish_pose", publishPose_))
     publishPose_ = true;
+  if (!nh_private.getParam ("use_odometry", useOdometry_))
+    useOdometry_ = false;
 
   // **** subscribe to laser scan messages
   scanSubscriber_ = nh.subscribe (scanTopic_, 10, &PolarScanMatching::scanCallback, this);
@@ -124,11 +126,7 @@ void PolarScanMatching::scanCallback (const sensor_msgs::LaserScan& scan)
     return;
   }
   
-  // **** get the current position of the base in the world frame
 
-  // if no transofrm is available, we'll use the last known transform
-  btTransform currWorldToBase;
-  getCurrentEstimatedPose(currWorldToBase, scan);
 
   // **** attmempt to match the two scans
 
@@ -142,11 +140,20 @@ void PolarScanMatching::scanCallback (const sensor_msgs::LaserScan& scan)
   prevPMScan_->ry = 0;
   prevPMScan_->th = 0; 
 
-  // use odometry model or not?
-  btTransform change = 
-    laserToBase_ * prevWorldToBase_.inverse() * currWorldToBase * baseToLaser_;
+  btTransform currWorldToBase;
+  btTransform change;
 
-  change.setIdentity();
+  // use odometry model or not?
+  if (useOdometry_) 
+  {
+    // get the current position of the base in the world frame
+    // if no transofrm is available, we'll use the last known transform
+
+    getCurrentEstimatedPose(currWorldToBase, scan);
+    change = laserToBase_ * prevWorldToBase_.inverse() * currWorldToBase * baseToLaser_;
+  }
+  else
+    change.setIdentity();
 
   PMScan * currPMScan = new PMScan(scan.ranges.size());
   rosToPMScan(scan, change, currPMScan);

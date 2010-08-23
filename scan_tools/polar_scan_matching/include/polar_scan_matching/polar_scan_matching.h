@@ -43,8 +43,9 @@ class PolarScanMatching
     double maxError_;
     int    maxIterations_;
     double stopCondition_;
-    bool publishTf_;
-    bool publishPose_;
+    bool   publishTf_;
+    bool   publishPose_;
+    bool   useOdometry_;
 
     std::string worldFrame_;
     std::string baseFrame_;
