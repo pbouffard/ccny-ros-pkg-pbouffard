@@ -1,13 +1,14 @@
 <launch>
+
   ##########################################################################
 
   <node pkg="laser_ortho_projector" type="laser_ortho_projector" name="laser_ortho_projector" output="screen">
     <remap from="/scan" to="/splitter/mvs"/>
-    <param name="world_frame" value="world"/>
-    <param name="laser_frame" value="laser"/>
-    <param name="laser_ortho_frame" value="laser_ortho"/>
+    <param name="world_frame" type="string" value="world"/>
+    <param name="laser_frame" type="string" value="laser"/>
+    <param name="laser_ortho_frame" type="string" value="laser_ortho"/>
     <param name="publish_cloud" value="true"/>
-    <param name="tf_tolerance" value="0.10"/>
+    <param name="tf_tolerance" value="0.1"/>
   </node>
 
   ##########################################################################
@@ -49,7 +50,7 @@
     <param name="laser_frame" value="/laser_ortho"/>
 
     <param name="map_update_interval" value="3.0"/>
-    <param name="transform_publish_period" value="0.01"/>
+    <param name="transform_publish_period" value="0.05"/>
   </node>
 
 
