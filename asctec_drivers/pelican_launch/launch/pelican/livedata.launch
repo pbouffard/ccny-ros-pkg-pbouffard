@@ -1,0 +1,10 @@
+<launch>
+
+  <include file="$(find pelican_launch)/launch/autopilot.launch"/>
+
+  <include file="$(find pelican_launch)/launch/hokuyo_240deg.launch"/>  
+
+  <include file="$(find pelican_launch)/launch/gscam.launch"/>
+
+</launch>
+

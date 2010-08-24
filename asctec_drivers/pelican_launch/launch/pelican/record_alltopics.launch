@@ -1,7 +1,5 @@
 <launch>
 
-  <env name="ROS_MASTER_URI" value="http://192.168.1.33:11311"/>
-
   <node pkg="rosbag" type="record" name="record" output="screen"
     args="-a -o $(env HOME)/ros/bags/alltopics"/>
 

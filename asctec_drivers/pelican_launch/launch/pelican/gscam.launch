@@ -1,7 +1,5 @@
 <launch>
 
-  <env name="ROS_MASTER_URI" value="http://192.168.1.33:11311"/>
-
   <env name="GSCAM_CONFIG" 
     value='udpsrc port=5000 caps="application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)RAW, sampling=(string)YCbCr-4:2:0, depth=(string)8, width=(string)320, height=(string)240, payload=(int)96" ! queue ! rtpvrawdepay ! ffmpegcolorspace ! video/x-raw-rgb ! identity name=ros ! fakesink'/>
 

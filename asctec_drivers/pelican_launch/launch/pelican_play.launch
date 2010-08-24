@@ -1,0 +1,12 @@
+<launch>
+
+  <env name="ROS_IP" value="192.168.1.33"/>
+  <env name="ROS_HOSTNAME" value="192.168.1.33"/>
+  <env name="ROS_MASTER_URI" value="http://192.168.1.33:11311"/>
+
+  <include file="$(find pelican_launch)/launch/pelican/bagdata.launch"/>
+
+  <include file="$(find pelican_launch)/launch/pelican/proc.launch"/>
+
+</launch>
+

@@ -7,9 +7,4 @@
   <node pkg="rosbag" type="play" name="play" output="screen"
     args="$(env HOME)/ros/bags/$(arg BAG_NAME).bag -d 10 --clock"/>
 
-  <node pkg="rviz" type="rviz" name="rviz"
-    args="-d $(find pelican_launch)/launch/pelican.vcg"/>
- 
-  <include file="$(find pelican_launch)/launch/gmapping.launch"/>
-
 </launch>
