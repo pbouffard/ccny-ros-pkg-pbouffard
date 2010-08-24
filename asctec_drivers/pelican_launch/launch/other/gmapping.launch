@@ -1,14 +1,18 @@
 <launch>
 
+  <env name="ROS_MASTER_URI" value="http://strange:11311"/>
+
   ##########################################################################
 
   <node pkg="laser_ortho_projector" type="laser_ortho_projector" name="laser_ortho_projector" output="screen">
+
     <remap from="/scan" to="/splitter/mvs"/>
-    <param name="world_frame" type="string" value="world"/>
-    <param name="laser_frame" type="string" value="laser"/>
+    <param name="world_frame"       type="string" value="world"/>
+    <param name="laser_frame"       type="string" value="laser"/>
     <param name="laser_ortho_frame" type="string" value="laser_ortho"/>
     <param name="publish_cloud" value="true"/>
     <param name="tf_tolerance" value="0.1"/>
+
   </node>
 
   ##########################################################################
