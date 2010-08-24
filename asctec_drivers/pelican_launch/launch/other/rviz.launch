@@ -3,7 +3,7 @@
   <env name="ROS_MASTER_URI" value="http://192.168.1.33:11311"/>
 
   <node pkg="rviz" type="rviz" name="rviz"
-    args="-d $(find pelican_launch)/launch/pelican.vcg">
+    args="-d $(find pelican_launch)/launch/vcg/pelican.vcg">
 
   </node>
 
