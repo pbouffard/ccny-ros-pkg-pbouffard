@@ -1,12 +1,7 @@
 <launch>
 
-  <env name="ROS_IP" value="192.168.1.145"/>
-  <env name="ROS_HOSTNAME" value="idryanov-desktop"/>
-  <env name="ROS_MASTER_URI" value="http://strange:11311"/>
-
   <node pkg="rviz" type="rviz" name="rviz"
     args="-d $(find pelican_launch)/launch/vcg/pelican.vcg">
-
 
   </node>
 
