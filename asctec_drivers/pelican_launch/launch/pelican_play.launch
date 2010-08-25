@@ -1,7 +1,5 @@
 <launch>
 
-  <env name="ROS_MASTER_URI" value="http://strange:11311"/>
-
   <include file="$(find pelican_launch)/launch/pelican/bagdata.launch"/>
 
   <include file="$(find pelican_launch)/launch/pelican/proc.launch"/>

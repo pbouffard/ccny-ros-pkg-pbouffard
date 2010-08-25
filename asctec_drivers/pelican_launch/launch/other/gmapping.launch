@@ -1,7 +1,5 @@
 <launch>
 
-  <env name="ROS_MASTER_URI" value="http://strange:11311"/>
-
   ##########################################################################
 
   <node pkg="laser_ortho_projector" type="laser_ortho_projector" name="laser_ortho_projector" output="screen">
