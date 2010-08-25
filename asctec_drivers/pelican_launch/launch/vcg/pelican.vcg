@@ -57,7 +57,7 @@ Mid\ Virtual\ Scan.Decay\ Time=100
 Mid\ Virtual\ Scan.Enabled=1
 Mid\ Virtual\ Scan.Position\ Transformer=XYZ
 Mid\ Virtual\ Scan.Selectable=1
-Mid\ Virtual\ Scan.Style=1
+Mid\ Virtual\ Scan.Style=0
 Mid\ Virtual\ Scan.Topic=/splitter/mvs
 Mid\ Virtual\ Scan..Flat\ ColorColorR=1
 Mid\ Virtual\ Scan..Flat\ ColorColorG=0
@@ -156,8 +156,8 @@ TF.Update\ Interval=0
 Tool\ 2D\ Nav\ GoalTopic=goal
 Tool\ 2D\ Pose\ EstimateTopic=initialpose
 Camera\ Type=rviz::OrbitViewController
-Camera\ Config=0.882972 3.55492 20.7421 0 0 0
-Property\ Grid\ State=selection=Camera.Enabled;expanded=.Global Options,TF.Enabled,TF./base_link/base_link,TF./camera/camera,TF./camera_0/camera_0,TF./imu/imu,TF./laser/laser,TF./lvl/lvl,TF./odom/odom,TF./rvl/rvl,TF.Enabled.TF.Tree,TF./odomTree/odom,TF./base_linkTree/base_link,TF./camera_0Tree/camera_0,TF./cameraTree/camera,TF./imuTree/imu,TF./laserTree/laser,TF./lvlTree/lvl,TF./rvlTree/rvl,Scan Orig.Enabled.Scan Orig.StatusTopStatus,Mid Virtual Scan.Enabled,Projected Scan.Enabled.Projected Scan.StatusTopStatus,Map.Enabled,Camera.Enabled;scrollpos=0,21;splitterpos=191,367;ispageselected=1
+Camera\ Config=1.051 2.06992 20.7421 0 0 0
+Property\ Grid\ State=selection=Mid Virtual Scan.Enabled;expanded=.Global Options,TF.Enabled,TF./base_link/base_link,TF./camera/camera,TF./camera_0/camera_0,TF./imu/imu,TF./laser/laser,TF./lvl/lvl,TF./odom/odom,TF./rvl/rvl,TF.Enabled.TF.Tree,TF./odomTree/odom,TF./base_linkTree/base_link,TF./camera_0Tree/camera_0,TF./cameraTree/camera,TF./imuTree/imu,TF./laserTree/laser,TF./lvlTree/lvl,TF./rvlTree/rvl,Scan Orig.Enabled.Scan Orig.StatusTopStatus,Mid Virtual Scan.Enabled,Projected Scan.Enabled.Projected Scan.StatusTopStatus,Map.Enabled,Camera.Enabled;scrollpos=0,17;splitterpos=190,366;ispageselected=1
 [Display0]
 Name=TF
 Package=rviz
