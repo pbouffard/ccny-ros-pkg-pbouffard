@@ -26,6 +26,7 @@
   <node pkg="laser_height_estimation" type="laser_height_estimation" name="right_floor_altimeter" output="screen">
     <param name="base_frame" value="/base_link"/>
     <param name="world_frame" value="/odom"/>
+    <param name="max_height_jump" value="1.00"/>
     <remap from="/scan"   to="splitter/rvs"/>
     <remap from="/imu"    to="asctec_proc/imu"/>
   </node>

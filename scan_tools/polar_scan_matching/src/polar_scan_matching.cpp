@@ -126,8 +126,6 @@ void PolarScanMatching::scanCallback (const sensor_msgs::LaserScan& scan)
     return;
   }
   
-
-
   // **** attmempt to match the two scans
 
   // PM scan matcher is used in the following way:
