@@ -1,3 +1,30 @@
+/*
+*  Polar Scan Matching
+*  Copyright (C) 2010, CCNY Robotics Lab
+*  Ivan Dryanovski <ivan.dryanovski@gmail.com>
+*  William Morris <morris@ee.ccny.cuny.edu>
+*  http://robotics.ccny.cuny.edu
+*
+*  This program is free software: you can redistribute it and/or modify
+*  it under the terms of the GNU General Public License as published by
+*  the Free Software Foundation, either version 3 of the License, or
+*  (at your option) any later version.
+*
+*  This program is distributed in the hope that it will be useful,
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*  GNU General Public License for more details.
+*
+*  You should have received a copy of the GNU General Public License
+*  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+*  Polar Scan Matching [1] algorithm written by A. Diosi
+*
+*  [1] A. Diosi and L. Kleeman, "Laser Scan Matching in Polar Coordinates with 
+*  Application to SLAM " Proceedings of 2005 IEEE/RSJ International Conference 
+*  on Intelligent Robots and Systems, August, 2005, Edmonton, Canada
+*/
+
 #ifndef POLAR_SCAN_MATCHING_POLAR_SCAN_MATCHING_H
 #define POLAR_SCAN_MATCHING_POLAR_SCAN_MATCHING_H
 
