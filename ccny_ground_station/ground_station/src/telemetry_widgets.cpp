@@ -19,7 +19,7 @@
  */
 
 /**
- * @file gauges_ground_station.cpp 
+ * @file telemetry_widgets.cpp 
  * @brief Program that link ROS with Gtk
  * @author Gautier Dumonteil <gautier.dumonteil@gmail.com>
  * @version 0.1
@@ -42,7 +42,7 @@
  *  
  */
 
-#include <ground_station/gauges_ground_station.h>
+#include <ground_station/telemetry_widgets.h>
 
 AppData *data;
 
@@ -256,56 +256,56 @@ void *startROS (void *user)
     std::string name_bar_gauge1, name_bar_gauge2, name_bar_gauge3;
     std::string unit_bar_gauge1, unit_bar_gauge2, unit_bar_gauge3;
 
-    n_param.param ("widget_name", widget_name, std::string ("Randow Bar Gauges"));
+    n_param.param ("bg_widget_name", widget_name, std::string ("Randow Bar Gauges"));
     sprintf (data->widget_name, "<big>%s</big>", widget_name.c_str ());
     ROS_DEBUG ("\tWidget name : %s", data->name_bar_gauge1_f);
 
-    n_param.param ("name_bar_gauge1", name_bar_gauge1, std::string ("BG1"));
-    n_param.param ("unit_bar_gauge1", unit_bar_gauge1, std::string ("(X)"));
+    n_param.param ("bg_name_bar_gauge1", name_bar_gauge1, std::string ("BG1"));
+    n_param.param ("bg_unit_bar_gauge1", unit_bar_gauge1, std::string ("(X)"));
     sprintf (data->name_bar_gauge1_f, "<big>%s</big>\n<span foreground=\"orange\"><i>(%s)</i></span>",
              name_bar_gauge1.c_str (), unit_bar_gauge1.c_str ());
     ROS_DEBUG ("\tBar Gauge 1 name : %s", data->name_bar_gauge1_f);
 
-    n_param.param ("name_bar_gauge2", name_bar_gauge2, std::string ("BG2"));
-    n_param.param ("unit_bar_gauge2", unit_bar_gauge2, std::string ("(X)"));
+    n_param.param ("bg_name_bar_gauge2", name_bar_gauge2, std::string ("BG2"));
+    n_param.param ("bg_unit_bar_gauge2", unit_bar_gauge2, std::string ("(X)"));
     sprintf (data->name_bar_gauge2_f, "<big>%s</big>\n<span foreground=\"orange\"><i>(%s)</i></span>",
              name_bar_gauge2.c_str (), unit_bar_gauge2.c_str ());
     ROS_DEBUG ("\tBar Gauge 2 name : %s", data->name_bar_gauge2_f);
 
-    n_param.param ("name_bar_gauge3", name_bar_gauge3, std::string ("BG3"));
-    n_param.param ("unit_bar_gauge3", unit_bar_gauge3, std::string ("(X)"));
+    n_param.param ("bg_name_bar_gauge3", name_bar_gauge3, std::string ("BG3"));
+    n_param.param ("bg_unit_bar_gauge3", unit_bar_gauge3, std::string ("(X)"));
     sprintf (data->name_bar_gauge3_f, "<big>%s</big>\n<span foreground=\"orange\"><i>(%s)</i></span>",
              name_bar_gauge3.c_str (), unit_bar_gauge3.c_str ());
     ROS_DEBUG ("\tBar Gauge 3 name : %s", data->name_bar_gauge3_f);
 
-    if (!n_param.getParam ("bar_number", data->bar_number))
+    if (!n_param.getParam ("bg_bar_number", data->bar_number))
       data->bar_number = 1;
     ROS_DEBUG ("\tNum containser of bar gauge: %d", data->bar_number);
 
-    if (!n_param.getParam ("start_value_bar_1", data->start_value_bar_1))
+    if (!n_param.getParam ("bg_start_value_bar_1", data->start_value_bar_1))
       data->start_value_bar_1 = 100;
     ROS_DEBUG ("\tStart value bar 1: %d", data->start_value_bar_1);
 
-    if (!n_param.getParam ("end_value_bar_1", data->end_value_bar_1))
+    if (!n_param.getParam ("bg_end_value_bar_1", data->end_value_bar_1))
       data->end_value_bar_1 = 0;
     ROS_DEBUG ("\tEnd value bar 1: %d", data->end_value_bar_1);
 
-    n_param.getParam ("green_strip_start_1", data->green_strip_start_1);
-    n_param.getParam ("yellow_strip_start_1", data->yellow_strip_start_1);
+    n_param.getParam ("bg_green_strip_start_1", data->green_strip_start_1);
+    n_param.getParam ("bg_yellow_strip_start_1", data->yellow_strip_start_1);
 
-    if (!n_param.getParam ("start_value_bar_2", data->start_value_bar_2))
+    if (!n_param.getParam ("bg_start_value_bar_2", data->start_value_bar_2))
       data->start_value_bar_2 = 100;
     ROS_DEBUG ("\tStart value bar 2: %d", data->start_value_bar_2);
 
-    if (!n_param.getParam ("end_value_bar_2", data->end_value_bar_2))
+    if (!n_param.getParam ("bg_end_value_bar_2", data->end_value_bar_2))
       data->end_value_bar_2 = 0;
     ROS_DEBUG ("\tEnd value bar 2: %d", data->end_value_bar_2);
 
-    if (!n_param.getParam ("start_value_bar_3", data->start_value_bar_3))
+    if (!n_param.getParam ("bg_start_value_bar_3", data->start_value_bar_3))
       data->start_value_bar_3 = 100;
     ROS_DEBUG ("\tStart value bar 3: %d", data->start_value_bar_3);
 
-    if (!n_param.getParam ("end_value_bar_3", data->end_value_bar_3))
+    if (!n_param.getParam ("bg_end_value_bar_3", data->end_value_bar_3))
       data->end_value_bar_3 = 0;
     ROS_DEBUG ("\tEnd value bar 3: %d", data->end_value_bar_3);
 
@@ -415,7 +415,7 @@ int main (int argc, char **argv)
   data->window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_window_set_title (GTK_WINDOW (data->window), "CityFlyer Ground Station");
   gtk_window_set_position (GTK_WINDOW (data->window), GTK_WIN_POS_CENTER);
-  gtk_window_set_default_size (GTK_WINDOW (data->window), 1200, 700);
+  gtk_window_set_default_size (GTK_WINDOW (data->window), 1000, 500);
 
   g_signal_connect (G_OBJECT (data->window), "destroy", G_CALLBACK (gtk_main_quit), NULL);
 
@@ -540,7 +540,7 @@ int main (int argc, char **argv)
   data->widget_created = true;
 
   // **** udpate all widgets
-  g_timeout_add (200, window_update, NULL);
+  g_timeout_add (500, window_update, NULL);
 
   gtk_main ();
   gdk_threads_leave ();
