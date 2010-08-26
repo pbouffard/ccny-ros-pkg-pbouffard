@@ -1,3 +1,30 @@
+/*
+*  Polar Scan Matching
+*  Copyright (C) 2010, CCNY Robotics Lab
+*  Ivan Dryanovski <ivan.dryanovski@gmail.com>
+*  William Morris <morris@ee.ccny.cuny.edu>
+*  http://robotics.ccny.cuny.edu
+*
+*  This program is free software: you can redistribute it and/or modify
+*  it under the terms of the GNU General Public License as published by
+*  the Free Software Foundation, either version 3 of the License, or
+*  (at your option) any later version.
+*
+*  This program is distributed in the hope that it will be useful,
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*  GNU General Public License for more details.
+*
+*  You should have received a copy of the GNU General Public License
+*  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+*  Polar Scan Matching [1] algorithm written by A. Diosi
+*
+*  [1] A. Diosi and L. Kleeman, "Laser Scan Matching in Polar Coordinates with 
+*  Application to SLAM " Proceedings of 2005 IEEE/RSJ International Conference 
+*  on Intelligent Robots and Systems, August, 2005, Edmonton, Canada
+*/
+
 #include "polar_scan_matching/polar_scan_matching.h"
 
 int main (int argc, char** argv)
@@ -40,6 +67,8 @@ PolarScanMatching::PolarScanMatching()
     publishTf_ = true;
   if (!nh_private.getParam ("publish_pose", publishPose_))
     publishPose_ = true;
+  if (!nh_private.getParam ("use_odometry", useOdometry_))
+    useOdometry_ = false;
 
   // **** subscribe to laser scan messages
   scanSubscriber_ = nh.subscribe (scanTopic_, 10, &PolarScanMatching::scanCallback, this);
@@ -73,7 +102,7 @@ bool PolarScanMatching::initialize(const sensor_msgs::LaserScan& scan)
   baseToLaser_ = baseToLaserTf;
   laserToBase_ = baseToLaser_.inverse();
 
-  // pass parameters to matcher and initialise
+  // **** pass parameters to matcher and initialise
 
   matcher_.PM_L_POINTS         = scan.ranges.size();
 
@@ -93,7 +122,11 @@ bool PolarScanMatching::initialize(const sensor_msgs::LaserScan& scan)
 
   matcher_.pm_init();
 
-  // create the first pm scan from the laser scan message
+  // **** get the initial worldToBase tf
+
+  getCurrentEstimatedPose(prevWorldToBase_, scan);
+
+  // **** create the first pm scan from the laser scan message
 
   btTransform t;
   t.setIdentity();
@@ -105,7 +138,7 @@ bool PolarScanMatching::initialize(const sensor_msgs::LaserScan& scan)
 
 void PolarScanMatching::scanCallback (const sensor_msgs::LaserScan& scan)
 {
-  ROS_INFO("Received scan");
+  ROS_DEBUG("Received scan");
   scansCount_++;
 
   struct timeval start, end;
@@ -120,12 +153,6 @@ void PolarScanMatching::scanCallback (const sensor_msgs::LaserScan& scan)
     return;
   }
   
-  // **** get the current position of the base in the world frame
-
-  // if no transofrm is available, we'll use the last known transform
-  btTransform currWorldToBase;
-  getCurrentEstimatedPose(currWorldToBase, scan);
-
   // **** attmempt to match the two scans
 
   // PM scan matcher is used in the following way:
@@ -138,8 +165,20 @@ void PolarScanMatching::scanCallback (const sensor_msgs::LaserScan& scan)
   prevPMScan_->ry = 0;
   prevPMScan_->th = 0; 
 
-  btTransform change = 
-    laserToBase_ * prevWorldToBase_.inverse() * currWorldToBase * baseToLaser_;
+  btTransform currWorldToBase;
+  btTransform change;
+
+  // use odometry model or not?
+  if (useOdometry_) 
+  {
+    // get the current position of the base in the world frame
+    // if no transofrm is available, we'll use the last known transform
+
+    getCurrentEstimatedPose(currWorldToBase, scan);
+    change = laserToBase_ * prevWorldToBase_.inverse() * currWorldToBase * baseToLaser_;
+  }
+  else
+    change.setIdentity();
 
   PMScan * currPMScan = new PMScan(scan.ranges.size());
   rosToPMScan(scan, change, currPMScan);
@@ -158,7 +197,7 @@ void PolarScanMatching::scanCallback (const sensor_msgs::LaserScan& scan)
 
   // **** calculate change in position
 
-  // rotate by 90 degrees, since polar scan matcher assumes different laser frame
+  // rotate by -90 degrees, since polar scan matcher assumes different laser frame
   // and scale down by 100
   double dx =  currPMScan->ry / ROS_TO_PM;
   double dy = -currPMScan->rx / ROS_TO_PM;
@@ -173,7 +212,7 @@ void PolarScanMatching::scanCallback (const sensor_msgs::LaserScan& scan)
   
   // **** publish the new estimated pose as a tf
    
-  currWorldToBase = currWorldToBase * baseToLaser_ * change * laserToBase_;
+  currWorldToBase = prevWorldToBase_ * baseToLaser_ * change * laserToBase_;
 
   if (publishTf_  ) publishTf  (currWorldToBase, scan.header.stamp);
   if (publishPose_) publishPose(currWorldToBase);
@@ -192,7 +231,7 @@ void PolarScanMatching::scanCallback (const sensor_msgs::LaserScan& scan)
   totalDuration_ += dur;
   double ave = totalDuration_/scansCount_;
 
-  printf("dur:\t %.3f ms \t ave:\t %.3f ms\n", dur, ave);
+  ROS_DEBUG("dur:\t %.3f ms \t ave:\t %.3f ms", dur, ave);
 }
 
 void PolarScanMatching::publishTf(const btTransform& transform, 
@@ -217,8 +256,10 @@ void PolarScanMatching::rosToPMScan(const sensor_msgs::LaserScan& scan,
   geometry_msgs::Pose2D pose;
   tfToPose2D(change, pose);
 
-  pmScan->rx = pose.x;
-  pmScan->ry = pose.y;
+  // FIXME: rotate x & y by 90 degree?
+
+  pmScan->rx = pose.x * ROS_TO_PM;
+  pmScan->ry = pose.y * ROS_TO_PM;
   pmScan->th = pose.theta;
 
   for (int i = 0; i < scan.ranges.size(); ++i)
@@ -258,7 +299,6 @@ void PolarScanMatching::getCurrentEstimatedPose(btTransform& worldToBase,
     worldToBase = prevWorldToBase_;
     return;
   }
-
   worldToBase = worldToBaseTf;
 }
 

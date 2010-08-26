@@ -1,0 +1,6 @@
+<launch>
+
+  <node pkg="rosbag" type="record" name="record" output="screen"
+    args="-a -o $(env HOME)/ros/bags/alltopics"/>
+
+</launch>

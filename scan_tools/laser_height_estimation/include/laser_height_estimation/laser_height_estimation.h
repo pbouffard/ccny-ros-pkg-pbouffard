@@ -24,7 +24,11 @@ class LaserHeightEstimation
 
     boost::mutex imuMutex_;
     sensor_msgs::Imu lastImuMsg_;
-    bool scanReceived_;
+
+    bool initialized_;
+    bool haveFloorReference_;
+    double prevHeight_;
+    double floorHeight_;
 
     btTransform baseToLaser_;
 
@@ -38,6 +42,9 @@ class LaserHeightEstimation
   
     std::string baseFrame_;
     std::string worldFrame_;
+    int minValues_;
+    double maxStdev_;
+    double maxHeightJump_;
 
 		// publishers & subscirbers
 
@@ -47,6 +54,11 @@ class LaserHeightEstimation
 		void scanCallback(const sensor_msgs::LaserScanConstPtr& scan);
 
     bool setBaseToLaserTf(const sensor_msgs::LaserScanConstPtr& scan);
+
+    void getStats(const std::vector<double> values, double& ave, double& stdev);
+
+    void getWorldToBaseTf(const sensor_msgs::LaserScanConstPtr& scan,
+                                btTransform& worldToLaser);
 
 	public:
   

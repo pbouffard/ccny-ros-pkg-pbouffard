@@ -1,0 +1,10 @@
+<launch>
+
+  <include file="$(find pelican_launch)/launch/pelican/laser_height.launch"/>
+
+  <include file="$(find pelican_launch)/launch/pelican/pose_estimation.launch"/>
+
+  <include file="$(find pelican_launch)/launch/pelican/pcm_scanmatcher.launch"/>
+
+</launch>
+

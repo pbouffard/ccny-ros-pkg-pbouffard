@@ -1,12 +1,17 @@
 <launch>
+
+  <node pkg="tf" type="static_transform_publisher" name="base_link_to_imu" 
+   args="0.00 0.00 0.0 0.000 0.000 0.000 /base_link /imu 20" />
+
   <node name="pose_estimation" pkg="pose_estimation" type="pose_estimation" respawn="false" required="true" output="screen">
 
-    <param name="world_frame" value="test"/>
+    <param name="world_frame" value="odom"/>
     <param name="freq" value="40.0"/>
 
     <remap from="imu" to="asctec_proc/imu"/>
     <remap from="height" to="/right_floor_altimeter/height"/>
 
   </node>
+
 </launch>
 

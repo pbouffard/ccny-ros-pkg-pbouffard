@@ -1,0 +1,8 @@
+<launch>
+
+  <include file="$(find pelican_launch)/launch/pelican/livedata.launch"/>
+
+  <include file="$(find pelican_launch)/launch/pelican/proc.launch"/>
+
+</launch>
+

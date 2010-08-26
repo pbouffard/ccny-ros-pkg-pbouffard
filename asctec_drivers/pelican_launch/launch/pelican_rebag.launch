@@ -1,0 +1,10 @@
+<launch>
+
+  <include file="$(find pelican_launch)/launch/pelican/bagdata.launch"/>
+
+  <include file="$(find pelican_launch)/launch/pelican/proc.launch"/>
+
+  <include file="$(find pelican_launch)/launch/pelican/record_alltopics.launch"/>
+
+</launch>
+
