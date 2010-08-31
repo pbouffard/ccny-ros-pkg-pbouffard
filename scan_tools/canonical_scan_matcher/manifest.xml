@@ -1,0 +1,20 @@
+<package>
+  <description brief="canonical_scan_matcher">
+
+     ccny_csm
+
+  </description>
+  <author>Ivan Dryanovski</author>
+  <license>GPL</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ccny_csm</url>
+
+  <depend package="tf"/>
+  <depend package="roscpp"/>
+  <depend package="sensor_msgs"/>
+  <depend package="geometry_msgs"/>
+  <depend package="csm_install"/>
+
+</package>
+
+

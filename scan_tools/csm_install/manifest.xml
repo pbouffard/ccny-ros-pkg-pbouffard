@@ -1,0 +1,14 @@
+<package>
+  <description brief="csm_install">
+
+     csm_install
+
+  </description>
+  <author>Ivan Dryanovski</author>
+  <license>GPL</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/csm_install</url>
+
+</package>
+
+

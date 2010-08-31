@@ -1,0 +1,21 @@
+<launch>
+  <rosparam>
+    /hokuyo_node/min_ang: -2.0862138271331787
+    /hokuyo_node/max_ang:  2.0923497676849365
+  </rosparam>
+
+  <node pkg="hokuyo_node" type="hokuyo_node" name="hokuyo_node" output="screen">
+    <param name="frame_id" value="/laser"/>
+    <param name="port" value="/dev/ttyACM0"/>
+  </node>
+
+  <node pkg="canonical_scan_matcher" type="csm_node" name="csm_node" output="screen">
+
+  </node>
+
+  <node pkg="tf" type="static_transform_publisher" name="base_link_to_laser" 
+    args="0.0 0.0 0.0 0 0 0 /base_link /laser 40" />
+
+  <node pkg="rviz" type="rviz" name="rviz"/>
+
+</launch>
