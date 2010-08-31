@@ -8,6 +8,7 @@
   <license>GPL</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/csm_install</url>
+  <rosdep name="libgsl0-dev"/>
 
 </package>
 
