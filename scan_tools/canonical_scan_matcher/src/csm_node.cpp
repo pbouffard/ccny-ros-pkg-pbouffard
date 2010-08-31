@@ -279,8 +279,6 @@ void CSMNode::scanCallback (const sensor_msgs::LaserScan& scan)
 
   // **** calculate change in position
 
-  // rotate by -90 degrees, since polar scan matcher assumes different laser frame
-  // and scale down by 100
   double dx = output_.x[0];
   double dy = output_.x[1];
   double da = output_.x[2]; 
@@ -383,6 +381,10 @@ bool CSMNode::initialize(const sensor_msgs::LaserScan& scan)
 
   input_.min_reading = scan.range_min;
   input_.max_reading = scan.range_max;
+
+  // **** get the initial worldToBase tf
+
+  getCurrentEstimatedPose(prevWorldToBase_, scan);
 
   return true;
 }
