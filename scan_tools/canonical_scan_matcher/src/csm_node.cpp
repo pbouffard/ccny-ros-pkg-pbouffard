@@ -200,7 +200,7 @@ void CSMNode::imuCallback (const sensor_msgs::Imu& imuMsg)
 
 void CSMNode::scanCallback (const sensor_msgs::LaserScan& scan)
 {
-  ROS_INFO("Received scan");
+  ROS_DEBUG("Received scan");
   scansCount_++;
 
   struct timeval start, end;

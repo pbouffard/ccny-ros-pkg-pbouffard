@@ -4,6 +4,7 @@
     <param name="world_frame"    type="string" value="odom"/>
     <param name="odometry_type"  type="string" value="imu"/>
     <param name="max_iterations"               value="5"/>
+    <param name="max_correspondence_dist"      value="0.50"/>
 
     <remap from="/imu"  to="asctec_proc/imu"/>
     <remap from="/scan" to="/splitter/mvs"/>   
