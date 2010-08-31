@@ -1,11 +1,11 @@
 <package>
   <description brief="polar_scan_matching">
 
-     polar_scan_matching
+    A wrapper around Albert Diosi's Polar Scan Matching implementation, used for laser scan registration.
 
   </description>
   <author>Ivan Dryanovski</author>
-  <license>BSD</license>
+  <license>GPL</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/polar_scan_matching</url>
   <depend package="tf"/>
