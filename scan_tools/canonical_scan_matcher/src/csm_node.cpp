@@ -21,11 +21,15 @@ CSMNode::CSMNode()
   totalDuration_ = 0.0;
   scansCount_    = 0;
 
+  prevImuAngle_  = 0.0;
+  currImuAngle_  = 0.0;
+
   prevWorldToBase_.setIdentity();
 
   getParams();  
 
   scanSubscriber_ = nh.subscribe (scanTopic_, 10, &CSMNode::scanCallback, this);
+  imuSubscriber_  = nh.subscribe (imuTopic_,  10, &CSMNode::imuCallback,  this);
   posePublisher_  = nh.advertise<geometry_msgs::Pose2D>(poseTopic_, 10);
 }
 
@@ -38,6 +42,8 @@ void CSMNode::getParams()
 {
   ros::NodeHandle nh_private("~");
 
+  std::string odometryType;
+
   if (!nh_private.getParam ("world_frame", worldFrame_))
     worldFrame_ = "world";
   if (!nh_private.getParam ("base_frame", baseFrame_))
@@ -46,6 +52,32 @@ void CSMNode::getParams()
     publishTf_ = true;
   if (!nh_private.getParam ("publish_pose", publishPose_))
     publishPose_ = true;
+  if (!nh_private.getParam ("odometry_type", odometryType))
+    odometryType = "none";
+
+  if (odometryType.compare("none") == 0)
+  {
+    useTfOdometry_  = false;
+    useImuOdometry_ = false;
+  }
+  else if (odometryType.compare("tf") == 0)
+  {
+    useTfOdometry_  = true;
+    useImuOdometry_ = false;
+  }
+  else if (odometryType.compare("imu") == 0)
+  {
+    useTfOdometry_  = false;
+    useImuOdometry_ = true;
+  }
+  else
+  {
+    ROS_WARN("Unknown value of odometry_type parameter passed to psm_node. \
+              Using default value (\"none\")");
+    useTfOdometry_  = false;
+    useImuOdometry_ = false;
+  }
+  
 
   // **** CSM parameters
 
@@ -59,7 +91,7 @@ void CSMNode::getParams()
 
   // Maximum ICP cycle iterations
   if (!nh_private.getParam ("max_iterations", input_.max_iterations))
-    input_.max_iterations = 2;
+    input_.max_iterations = 10;
 
   // A threshold for stopping (m)
   if (!nh_private.getParam ("epsilon_xy", input_.epsilon_xy))
@@ -156,6 +188,16 @@ void CSMNode::getParams()
     input_.use_sigma_weights = 0;
 }
 
+void CSMNode::imuCallback (const sensor_msgs::Imu& imuMsg)
+{
+  imuMutex_.lock();
+  btQuaternion q(imuMsg.orientation.x, imuMsg.orientation.y, imuMsg.orientation.z, imuMsg.orientation.w);
+  btMatrix3x3 m(q);
+  double temp;
+  m.getRPY(temp, temp, currImuAngle_);
+  imuMutex_.unlock();
+}
+
 void CSMNode::scanCallback (const sensor_msgs::LaserScan& scan)
 {
   ROS_INFO("Received scan");
@@ -173,11 +215,50 @@ void CSMNode::scanCallback (const sensor_msgs::LaserScan& scan)
     return;
   }
 
-  geometry_msgs::Pose2D p;
-  p.x = 0;
-  p.y = 0;
-  p.theta = 0;
+  // **** attmempt to match the two scans
 
+  // CSM is used in the following way:
+  // The reference scan (prevLDPcan_) always has a pose of 0
+  // The new scan (currLDPScan) has a pose equal to the movement
+  // of the laser in the world frame since the last scan (btTransform change)
+  // The computed correction is then propagated using the tf machinery
+
+  prevLDPScan_->odometry[0] = 0;
+  prevLDPScan_->odometry[1] = 0;
+  prevLDPScan_->odometry[2] = 0;
+
+  prevLDPScan_->estimate[0] = 0;
+  prevLDPScan_->estimate[1] = 0;
+  prevLDPScan_->estimate[2] = 0;
+
+  prevLDPScan_->true_pose[0] = 0;
+  prevLDPScan_->true_pose[1] = 0;
+  prevLDPScan_->true_pose[2] = 0;
+
+  btTransform currWorldToBase;
+  btTransform change;
+  change.setIdentity();
+
+  // what odometry model to use
+  if (useTfOdometry_) 
+  {
+    // get the current position of the base in the world frame
+    // if no transofrm is available, we'll use the last known transform
+
+    getCurrentEstimatedPose(currWorldToBase, scan);
+    change = laserToBase_ * prevWorldToBase_.inverse() * currWorldToBase * baseToLaser_;
+  }
+  else if (useImuOdometry_)
+  {
+    imuMutex_.lock();
+    double dTheta = currImuAngle_ - prevImuAngle_;
+    prevImuAngle_ = currImuAngle_;
+    change.getRotation().setRPY(0.0, 0.0, dTheta);
+    imuMutex_.unlock();
+  }
+
+  geometry_msgs::Pose2D p;
+  tfToPose2D(change, p);
   LDP currLDPScan = rosToLDPScan(scan, p);
 
   input_.laser_ref  = prevLDPScan_;
@@ -190,26 +271,39 @@ void CSMNode::scanCallback (const sensor_msgs::LaserScan& scan)
 
   if (!output_.valid) 
   {
-    printf("************************\n");
+    ROS_WARN("Error in scan matching");
+    ld_free(prevLDPScan_);
+    prevLDPScan_ = currLDPScan;
     return;
   }
 
-  btTransform change;
-  change.setOrigin(btVector3(output_.x[0], output_.x[1], 0.0));
+  // **** calculate change in position
+
+  // rotate by -90 degrees, since polar scan matcher assumes different laser frame
+  // and scale down by 100
+  double dx = output_.x[0];
+  double dy = output_.x[1];
+  double da = output_.x[2]; 
+
+  // change = scan match result for how much laser moved between scans, 
+  // in the world frame
+  change.setOrigin(btVector3(dx, dy, 0.0));
   btQuaternion q;
-  q.setRPY(0.0, 0.0, output_.x[2]);
+  q.setRPY(0, 0, da);
   change.setRotation(q);
 
-  prevWorldToBase_ = prevWorldToBase_ * change;
+  // **** publish the new estimated pose as a tf
+   
+  currWorldToBase = prevWorldToBase_ * baseToLaser_ * change * laserToBase_;
 
-  if (publishTf_  ) publishTf  (prevWorldToBase_, scan.header.stamp);
-  if (publishPose_) publishPose(prevWorldToBase_);
+  if (publishTf_  ) publishTf  (currWorldToBase, scan.header.stamp);
+  if (publishPose_) publishPose(currWorldToBase);
 
   // **** swap old and new
 
   ld_free(prevLDPScan_);
-
   prevLDPScan_ = currLDPScan;
+  prevWorldToBase_ = currWorldToBase;
 
   // **** timing information - needed for profiling only
 
@@ -223,7 +317,7 @@ void CSMNode::scanCallback (const sensor_msgs::LaserScan& scan)
 }
 
 LDP CSMNode::rosToLDPScan(const sensor_msgs::LaserScan& scan, 
-                          const geometry_msgs::Pose2D& laserPose)
+                          const geometry_msgs::Pose2D& basePose)
 {
   unsigned int n = scan.ranges.size();
   
@@ -243,16 +337,15 @@ LDP CSMNode::rosToLDPScan(const sensor_msgs::LaserScan& scan,
   ld->min_theta = ld->theta[0];
   ld->max_theta = ld->theta[n-1];
 
-  ld->odometry[0] = laserPose.x;
-  ld->odometry[1] = laserPose.y;
-  ld->odometry[2] = laserPose.theta;
+  ld->odometry[0] = basePose.x;
+  ld->odometry[1] = basePose.y;
+  ld->odometry[2] = basePose.theta;
 
 	return ld;
 }
 
 bool CSMNode::initialize(const sensor_msgs::LaserScan& scan)
 {
-  printf("Initializing...\n");
   laserFrame_ = scan.header.frame_id;
 
   // **** get base to laser tf
@@ -291,7 +384,6 @@ bool CSMNode::initialize(const sensor_msgs::LaserScan& scan)
   input_.min_reading = scan.range_min;
   input_.max_reading = scan.range_max;
 
-  printf("Done Initializing...\n");
   return true;
 }
 
@@ -310,6 +402,23 @@ void CSMNode::publishPose(const btTransform& transform)
   posePublisher_.publish(pose);
 }
 
+void CSMNode::getCurrentEstimatedPose(btTransform& worldToBase, 
+                                      const sensor_msgs::LaserScan& scanMsg)
+{
+  tf::StampedTransform worldToBaseTf;
+  try
+  {
+     tfListener_.lookupTransform (worldFrame_, baseFrame_, scanMsg.header.stamp, worldToBaseTf);
+  }
+  catch (tf::TransformException ex)
+  {
+    // transform unavailable - use the pose from our last estimation
+    ROS_WARN("Transform unavailable, using last estimated pose (%s)", ex.what());
+    worldToBase = prevWorldToBase_;
+    return;
+  }
+  worldToBase = worldToBaseTf;
+}
 
 void CSMNode::tfToPose2D(const btTransform& t, geometry_msgs::Pose2D& pose)
 {
@@ -320,4 +429,12 @@ void CSMNode::tfToPose2D(const btTransform& t, geometry_msgs::Pose2D& pose)
   pose.x = t.getOrigin().getX();
   pose.y = t.getOrigin().getY();
   pose.theta = yaw;
+}
+
+void CSMNode::pose2DToTf(const geometry_msgs::Pose2D& pose, btTransform& t)
+{
+  t.setOrigin(btVector3(pose.x, pose.y, 0.0));
+  btQuaternion q;
+  q.setRPY(0, 0, pose.theta);
+  t.setRotation(q);
 }
