@@ -36,12 +36,11 @@ class CSMNode
 
     sm_params input_;
     sm_result output_;
-
     LDP prevLDPScan_;
 
     boost::mutex imuMutex_;
-    double prevImuAngle_;
-    double currImuAngle_;
+    double prevImuAngle_;   // the yaw angle when we last perfomred a scan match
+    double currImuAngle_;   // the most recent yaw angle we have received
 
     // **** parameters
  
@@ -57,6 +56,7 @@ class CSMNode
     void getParams();
     bool initialize(const sensor_msgs::LaserScan& scan);
 
+    void imuCallback (const sensor_msgs::Imu& imuMsg);
     void scanCallback (const sensor_msgs::LaserScan& scan);
 
     LDP rosToLDPScan(const sensor_msgs::LaserScan& scan,
@@ -70,7 +70,7 @@ class CSMNode
     void pose2DToTf(const geometry_msgs::Pose2D& pose, btTransform& t);
     void getCurrentEstimatedPose(btTransform& worldToBase, 
                                  const sensor_msgs::LaserScan& scanMsg);
-    void imuCallback (const sensor_msgs::Imu& imuMsg);
+
 
   public:
 

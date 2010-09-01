@@ -44,6 +44,8 @@ void CSMNode::getParams()
 
   std::string odometryType;
 
+  // **** wrapper parameters
+
   if (!nh_private.getParam ("world_frame", worldFrame_))
     worldFrame_ = "world";
   if (!nh_private.getParam ("base_frame", baseFrame_))
@@ -78,15 +80,14 @@ void CSMNode::getParams()
     useImuOdometry_ = false;
   }
   
-
-  // **** CSM parameters
+  // **** CSM parameters - comments copied from algos.h (by Andrea Censi)
 
   // Maximum angular displacement between scans
   if (!nh_private.getParam ("max_angular_correction_deg", input_.max_angular_correction_deg))
     input_.max_angular_correction_deg = 45.0;
 
   // Maximum translation between scans (m)
-  if (!nh_private.getParam ("max_linear_correction",      input_.max_linear_correction))
+  if (!nh_private.getParam ("max_linear_correction", input_.max_linear_correction))
     input_.max_linear_correction = 0.50;
 
   // Maximum ICP cycle iterations
@@ -101,7 +102,7 @@ void CSMNode::getParams()
   if (!nh_private.getParam ("epsilon_theta", input_.epsilon_theta))
     input_.epsilon_theta = 0.00872;
 
-  // ???
+  // Maximum distance for a correspondence to be valid
   if (!nh_private.getParam ("max_correspondence_dist", input_.max_correspondence_dist))
     input_.max_correspondence_dist = 0.5;
 
@@ -145,23 +146,33 @@ void CSMNode::getParams()
   if (!nh_private.getParam ("do_alpha_test", input_.do_alpha_test))
     input_.do_alpha_test = 0;
 
-  // ???
+  // Discard correspondences based on the angles - threshold angle, in degrees
   if (!nh_private.getParam ("do_alpha_test_thresholdDeg", input_.do_alpha_test_thresholdDeg))
     input_.do_alpha_test_thresholdDeg = 20.0;
 
-  // ???
+  // Percentage of correspondences to consider: if 0.9,
+	// always discard the top 10% of correspondences with more error
   if (!nh_private.getParam ("outliers_maxPerc", input_.outliers_maxPerc))
     input_.outliers_maxPerc = 0.90;
 
-  // ??? 
+  // Parameters describing a simple adaptive algorithm for discarding.
+	//  1) Order the errors.
+	//	2) Choose the percentile according to outliers_adaptive_order.
+	//	   (if it is 0.7, get the 70% percentile)
+	//	3) Define an adaptive threshold multiplying outliers_adaptive_mult
+	//	   with the value of the error at the chosen percentile.
+	//	4) Discard correspondences over the threshold.
+	//	This is useful to be conservative; yet remove the biggest errors.
   if (!nh_private.getParam ("outliers_adaptive_order", input_.outliers_adaptive_order))
     input_.outliers_adaptive_order = 0.7;
 
-  // ???
   if (!nh_private.getParam ("outliers_adaptive_mult", input_.outliers_adaptive_mult))
     input_.outliers_adaptive_mult = 2.0;
 
-  // ???
+  //If you already have a guess of the solution, you can compute the polar angle
+	//	of the points of one scan in the new position. If the polar angle is not a monotone
+	//	function of the readings index, it means that the surface is not visible in the 
+	//	next position. If it is not visible, then we don't use it for matching.
   if (!nh_private.getParam ("do_visibility_test", input_.do_visibility_test))
     input_.do_visibility_test = 0;
 
@@ -186,8 +197,6 @@ void CSMNode::getParams()
   // correspondence by 1/sigma^2
   if (!nh_private.getParam ("use_sigma_weights", input_.use_sigma_weights))
     input_.use_sigma_weights = 0;
-
-  printf("Max iterations: %d\n", input_.max_iterations);
 }
 
 void CSMNode::imuCallback (const sensor_msgs::Imu& imuMsg)
@@ -269,7 +278,6 @@ void CSMNode::scanCallback (const sensor_msgs::LaserScan& scan)
   input_.first_guess[1] = 0;
   input_.first_guess[2] = 0;
 
-  printf("\n %d \n", input_.max_iterations);
   sm_icp(&input_, &output_);
 
   if (!output_.valid) 
