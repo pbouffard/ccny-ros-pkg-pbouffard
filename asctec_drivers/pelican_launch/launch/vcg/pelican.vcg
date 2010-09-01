@@ -107,9 +107,9 @@ TF.Show\ Names=0
 TF.Update\ Interval=0
 Tool\ 2D\ Nav\ GoalTopic=goal
 Tool\ 2D\ Pose\ EstimateTopic=initialpose
-Camera\ Type=rviz::OrbitViewController
-Camera\ Config=0.552239 2.32304 12.7873 1.3881 0.367943 0.48117
-Property\ Grid\ State=selection=;expanded=.Global Options,TF./base_link/base_link,TF./camera/camera,TF./camera_0/camera_0,TF./imu/imu,TF./laser/laser,TF./lvl/lvl,TF./odom/odom,TF./rvl/rvl,TF.Enabled.TF.Tree,TF./odomTree/odom,TF./base_linkTree/base_link,TF./camera_0Tree/camera_0,TF./cameraTree/camera,TF./imuTree/imu,TF./laserTree/laser,TF./lvlTree/lvl,TF./rvlTree/rvl,Right Virtual Scan.Enabled.Right Virtual Scan.StatusTopStatus,Mid Virtual Scan.Enabled,Left Virtual Scan.Enabled.Left Virtual Scan.StatusTopStatus;scrollpos=0,0;splitterpos=133,266;ispageselected=1
+Camera\ Type=rviz::FixedOrientationOrthoViewController
+Camera\ Config=37.3075 -0.0242817 17.0313 7.95105 -0.486267 -0.513366 -0.513366 0.486267
+Property\ Grid\ State=selection=;expanded=.Global Options,TF./base_link/base_link,TF./odom/odom,TF./imu/imu,TF./laser/laser,TF./lvl/lvl,TF./rvl/rvl,TF./camera/camera,TF./camera_0/camera_0,TF.Enabled.TF.Tree,TF./odomTree/odom,TF./base_linkTree/base_link,TF./imuTree/imu,TF./laserTree/laser,TF./lvlTree/lvl,TF./rvlTree/rvl,TF./camera_0Tree/camera_0,TF./cameraTree/camera,Right Virtual Scan.Enabled.Right Virtual Scan.StatusTopStatus,Mid Virtual Scan.Enabled,Left Virtual Scan.Enabled.Left Virtual Scan.StatusTopStatus;scrollpos=0,0;splitterpos=133,266;ispageselected=1
 [Display0]
 Name=TF
 Package=rviz

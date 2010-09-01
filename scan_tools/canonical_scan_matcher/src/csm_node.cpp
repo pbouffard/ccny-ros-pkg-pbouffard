@@ -103,7 +103,7 @@ void CSMNode::getParams()
 
   // ???
   if (!nh_private.getParam ("max_correspondence_dist", input_.max_correspondence_dist))
-    input_.max_correspondence_dist = 0.2;
+    input_.max_correspondence_dist = 0.5;
 
   // Noise in the scan (m)
   if (!nh_private.getParam ("sigma", input_.sigma))
@@ -186,6 +186,8 @@ void CSMNode::getParams()
   // correspondence by 1/sigma^2
   if (!nh_private.getParam ("use_sigma_weights", input_.use_sigma_weights))
     input_.use_sigma_weights = 0;
+
+  printf("Max iterations: %d\n", input_.max_iterations);
 }
 
 void CSMNode::imuCallback (const sensor_msgs::Imu& imuMsg)
@@ -267,6 +269,7 @@ void CSMNode::scanCallback (const sensor_msgs::LaserScan& scan)
   input_.first_guess[1] = 0;
   input_.first_guess[2] = 0;
 
+  printf("\n %d \n", input_.max_iterations);
   sm_icp(&input_, &output_);
 
   if (!output_.valid) 
@@ -326,8 +329,10 @@ LDP CSMNode::rosToLDPScan(const sensor_msgs::LaserScan& scan,
     ld->readings[i] = scan.ranges[i];
     ld->theta[i]    = scan.angle_min + (double)i * scan.angle_increment;
 
-    if (scan.ranges[i] == 0)  ld->valid[i] = 0;
-    else                      ld->valid[i] = 1;
+    if (scan.ranges[i] == 0 || scan.ranges[i] > scan.range_max)  
+      ld->valid[i] = 0;
+    else
+      ld->valid[i] = 1;
       
     ld->cluster[i]  = -1;
   }
