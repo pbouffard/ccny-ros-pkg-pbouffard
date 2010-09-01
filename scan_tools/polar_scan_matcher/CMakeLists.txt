@@ -16,6 +16,6 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 #set the default path for built libraries to the "lib" directory
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
-rosbuild_add_executable(polar_scan_matcher src/psm_node.cpp 
-                                           src/polar_match.cpp)
+rosbuild_add_executable(psm_node src/psm_node.cpp 
+                                 src/polar_match.cpp)
 
