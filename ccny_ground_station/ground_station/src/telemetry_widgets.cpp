@@ -514,7 +514,7 @@ int main (int argc, char **argv)
   gtk_box_pack_start (GTK_BOX (hbox_up), GTK_WIDGET (data->gauge2), TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (hbox_up), GTK_WIDGET (data->alt), TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (hbox_up), GTK_WIDGET (data->arh), TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox_up), GTK_WIDGET (data->bg), TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox_up), GTK_WIDGET (data->gauge1), TRUE, TRUE, 0);
 
   gtk_box_pack_start (GTK_BOX (hbox_down), GTK_WIDGET (data->tc), TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (hbox_down), GTK_WIDGET (data->gauge1), TRUE, TRUE, 0);

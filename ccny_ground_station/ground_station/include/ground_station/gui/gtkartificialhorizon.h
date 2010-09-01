@@ -72,7 +72,7 @@
  * @b Widget @b values:<br>
  * - "rotation_angle": double, provide rotation of the widget sphere<br>
  * and external arc - the value is from 0 to 360.<br>
- * - "trans_y": double, provide sphere translation - the value is from -30 to 30
+ * - "trans_y": double, provide sphere translation - the value is from -70 to 70
  */
 
 #ifndef __GTK_ARTIFICIAL_HORIZON_H__

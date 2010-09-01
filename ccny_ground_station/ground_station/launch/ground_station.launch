@@ -3,7 +3,7 @@
 	
 		<!-- General window parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 		<param name="window_grayscale_color" value="false"/>
-		<param name="window_radial_color" value="true"/>
+		<param name="window_radial_color" value="false"/>
 		
 		<!-- Altimeter parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 		<param name="altimeter_unit_is_feet" value="false"/>	
@@ -12,14 +12,18 @@
 		<!-- Variometer parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 		<param name="variometer_step_value" value="100"/>
 				
-	   <!-- Bar Gauge parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-		<param name="bd_widget_name" value="Battery Gauge"/>	
-		<param name="bd_bar_number" value="1"/>
-		<param name="bd_name_bar_gauge1" value="Batt"/>	
-		<param name="bd_unit_bar_gauge1" value="V"/>	
-		<param name="bd_start_value_bar_1" value="0"/>
-		<param name="bd_end_value_bar_1" value="13"/>
-		<param name="bd_green_strip_start_1" value="10"/>
-		<param name="bd_yellow_strip_start_1" value="8"/>
+	   <!-- Gauge1 parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+		<param name="gauge1_name" value="Battery Voltage"/>	
+		<param name="gauge1_unit" value="V"/>	
+		<param name="gauge1_start_value" value="0"/>
+		<param name="gauge1_end_value" value="12"/>
+		<param name="gauge1_initial_step" value="2"/>
+		<param name="gauge1_sub_step" value="0_5"/>
+		<param name="gauge1_drawing_step" value="2"/>
+		<param name="gauge1_color_strip_order" value="RYG"/>	
+		<param name="gauge1_green_strip_start" value="10"/>
+		<param name="gauge1_yellow_strip_start" value="8"/>
+		<param name="gauge1_red_strip_start" value="0"/>
+		
 	</node>
 </launch>
