@@ -59,18 +59,17 @@ class CSMNode
     void imuCallback (const sensor_msgs::Imu& imuMsg);
     void scanCallback (const sensor_msgs::LaserScan& scan);
 
-    LDP rosToLDPScan(const sensor_msgs::LaserScan& scan,
-                     const geometry_msgs::Pose2D& laserPose);
-
     void publishTf(const btTransform& transform, 
                    const ros::Time& time);
     void publishPose(const btTransform& transform);
+
+    LDP rosToLDPScan(const sensor_msgs::LaserScan& scan,
+                     const geometry_msgs::Pose2D& laserPose);
 
     void tfToPose2D(const btTransform& t, geometry_msgs::Pose2D& pose);
     void pose2DToTf(const geometry_msgs::Pose2D& pose, btTransform& t);
     void getCurrentEstimatedPose(btTransform& worldToBase, 
                                  const sensor_msgs::LaserScan& scanMsg);
-
 
   public:
 

@@ -1,10 +1,14 @@
 <launch>
   <node pkg="polar_scan_matcher" type="psm_node" name="psm_node" output="screen">
-    <param name="max_error" value="0.30"/>
-    <param name="publish_tf"  type="bool"   value="false"/>
-    <param name="world_frame" type="string" value="odom"/>
 
-    <remap from="/scan" to="/splitter/mvs"/>   
+    <param name="publish_tf"     type="bool"   value="false"/>
+    <param name="world_frame"    type="string" value="odom"/>
+    <param name="odometry_type"  type="string" value="imu"/>
+
+    <param name="max_error" value="0.30"/>
+
+    <remap from="/imu"  to="asctec_proc/imu"/>
+    <remap from="/scan" to="/splitter/mvs"/>  
   </node>
 </launch>
 
