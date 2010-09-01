@@ -39,6 +39,10 @@
 #include <pthread.h>
 #include <math.h>
 #include <glib.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 #include <ros/ros.h>
 #include <ros/package.h>

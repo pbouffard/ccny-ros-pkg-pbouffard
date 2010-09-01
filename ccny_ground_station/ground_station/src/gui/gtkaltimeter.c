@@ -172,6 +172,7 @@ static void gtk_altimeter_draw_digital (GtkWidget * alt);
 static void gtk_altimeter_draw_hands (GtkWidget * alt);
 
 static gboolean gtk_altimeter_debug = FALSE;
+static gboolean gtk_altimeter_lock_update = FALSE;
 
 /**
  * @fn static void gtk_altimeter_class_init (GtkAltimeterClass * klass)
@@ -363,9 +364,6 @@ static gboolean gtk_altimeter_expose (GtkWidget * alt, GdkEventExpose * event)
   priv = GTK_ALTIMETER_GET_PRIVATE (alt);
   g_return_val_if_fail (priv != NULL, FALSE);
 
-  priv->plot_box.width = widget->allocation.width;
-  priv->plot_box.height = widget->allocation.height;
-
   if (gtk_altimeter_debug)
   {
     g_debug ("gtk_altimeter_expose(width=%d, height=%d)", widget->allocation.width, widget->allocation.height);
@@ -378,7 +376,7 @@ static gboolean gtk_altimeter_expose (GtkWidget * alt, GdkEventExpose * event)
     g_message ("GLG-Expose:cairo_create:status %d=%s", status, cairo_status_to_string (status));
   }
 
-  cairo_rectangle (cr, 0, 0, priv->plot_box.width, priv->plot_box.height);
+  cairo_rectangle (cr, event->area.x, event->area.y, event->area.width, event->area.height);
   cairo_clip (cr);
 
   gtk_altimeter_draw (alt);
@@ -446,13 +444,15 @@ extern void gtk_altimeter_set_alti (GtkAltimeter * alt, gdouble alti)
 
   priv = GTK_ALTIMETER_GET_PRIVATE (alt);
 
-  if ((alti >= 0) && (alti <= 999999))
+  if(!gtk_altimeter_lock_update)
   {
-    priv->altitude = alti;
+		if ((alti >= 0) && (alti <= 999999))
+		{
+			priv->altitude = alti;
+		}
+		else
+			g_warning ("GtkAltimeter : gtk_altimeter_set_alti : value out of range");
   }
-  else
-    g_warning ("GtkAltimeter : gtk_altimeter_set_alti : value out of range");
-
 }
 
 /**
@@ -1499,7 +1499,7 @@ static gboolean gtk_altimeter_button_press_event (GtkWidget * widget, GdkEventBu
 
   priv = GTK_ALTIMETER_GET_PRIVATE (widget);
 
-  if ((ev->type & GDK_BUTTON_PRESS) && (ev->button == 1))
+  if ((ev->type & GDK_BUTTON_PRESS) && (ev->button == 1) && !priv->b_mouse_onoff)
   {
     gdk_window_get_pointer (ev->window, &x, &y, &priv->mouse_state);
     priv->mouse_pos.x = x;
@@ -1509,6 +1509,11 @@ static gboolean gtk_altimeter_button_press_event (GtkWidget * widget, GdkEventBu
   if ((ev->type & GDK_BUTTON_PRESS) && (ev->button == 2) && priv->b_mouse_onoff)
   {
     gtk_altimeter_debug = gtk_altimeter_debug ? FALSE : TRUE;
+    return TRUE;
+  }
+  if ((ev->type & GDK_BUTTON_PRESS) && (ev->button == 1) && priv->b_mouse_onoff)
+  {
+    gtk_altimeter_lock_update = gtk_altimeter_lock_update ? FALSE : TRUE;
     return TRUE;
   }
   if ((ev->type & GDK_BUTTON_PRESS) && (ev->button == 3))

@@ -72,7 +72,7 @@
  * @b Widget @b values:<br>
  * - "rotation_angle": double, provide rotation of the widget sphere<br>
  * and external arc - the value is from 0 to 360.<br>
- * - "trans_y": double, provide sphere translation - the value is from -30 to 30
+ * - "trans_y": double, provide sphere translation - the value is from -70 to 70
  */
 
 #include <ground_station/gui/gtkartificialhorizon.h>
@@ -419,7 +419,7 @@ extern void gtk_artificial_horizon_redraw (GtkArtificialHorizon * arh)
  * Here, tree values have to be set:<br>
  * "rotation_angle": double, provide rotation of the widget sphere<br>
  * and external arc - the value is from 0 to 360.<br>
- * "trans_y": double, provide sphere translation - the value is from -30 to 30
+ * "trans_y": double, provide sphere translation - the value is from -70 to 70
  */
 extern void gtk_artificial_horizon_set_value (GtkArtificialHorizon * arh, gdouble angle, gdouble y)
 {
@@ -438,7 +438,7 @@ extern void gtk_artificial_horizon_set_value (GtkArtificialHorizon * arh, gdoubl
   else
     g_warning ("GtkArtificialHorizon : gtk_artificial_horizon_set_value : value out of range");
 
-  if ((y >= -30) && (y <= 30))
+  if ((y >= -70) && (y <= 70))
     priv->trans_y = y;
   else
     g_warning ("GtkArtificialHorizon : gtk_artificial_horizon_set_value : value out of range");

@@ -173,6 +173,7 @@ static void gtk_variometer_draw_screws (GtkWidget * vario);
 static void gtk_variometer_draw_hand (GtkWidget * vario);
 
 static gboolean gtk_variometer_debug = FALSE;
+static gboolean gtk_variometer_lock_update = FALSE;
 
 /**
  * @fn static void gtk_variometer_class_init (GtkVariometerClass * klass)
@@ -464,33 +465,36 @@ extern void gtk_variometer_set_alti (GtkVariometer * vario, gdouble alti)
 
   priv = GTK_VARIOMETER_GET_PRIVATE (vario);
 
-  if ((alti >= 0) && (alti <= 999999))
+  if(!gtk_variometer_lock_update)
   {
-    if (priv->l_time == 0)
-    {
-      priv->l_time = getTime ();
-      priv->l_altitude = alti;
-      return;
-    }
+		if ((alti >= 0) && (alti <= 999999))
+		{
+			if (priv->l_time == 0)
+			{
+				priv->l_time = getTime ();
+				priv->l_altitude = alti;
+				return;
+			}
+	
+			double unit_per_min, now = getTime ();
 
-    double unit_per_min, now = getTime ();
+			unit_per_min = (60 * (alti - priv->l_altitude)) / (now - priv->l_time);
+			if (unit_per_min < 6 * priv->unit_value)
+			{
+				priv->altitude = (60 * (alti - priv->l_altitude)) / (now - priv->l_time);
+			}
+			else
+			{
+				priv->l_time = 0;
+				return;
+			}
 
-    unit_per_min = (60 * (alti - priv->l_altitude)) / (now - priv->l_time);
-    if (unit_per_min < 6 * priv->unit_value)
-    {
-      priv->altitude = (60 * (alti - priv->l_altitude)) / (now - priv->l_time);
-    }
-    else
-    {
-      priv->l_time = 0;
-      return;
-    }
-
-    priv->l_time = now;
-    priv->l_altitude = alti;
+			priv->l_time = now;
+			priv->l_altitude = alti;
+		}
+		else
+			g_warning ("GtkVariometer : gtk_variometer_set_alti : value out of range");
   }
-  else
-    g_warning ("GtkVariometer : gtk_variometer_set_alti : value out of range");
 
   return;
 }
@@ -1258,7 +1262,8 @@ static gboolean gtk_variometer_button_press_event (GtkWidget * widget, GdkEventB
 
   priv = GTK_VARIOMETER_GET_PRIVATE (widget);
 
-  if ((ev->type & GDK_BUTTON_PRESS) && (ev->button == 1))
+
+  if ((ev->type & GDK_BUTTON_PRESS) && (ev->button == 1) && !priv->b_mouse_onoff)
   {
     gdk_window_get_pointer (ev->window, &x, &y, &priv->mouse_state);
     priv->mouse_pos.x = x;
@@ -1270,12 +1275,16 @@ static gboolean gtk_variometer_button_press_event (GtkWidget * widget, GdkEventB
     gtk_variometer_debug = gtk_variometer_debug ? FALSE : TRUE;
     return TRUE;
   }
+  if ((ev->type & GDK_BUTTON_PRESS) && (ev->button == 1) && priv->b_mouse_onoff)
+  {
+    gtk_variometer_lock_update = gtk_variometer_lock_update ? FALSE : TRUE;
+    return TRUE;
+  }
   if ((ev->type & GDK_BUTTON_PRESS) && (ev->button == 3))
   {
     priv->b_mouse_onoff = priv->b_mouse_onoff ? FALSE : TRUE;
     return TRUE;
   }
-
   return FALSE;
 }
 
