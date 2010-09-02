@@ -1,7 +1,7 @@
 <package>
   <description brief="csm_install">
 
-     csm_install
+     A meta-package that downloads and installs Andrea Censi's Canonical Scan Matcher locally.
 
   </description>
   <author>Ivan Dryanovski</author>
