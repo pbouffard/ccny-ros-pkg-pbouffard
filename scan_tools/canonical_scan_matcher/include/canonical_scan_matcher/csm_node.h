@@ -26,20 +26,29 @@
 *  on Robotics and Automation (ICRA), 2008
 */
 
-
 #ifndef CANONICAL_SCAN_MATCHER_CSM_NODE_H
 #define CANONICAL_SCAN_MATCHER_CSM_NODE_H
+
+#define USE_PROJECTED_SCANS
 
 #include <sys/time.h>
 
 #include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
-#include <sensor_msgs/LaserScan.h>
 #include <sensor_msgs/Imu.h>
 #include <geometry_msgs/Pose2D.h>
 
 #include <csm/csm_all.h>
+
+#ifdef USE_PROJECTED_SCANS
+  #include <laser_ortho_projector/LaserScanWithAngles.h>
+  typedef laser_ortho_projector::LaserScanWithAngles Scan;
+#else
+  #include <sensor_msgs/LaserScan.h>
+  typedef sensor_msgs::LaserScan Scan;
+#endif
+
 
 const std::string imuTopic_  = "imu";
 const std::string scanTopic_ = "scan";
@@ -83,22 +92,22 @@ class CSMNode
     std::string laserFrame_;
 
     void getParams();
-    bool initialize(const sensor_msgs::LaserScan& scan);
+    bool initialize(const Scan& scan);
 
     void imuCallback (const sensor_msgs::Imu& imuMsg);
-    void scanCallback (const sensor_msgs::LaserScan& scan);
+    void scanCallback (const Scan& scan);
 
     void publishTf(const btTransform& transform, 
                    const ros::Time& time);
     void publishPose(const btTransform& transform);
 
-    LDP rosToLDPScan(const sensor_msgs::LaserScan& scan,
+    LDP rosToLDPScan(const Scan& scan,
                      const geometry_msgs::Pose2D& laserPose);
 
     void tfToPose2D(const btTransform& t, geometry_msgs::Pose2D& pose);
     void pose2DToTf(const geometry_msgs::Pose2D& pose, btTransform& t);
     void getCurrentEstimatedPose(btTransform& worldToBase, 
-                                 const sensor_msgs::LaserScan& scanMsg);
+                                 const Scan& scanMsg);
 
   public:
 

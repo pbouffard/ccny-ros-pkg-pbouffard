@@ -237,7 +237,7 @@ void CSMNode::imuCallback (const sensor_msgs::Imu& imuMsg)
   imuMutex_.unlock();
 }
 
-void CSMNode::scanCallback (const sensor_msgs::LaserScan& scan)
+void CSMNode::scanCallback (const Scan& scan)
 {
   ROS_DEBUG("Received scan");
   scansCount_++;
@@ -353,7 +353,7 @@ void CSMNode::scanCallback (const sensor_msgs::LaserScan& scan)
   ROS_INFO("dur:\t %.3f ms \t ave:\t %.3f ms,\t%d", dur, ave, output_.iterations);
 }
 
-LDP CSMNode::rosToLDPScan(const sensor_msgs::LaserScan& scan, 
+LDP CSMNode::rosToLDPScan(const Scan& scan, 
                           const geometry_msgs::Pose2D& basePose)
 {
   unsigned int n = scan.ranges.size();
@@ -363,8 +363,13 @@ LDP CSMNode::rosToLDPScan(const sensor_msgs::LaserScan& scan,
   for (int i = 0; i < n; i++)
   {
     ld->readings[i] = scan.ranges[i];
-    ld->theta[i]    = scan.angle_min + (double)i * scan.angle_increment;
 
+#ifdef USE_PROJECTED_SCANS
+    ld->theta[i]    = scan.angles[n];
+#else
+    ld->theta[i]    = scan.angle_min + (double)i * scan.angle_increment;
+#endif
+    
     if (scan.ranges[i] == 0 || scan.ranges[i] > scan.range_max)  
       ld->valid[i] = 0;
     else
@@ -383,7 +388,7 @@ LDP CSMNode::rosToLDPScan(const sensor_msgs::LaserScan& scan,
 	return ld;
 }
 
-bool CSMNode::initialize(const sensor_msgs::LaserScan& scan)
+bool CSMNode::initialize(const Scan& scan)
 {
   laserFrame_ = scan.header.frame_id;
 
@@ -431,7 +436,7 @@ bool CSMNode::initialize(const sensor_msgs::LaserScan& scan)
 }
 
 void CSMNode::publishTf(const btTransform& transform, 
-                                  const ros::Time& time)
+                        const ros::Time& time)
 {
   tf::StampedTransform transformMsg (transform, time, worldFrame_, baseFrame_);
   tfBroadcaster_.sendTransform (transformMsg);
@@ -446,7 +451,7 @@ void CSMNode::publishPose(const btTransform& transform)
 }
 
 void CSMNode::getCurrentEstimatedPose(btTransform& worldToBase, 
-                                      const sensor_msgs::LaserScan& scanMsg)
+                                      const Scan& scanMsg)
 {
   tf::StampedTransform worldToBaseTf;
   try
