@@ -16,7 +16,6 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 #set the default path for built libraries to the "lib" directory
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
-
 INCLUDE($ENV{ROS_ROOT}/core/rosbuild/FindPkgConfig.cmake)
 
 rosbuild_find_ros_package(csm_install)
@@ -41,9 +40,17 @@ ELSE(${CSM_FOUND})
   MESSAGE(FATAL_ERROR "CSM not found")
 ENDIF(${CSM_FOUND})
 
-rosbuild_add_executable(csm_node src/csm_node.cpp)
+set(CSM_NODE      csm_node)
+set(CSM_PROJ_NODE csm_proj_node)
 
-target_link_libraries(csm_node ${CSM_LIBRARIES})
+rosbuild_add_executable(${CSM_NODE}      src/csm_node.cpp)
+rosbuild_add_executable(${CSM_PROJ_NODE} src/csm_node.cpp)
+
+SET_TARGET_PROPERTIES(${CSM_PROJ_NODE} PROPERTIES
+  COMPILE_DEFINITIONS "USE_PROJECTED_SCANS")
+
+target_link_libraries(${CSM_NODE}      ${CSM_LIBRARIES})
+target_link_libraries(${CSM_PROJ_NODE} ${CSM_LIBRARIES})
 
 
 

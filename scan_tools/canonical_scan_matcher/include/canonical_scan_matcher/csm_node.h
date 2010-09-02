@@ -29,8 +29,6 @@
 #ifndef CANONICAL_SCAN_MATCHER_CSM_NODE_H
 #define CANONICAL_SCAN_MATCHER_CSM_NODE_H
 
-#define USE_PROJECTED_SCANS
-
 #include <sys/time.h>
 
 #include <ros/ros.h>

@@ -31,17 +31,18 @@
 int main (int argc, char** argv)
 {
   ros::init(argc, argv, "CSMNode");
-  
   CSMNode csmNode;
-
   ros::spin();
-
   return 0;
 }
 
 CSMNode::CSMNode()
 {
+#ifdef USE_PROJECTED_SCANS
+  ROS_INFO("Creating CanonicalScanMatcher node [Projected scans]");
+#else
   ROS_INFO("Creating CanonicalScanMatcher node");
+#endif
 
   ros::NodeHandle nh;
 
