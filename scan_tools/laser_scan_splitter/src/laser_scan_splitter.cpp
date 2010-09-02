@@ -49,8 +49,6 @@ LaserScanSplitter::LaserScanSplitter ()
   if (!nh_private.getParam ("sizes", sizesString))
     sizesString = "256 256";
 
-  ROS_INFO("========SIZES: %s", sizesString.c_str());
-
   // **** tokenize inputs
   tokenize (topicsString, publishedScanTopics_);
   tokenize (framesString, publishedLaserFrames_);
