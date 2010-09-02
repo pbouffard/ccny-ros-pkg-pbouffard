@@ -365,7 +365,7 @@ LDP CSMNode::rosToLDPScan(const Scan& scan,
     ld->readings[i] = scan.ranges[i];
 
 #ifdef USE_PROJECTED_SCANS
-    ld->theta[i]    = scan.angles[n];
+    ld->theta[i]    = scan.angles[i];
 #else
     ld->theta[i]    = scan.angle_min + (double)i * scan.angle_increment;
 #endif
