@@ -35,7 +35,6 @@
 
 AppData *data;
 
-
 void imuCallback (const sensor_msgs::ImuConstPtr & imu)
 {
   // **** get GTK thread lock
@@ -67,7 +66,26 @@ void imuCallback (const sensor_msgs::ImuConstPtr & imu)
   if (IS_GTK_ARTIFICIAL_HORIZON (data->arh))
     gtk_artificial_horizon_set_value (GTK_ARTIFICIAL_HORIZON (data->arh),
                                       (double)(((int)(RAD2DEG(roll)*1000)+360000)%360000)/1000,
-                                      (double) RAD2DEG(pitch));
+                                      (double) -RAD2DEG(pitch));
+
+  // **** release GTK thread lock 
+  gdk_threads_leave ();
+}
+
+
+void heightCallback (const asctec_msgs::HeightConstPtr & height)
+{
+  // **** get GTK thread lock
+  gdk_threads_enter ();
+  heightData_ = (*height);
+
+  ROS_DEBUG ("Climb %fm/s %fm/min\n", heightData_.climb,heightData_.climb*3600);
+
+  if (IS_GTK_ALTIMETER (data->alt))
+    gtk_altimeter_set_alti (GTK_ALTIMETER (data->alt), (double) heightData_.height);
+
+  //~ if (IS_GTK_VARIOMETER (data->vario))
+   //~ gtk_variometer_set_value (GTK_VARIOMETER (data->vario), (double) (heightData_.climb)*3600);
 
   // **** release GTK thread lock 
   gdk_threads_leave ();
@@ -82,11 +100,8 @@ void imuCalcDataCallback (const asctec_msgs::IMUCalcDataConstPtr & dat)
   
   ROS_DEBUG("imuCalcData yaw %f, pitch %f, roll %f\n",(double)imuCalcData_.angle_yaw /1000.,(double)imuCalcData_.angle_nick/1000.,(double)imuCalcData_.angle_roll/1000.);
 
-  if (IS_GTK_ALTIMETER (data->alt))
-    gtk_altimeter_set_alti (GTK_ALTIMETER (data->alt), (double) (imuCalcData_.height / 1000.));
-
   if (IS_GTK_VARIOMETER (data->vario))
-   gtk_variometer_set_value (GTK_VARIOMETER (data->vario), (double) (imuCalcData_.dheight / 1000.)*3600);
+    gtk_variometer_set_value (GTK_VARIOMETER (data->vario), (double) (imuCalcData_.dheight /1000.)*3600);
 
   if (IS_GTK_COMPASS (data->comp))
     gtk_compass_set_angle (GTK_COMPASS (data->comp), (double) (imuCalcData_.mag_heading / 1000.));
@@ -308,6 +323,7 @@ void *startROS (void *user)
     // **** topics subscribing
     ROS_INFO ("Subscribing to topics");
     imuSub = n.subscribe (imuTopic, 1, imuCallback);
+    heightSub = n.subscribe (heightTopic, 1, heightCallback);
     imuCalcDataSub = n.subscribe (imuCalcDataTopic, 1, imuCalcDataCallback);
     //~ gpsDataSub = n.subscribe (gpsDataTopic, 1, gpsDataCallback);
     llStatusSub = n.subscribe (llStatusTopic, 1, llStatusCallback);

@@ -51,6 +51,7 @@
 #include <asctec_msgs/GPSData.h>
 #include <asctec_msgs/IMUCalcData.h>
 #include <asctec_msgs/LLStatus.h>
+#include <asctec_msgs/Height.h>
 #include <gps_common/GPSFix.h>
 #include <gps_common/GPSStatus.h>
 #include <sensor_msgs/Imu.h>
@@ -69,6 +70,7 @@
 #include <ground_station/gui/gpsd_viewer_osd.h>
 
 const std::string imuTopic = "/asctec_proc/imu";
+const std::string heightTopic = "/asctec_proc/pressure_height";
 const std::string imuCalcDataTopic = "/autopilot/IMU_CALCDATA";
 const std::string gpsDataTopic = "/autopilot/GPS_DATA";
 const std::string llStatusTopic = "/autopilot/LL_STATUS";
@@ -86,13 +88,15 @@ struct arg
   char **argv;
 };
 
-ros::Subscriber imuCalcDataSub;
 ros::Subscriber imuSub;
+ros::Subscriber heightSub;
+ros::Subscriber imuCalcDataSub;
 ros::Subscriber gpsDataSub;
 ros::Subscriber llStatusSub;
 ros::Subscriber gpsFixSub;
 
 sensor_msgs::Imu imuData_;
+asctec_msgs::Height heightData_;
 asctec_msgs::IMUCalcData imuCalcData_;
 asctec_msgs::GPSData gpsData_;
 asctec_msgs::LLStatus llStatus_;
