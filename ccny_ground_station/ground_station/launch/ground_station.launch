@@ -11,7 +11,7 @@
 		<param name="altimeter_step_value" value="1"/>
 		
 		<!-- Variometer parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-		<param name="variometer_step_value" value="100"/>
+		<param name="variometer_step_value" value="1000"/>
 				
 	   <!-- Gauge1 parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 		<param name="gauge1_name" value="Battery Voltage"/>	

@@ -74,9 +74,7 @@
  * - "unit-step-value", int, define the step value of the altimeter can be 100,1000<br>
  * 
  * @b Widget @b values:<br>
- * - "altitude": double, define the altitude you want to display by the widget - the value is<br>
- * from 0 to 999999.
- * Note that this value need to be the same as the altimeter widget.
+ * - "dheight": double, define the diff height you want to display by the widget.
  */
 
 #include <ground_station/gui/gtkvariometer.h>
@@ -101,9 +99,7 @@ typedef struct _GtkVariometerPrivate
   gboolean unit_is_feet;
   gboolean grayscale_color;
   gboolean radial_color;
-  gdouble altitude;
-  gdouble l_time;
-  gdouble l_altitude;
+  gdouble dheight;
 
   /* drawing data */
   gdouble x;
@@ -235,8 +231,8 @@ static void gtk_variometer_class_init (GtkVariometerClass * klass)
   g_object_class_install_property (obj_class,
                                    PROP_UNIT_STEP_VALUE,
                                    g_param_spec_int ("unit-step-value",
-                                                     "select the value of the initial step (1, 10 or 100)",
-                                                     "select the value of the initial step (1, 10 or 100)",
+                                                     "select the value of the initial step (100 or 1000)",
+                                                     "select the value of the initial step (100 or 1000)",
                                                      100, 1000, 100, G_PARAM_WRITABLE));
   g_object_class_install_property (obj_class,
                                    PROP_RADIAL_COLOR,
@@ -274,10 +270,7 @@ static void gtk_variometer_init (GtkVariometer * vario)
   priv->grayscale_color = FALSE;
   priv->radial_color = TRUE;
   priv->unit_value = 1000;
-  priv->altitude = 0;
-  priv->l_time = 0;
-  priv->altitude = 0;
-  priv->l_altitude = 0;
+  priv->dheight = 0;
 
   priv->bg_color_bounderie.red = 6553.5;        // 0.1 cairo
   priv->bg_color_bounderie.green = 6553.5;
@@ -420,27 +413,13 @@ extern void gtk_variometer_redraw (GtkVariometer * vario)
 }
 
 /**
- * @fn static inline double getTime() 
- * @brief Private widget's function allow to get the current time.
- * @return (double) current time
- */
-static inline double getTime ()
-{
-  struct timeval tp;
-  gettimeofday (&tp, NULL);
-  return (double) tp.tv_sec + tp.tv_usec * 1e-6;
-}
-
-/**
- * @fn extern void gtk_variometer_set_alti (GtkVariometer * vario, gdouble alti)
+ * @fn extern void gtk_variometer_set_value (GtkVariometer * vario, gdouble dheight)
  * @brief Public widget's function that allow the main program/user to<br>
  * set the internal value variable of the widget. 
  * 
- * "alti": double, define the altitude you want to display by the widget - the value is<br>
- * from 0 to 999999.
- * Note that this value need to be the same as the altimeter widget.
+ * "dheight": double, define the diff height you want to display by the widget.
  */
-extern void gtk_variometer_set_alti (GtkVariometer * vario, gdouble alti)
+extern void gtk_variometer_set_value (GtkVariometer * vario, gdouble dheight)
 {
   GtkVariometerPrivate *priv;
 
@@ -454,33 +433,21 @@ extern void gtk_variometer_set_alti (GtkVariometer * vario, gdouble alti)
 
   if(!gtk_variometer_lock_update)
   {
-		if ((alti >= 0) && (alti <= 999999))
-		{
-			if (priv->l_time == 0)
-			{
-				priv->l_time = getTime ();
-				priv->l_altitude = alti;
-				return;
-			}
-	
-			double unit_per_min, now = getTime ();
-
-			unit_per_min = (60 * (alti - priv->l_altitude)) / (now - priv->l_time);
-			if (unit_per_min < 6 * priv->unit_value)
-			{
-				priv->altitude = (60 * (alti - priv->l_altitude)) / (now - priv->l_time);
-			}
-			else
-			{
-				priv->l_time = 0;
-				return;
-			}
-
-			priv->l_time = now;
-			priv->l_altitude = alti;
+	   switch(priv->unit_value)
+	   {
+			case 100:
+				if((dheight<600)&&(dheight>-600))
+					priv->dheight=dheight;
+				else 
+					g_warning ("GtkVariometer : gtk_variometer_set_value : value out of range");
+				break;
+			case 1000:
+				if((dheight<6000)&&(dheight>-6000))
+					priv->dheight=dheight;
+				else 
+					g_warning ("GtkVariometer : gtk_variometer_set_value : value out of range");
+				break;
 		}
-		else
-			g_warning ("GtkVariometer : gtk_variometer_set_alti : value out of range");
   }
 
   return;
@@ -1173,7 +1140,7 @@ static void gtk_variometer_draw_hand (GtkWidget * vario,  cairo_t * cr)
   double x = priv->x;
   double y = priv->y;
   double radius = priv->radius;
-  int altitude = priv->altitude;
+  int dheight = priv->dheight;
 
   // **** centre cercle 
   cairo_save (cr);
@@ -1191,14 +1158,14 @@ static void gtk_variometer_draw_hand (GtkWidget * vario,  cairo_t * cr)
   cairo_arc (cr, x, y, radius - 0.9 * radius, 0, 2 * M_PI);
   cairo_stroke (cr);
   cairo_restore (cr);
-
+  
   // **** gauge hand
-  if (priv->altitude >= 1000)
-    altitude += 1000;
-  else if (priv->altitude <= -1000)
-    altitude -= 1000;
+  if (priv->dheight >= priv->unit_value)
+    dheight += priv->unit_value;
+  else if (priv->dheight <= -priv->unit_value)
+    dheight -= priv->unit_value;
 
-  if ((priv->altitude >= 1000) || (priv->altitude <= -1000))
+  if ((priv->dheight >= priv->unit_value) || (priv->dheight <= -priv->unit_value))
   {
     cairo_save (cr);
     if (!priv->grayscale_color)
@@ -1208,8 +1175,8 @@ static void gtk_variometer_draw_hand (GtkWidget * vario,  cairo_t * cr)
     cairo_set_line_width (cr, 0.02 * radius);
     cairo_move_to (cr, x, y);
     cairo_line_to (cr,
-                   x + (radius - 0.2 * radius) * cos (M_PI + altitude * ((M_PI / 9 + M_PI / 38) / 1000)),
-                   y + (radius - 0.2 * radius) * sin (M_PI + altitude * ((M_PI / 9 + M_PI / 38) / 1000)));
+                   x + (radius - 0.2 * radius) * cos (M_PI + dheight * ((M_PI / 9 + M_PI / 38) / priv->unit_value)),
+                   y + (radius - 0.2 * radius) * sin (M_PI + dheight * ((M_PI / 9 + M_PI / 38) / priv->unit_value)));
     cairo_stroke (cr);
     cairo_restore (cr);
 
@@ -1221,8 +1188,8 @@ static void gtk_variometer_draw_hand (GtkWidget * vario,  cairo_t * cr)
     cairo_set_line_width (cr, 0.02 * radius);
     cairo_move_to (cr, x, y);
     cairo_line_to (cr,
-                   x - (radius - 0.9 * radius) * cos (M_PI + altitude * ((M_PI / 9 + M_PI / 38) / 1000)),
-                   y - (radius - 0.9 * radius) * sin (M_PI + altitude * ((M_PI / 9 + M_PI / 38) / 1000)));
+                   x - (radius - 0.9 * radius) * cos (M_PI + dheight * ((M_PI / 9 + M_PI / 38) / priv->unit_value)),
+                   y - (radius - 0.9 * radius) * sin (M_PI + dheight * ((M_PI / 9 + M_PI / 38) / priv->unit_value)));
     cairo_stroke (cr);
     cairo_restore (cr);
   }
@@ -1236,8 +1203,8 @@ static void gtk_variometer_draw_hand (GtkWidget * vario,  cairo_t * cr)
     cairo_set_line_width (cr, 0.02 * radius);
     cairo_move_to (cr, x, y);
     cairo_line_to (cr,
-                   x + (radius - 0.2 * radius) * cos (M_PI + altitude * ((M_PI / (9 / 2) + M_PI / 38) / 1000)),
-                   y + (radius - 0.2 * radius) * sin (M_PI + altitude * ((M_PI / (9 / 2) + M_PI / 38) / 1000)));
+                   x + (radius - 0.2 * radius) * cos (M_PI + dheight * ((M_PI / (9 / 2) + M_PI / 38) / priv->unit_value)),
+                   y + (radius - 0.2 * radius) * sin (M_PI + dheight * ((M_PI / (9 / 2) + M_PI / 38) / priv->unit_value)));
     cairo_stroke (cr);
     cairo_restore (cr);
 
@@ -1249,8 +1216,8 @@ static void gtk_variometer_draw_hand (GtkWidget * vario,  cairo_t * cr)
     cairo_set_line_width (cr, 0.02 * radius);
     cairo_move_to (cr, x, y);
     cairo_line_to (cr,
-                   x - (radius - 0.9 * radius) * cos (M_PI + altitude * ((M_PI / (9 / 2) + M_PI / 38) / 1000)),
-                   y - (radius - 0.9 * radius) * sin (M_PI + altitude * ((M_PI / (9 / 2) + M_PI / 38) / 1000)));
+                   x - (radius - 0.9 * radius) * cos (M_PI + dheight * ((M_PI / (9 / 2) + M_PI / 38) / priv->unit_value)),
+                   y - (radius - 0.9 * radius) * sin (M_PI + dheight * ((M_PI / (9 / 2) + M_PI / 38) / priv->unit_value)));
     cairo_stroke (cr);
     cairo_restore (cr);
   }

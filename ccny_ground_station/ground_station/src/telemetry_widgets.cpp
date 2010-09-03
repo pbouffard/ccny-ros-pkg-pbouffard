@@ -59,7 +59,7 @@ void updateAltitudeCallback (const geometry_msgs::PoseConstPtr & msg)
 
   // **** update variometer
   if (IS_GTK_VARIOMETER (data->vario))
-    gtk_variometer_set_alti (GTK_VARIOMETER (data->vario), msg->position.z);
+    gtk_variometer_set_value (GTK_VARIOMETER (data->vario), ((int)msg->position.z)%100);
 
   // **** release GTK thread lock 
   gdk_threads_leave ();

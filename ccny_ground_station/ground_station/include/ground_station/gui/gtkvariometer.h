@@ -129,7 +129,7 @@ typedef struct _GtkVariometer
 
 extern GType gtk_variometer_get_type (void) G_GNUC_CONST;
 extern GtkWidget *gtk_variometer_new (void);
-extern void gtk_variometer_set_alti (GtkVariometer * vario, gdouble alti);
+extern void gtk_variometer_set_value (GtkVariometer * vario, gdouble dheight);
 extern void gtk_variometer_redraw (GtkVariometer * vario);
 
 G_END_DECLS

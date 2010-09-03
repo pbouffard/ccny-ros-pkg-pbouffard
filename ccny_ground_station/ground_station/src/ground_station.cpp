@@ -46,7 +46,7 @@ void imuCalcDataCallback (const asctec_msgs::IMUCalcDataConstPtr & dat)
     gtk_altimeter_set_alti (GTK_ALTIMETER (data->alt), (double) (imuCalcData_.height / 1000.));
 
   if (IS_GTK_VARIOMETER (data->vario))
-    gtk_variometer_set_alti (GTK_VARIOMETER (data->vario), (double) (imuCalcData_.height / 1000.));
+   gtk_variometer_set_value (GTK_VARIOMETER (data->vario), (double) (imuCalcData_.dheight / 1000.)*3600);
 
   if (IS_GTK_COMPASS (data->comp))
     gtk_compass_set_angle (GTK_COMPASS (data->comp), (double) (imuCalcData_.mag_heading / 1000.));
