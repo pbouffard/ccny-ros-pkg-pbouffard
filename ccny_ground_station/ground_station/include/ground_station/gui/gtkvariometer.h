@@ -89,8 +89,6 @@
 #include <sys/time.h>
 
 #define GTK_VARIOMETER_MAX_STRING  256   /* Size of a text string */
-#define GTK_VARIOMETER_MODEL_X 300
-#define GTK_VARIOMETER_MODEL_Y 300
 
 G_BEGIN_DECLS 
 

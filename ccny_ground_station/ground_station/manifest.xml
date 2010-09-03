@@ -18,7 +18,9 @@
   <depend package="rosbag"/>
   <depend package="std_msgs"/>
   <depend package="gps_common"/>
+  <depend package="tf"/>
   <rosdep name="libgtk2.0-dev"/>
+  
 
 </package>
 

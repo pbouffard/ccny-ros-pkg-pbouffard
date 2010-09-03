@@ -35,12 +35,52 @@
 
 AppData *data;
 
+
+void imuCallback (const sensor_msgs::ImuConstPtr & imu)
+{
+  // **** get GTK thread lock
+  gdk_threads_enter ();
+  imuData_ = (*imu);
+
+  double yaw, pitch, roll;
+  btQuaternion orientation; 
+  orientation.setX(imuData_.orientation.x);
+  orientation.setY(imuData_.orientation.y);
+  orientation.setZ(imuData_.orientation.z);
+  orientation.setW(imuData_.orientation.w);
+  btMatrix3x3(orientation).getRPY(roll, pitch, yaw);
+
+  ROS_DEBUG ("Yaw %f, Pitch %f, Roll %f, RollBis %f", RAD2DEG(yaw), RAD2DEG(pitch), RAD2DEG(roll),(double)(((int)(RAD2DEG(roll)*1000)+360000)%360000)/1000);
+
+  //~ if (IS_GTK_ALTIMETER (data->alt))
+    //~ gtk_altimeter_set_alti (GTK_ALTIMETER (data->alt), (double) (imuCalcData_.height / 1000.));
+//~ 
+  //~ if (IS_GTK_VARIOMETER (data->vario))
+   //~ gtk_variometer_set_value (GTK_VARIOMETER (data->vario), (double) (imuCalcData_.dheight / 1000.)*3600);
+//~ 
+  //~ if (IS_GTK_COMPASS (data->comp))
+    //~ gtk_compass_set_angle (GTK_COMPASS (data->comp), (double) (imuCalcData_.mag_heading / 1000.));
+
+  if (IS_GTK_COMPASS (data->comp2))
+    gtk_compass_set_angle (GTK_COMPASS (data->comp2), (double)(((int)(RAD2DEG(yaw)*1000)+360000)%360000)/1000);
+
+  if (IS_GTK_ARTIFICIAL_HORIZON (data->arh))
+    gtk_artificial_horizon_set_value (GTK_ARTIFICIAL_HORIZON (data->arh),
+                                      (double)(((int)(RAD2DEG(roll)*1000)+360000)%360000)/1000,
+                                      (double) RAD2DEG(pitch));
+
+  // **** release GTK thread lock 
+  gdk_threads_leave ();
+}
+
 void imuCalcDataCallback (const asctec_msgs::IMUCalcDataConstPtr & dat)
 {
   // **** get GTK thread lock
   gdk_threads_enter ();
 
   imuCalcData_ = (*dat);
+  
+  ROS_DEBUG("imuCalcData yaw %f, pitch %f, roll %f\n",(double)imuCalcData_.angle_yaw /1000.,(double)imuCalcData_.angle_nick/1000.,(double)imuCalcData_.angle_roll/1000.);
 
   if (IS_GTK_ALTIMETER (data->alt))
     gtk_altimeter_set_alti (GTK_ALTIMETER (data->alt), (double) (imuCalcData_.height / 1000.));
@@ -50,14 +90,6 @@ void imuCalcDataCallback (const asctec_msgs::IMUCalcDataConstPtr & dat)
 
   if (IS_GTK_COMPASS (data->comp))
     gtk_compass_set_angle (GTK_COMPASS (data->comp), (double) (imuCalcData_.mag_heading / 1000.));
-
-  if (IS_GTK_COMPASS (data->comp2))
-    gtk_compass_set_angle (GTK_COMPASS (data->comp2), (double) (imuCalcData_.angle_yaw / 1000.));
-
-  if (IS_GTK_ARTIFICIAL_HORIZON (data->arh))
-    gtk_artificial_horizon_set_value (GTK_ARTIFICIAL_HORIZON (data->arh),
-                                      (double) ((imuCalcData_.angle_roll + 360000) % 360000) / 1000.0,
-                                      (double) (imuCalcData_.angle_nick / 1000.));
 
   // **** release GTK thread lock 
   gdk_threads_leave ();
@@ -108,8 +140,6 @@ void llStatusCallback (const asctec_msgs::LLStatusConstPtr & dat)
   if (IS_GTK_GAUGE (data->gauge1))
     gtk_gauge_set_value (GTK_GAUGE (data->gauge1), (double) (llStatus_.battery_voltage_1 / 1000.));
 
-  printf (" flying: %d\n", llStatus_.flying);
-  printf (" motor: %d\n", llStatus_.motors_on);
   /*if(llStatus_.flying==0)
      {
      gtk_container_remove(GTK_CONTAINER(data->box_Flying),GTK_WIDGET (data->status_ok_icon_flying));
@@ -277,6 +307,7 @@ void *startROS (void *user)
     // -----------------------------------------------------------------      
     // **** topics subscribing
     ROS_INFO ("Subscribing to topics");
+    imuSub = n.subscribe (imuTopic, 1, imuCallback);
     imuCalcDataSub = n.subscribe (imuCalcDataTopic, 1, imuCalcDataCallback);
     //~ gpsDataSub = n.subscribe (gpsDataTopic, 1, gpsDataCallback);
     llStatusSub = n.subscribe (llStatusTopic, 1, llStatusCallback);

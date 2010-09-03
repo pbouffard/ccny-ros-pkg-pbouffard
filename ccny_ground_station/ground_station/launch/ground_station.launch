@@ -3,7 +3,7 @@
 	
 		<!-- General window parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 		<param name="window_grayscale_color" value="false"/>
-		<param name="window_radial_color" value="false"/>
+		<param name="window_radial_color" value="true"/>
 		<param name="telemetry_refresh_rate" value="100"/>
 		
 		<!-- Altimeter parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
