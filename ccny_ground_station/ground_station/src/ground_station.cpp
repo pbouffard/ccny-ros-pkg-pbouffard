@@ -180,6 +180,10 @@ void *startROS (void *user)
     if (!n_param.getParam ("window_radial_color", data->radial_color))
       data->radial_color = true;
     ROS_DEBUG ("\tWindow radial color: %d", data->radial_color);
+    
+    if (!n_param.getParam ("telemetry_refresh_rate", data->telemetry_refresh_rate))
+      data->telemetry_refresh_rate = 200;
+    ROS_DEBUG ("\tTelemetry refresh_rate: %d", data->telemetry_refresh_rate);
 
     // -----------------------------------------------------------------      
     // **** Altimeter parameters
@@ -408,18 +412,16 @@ int main (int argc, char **argv)
   
   std::string rosbag_path = ros::package::getPath("rosbag");
   sprintf (data->rosbag_rec_path, "%s/bin/record", rosbag_path.c_str ());
-  printf ("%s\n",data->rosbag_rec_path);
-
-
+  
   data->current_page = 0;
   data->telemetry_opt_popup_state = false;
   data->gps_opt_popup_state = false;
   data->fullscreen = false;
   load_icon ();
 
-  // Create new GtkBuilder object
+  // **** Create new GtkBuilder object
   builder = gtk_builder_new ();
-  // Load UI from file
+  // **** Load UI from file
   if (!gtk_builder_add_from_file (builder, glade_gui_file, &error))
   {
     g_warning ("%s", error->message);
@@ -621,7 +623,7 @@ int main (int argc, char **argv)
   data->widget_created = true;
 
   // **** udpate all widgets    
-  g_timeout_add (200, widgets_update, NULL);
+  g_timeout_add (data->telemetry_refresh_rate, widgets_update, NULL);
 
   gtk_main ();
   gdk_threads_leave ();

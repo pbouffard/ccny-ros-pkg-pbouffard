@@ -365,6 +365,12 @@ extern "C" G_MODULE_EXPORT void on_combobox_MapProvider_changed (GtkComboBox * b
     osm_gps_map_track_add (data->map, data->uav_track);
 
   gtk_widget_show_all (data->window);
+  gtk_widget_hide(data->record_icon);
+  gtk_widget_hide(data->status_ok_icon_motor);
+  gtk_widget_hide(data->status_ok_icon_flying);
+  gtk_widget_hide(data->status_ok_icon_gps);
+  gtk_widget_hide_all(data->telemetry_option_popup);
+  gtk_widget_hide_all(data->btn_open_gpsd_option_popup);
 }
 
 // #####################################################################
@@ -590,7 +596,7 @@ void startRec(AppData * data, bool start_w_key)
 				// **** child
 				ROS_DEBUG("Child: pid = %d\n", (int) getpid ());
 				execv(data->rosbag_rec_path, argv); 
-			
+				
 				// **** exit child. note the use of _exit() instead of exit()
 				_exit (-1);
 			}

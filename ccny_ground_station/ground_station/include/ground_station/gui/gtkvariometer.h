@@ -22,8 +22,8 @@
  * @file gtkvariometer.h
  * @brief Gtk+ based Variometer Widget
  * @author Gautier Dumonteil <gautier.dumonteil@gmail.com>
- * @version 0.1
- * @date 06/06/2010
+ * @version 0.2
+ * @date 02/09/2010
  *
  * Gtk Variometer Widget <br>
  * Copyright (C) 2010, CCNY Robotics Lab <br>

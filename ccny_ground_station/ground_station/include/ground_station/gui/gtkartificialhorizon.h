@@ -22,8 +22,8 @@
  * @file gtkartificialhorizon.h
  * @brief Gtk+ based Artificial Horizon Widget
  * @author Gautier Dumonteil <gautier.dumonteil@gmail.com>
- * @version 0.1
- * @date 06/06/2010
+ * @version 0.2
+ * @date 02/09/2010
  *
  * Gtk Artificial Horizon Widget <br>
  * Copyright (C) 2010, CCNY Robotics Lab <br>
@@ -84,8 +84,6 @@
 #include <time.h>
 
 #define GTK_ARTIFICIAL_HORIZON_MAX_STRING  256  // **** Size of a text string
-#define GTK_ARTIFICIAL_HORIZON_MODEL_X 300
-#define GTK_ARTIFICIAL_HORIZON_MODEL_Y 300
 #define DEG2RAD(DEG) ((DEG)*((M_PI)/(180.0)))
 
 G_BEGIN_DECLS

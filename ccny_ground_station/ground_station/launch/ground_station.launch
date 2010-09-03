@@ -4,6 +4,7 @@
 		<!-- General window parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 		<param name="window_grayscale_color" value="false"/>
 		<param name="window_radial_color" value="false"/>
+		<param name="telemetry_refresh_rate" value="100"/>
 		
 		<!-- Altimeter parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 		<param name="altimeter_unit_is_feet" value="false"/>	
@@ -16,7 +17,7 @@
 		<param name="gauge1_name" value="Battery Voltage"/>	
 		<param name="gauge1_unit" value="V"/>	
 		<param name="gauge1_start_value" value="0"/>
-		<param name="gauge1_end_value" value="12"/>
+		<param name="gauge1_end_value" value="14"/>
 		<param name="gauge1_initial_step" value="2"/>
 		<param name="gauge1_sub_step" value="0_5"/>
 		<param name="gauge1_drawing_step" value="2"/>

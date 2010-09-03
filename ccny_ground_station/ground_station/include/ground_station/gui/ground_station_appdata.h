@@ -48,6 +48,7 @@ public:
   bool radial_color;
   bool fullscreen;
   int current_page;
+  int telemetry_refresh_rate;
   char icon_directory[FILENAME_MAX];
 
   // **** Icon 64*64
