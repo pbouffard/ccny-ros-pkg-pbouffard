@@ -64,7 +64,7 @@ Mid\ Virtual\ Scan..Flat\ ColorColorG=0
 Mid\ Virtual\ Scan..Flat\ ColorColorB=0
 Mid\ Virtual\ Scan..Height\ mapAutocompute\ Height\ Bounds=0
 Mid\ Virtual\ Scan..Height\ mapMax\ Height=2
-Mid\ Virtual\ Scan..Height\ mapMin\ Height=0
+Mid\ Virtual\ Scan..Height\ mapMin\ Height=-0.5
 Mid\ Virtual\ Scan..IntensityAutocompute\ Intensity\ Bounds=1
 Mid\ Virtual\ Scan..IntensityMax\ ColorR=1
 Mid\ Virtual\ Scan..IntensityMax\ ColorG=1
@@ -78,7 +78,7 @@ Right\ Virtual\ Scan.Alpha=1
 Right\ Virtual\ Scan.Billboard\ Size=0.01
 Right\ Virtual\ Scan.Color\ Transformer=Height map
 Right\ Virtual\ Scan.Decay\ Time=10
-Right\ Virtual\ Scan.Enabled=0
+Right\ Virtual\ Scan.Enabled=1
 Right\ Virtual\ Scan.Position\ Transformer=XYZ
 Right\ Virtual\ Scan.Selectable=1
 Right\ Virtual\ Scan.Style=0
@@ -108,8 +108,8 @@ TF.Update\ Interval=0
 Tool\ 2D\ Nav\ GoalTopic=goal
 Tool\ 2D\ Pose\ EstimateTopic=initialpose
 Camera\ Type=rviz::OrbitViewController
-Camera\ Config=0.850797 2.11159 10 0 0 0
-Property\ Grid\ State=selection=;expanded=.Global Options,TF./base_link/base_link,TF./camera/camera,TF./camera_0/camera_0,TF./imu/imu,TF./laser/laser,TF./lvl/lvl,TF./odom/odom,TF./rvl/rvl,TF.Enabled.TF.Tree,TF./odomTree/odom,TF./base_linkTree/base_link,TF./camera_0Tree/camera_0,TF./cameraTree/camera,TF./imuTree/imu,TF./laserTree/laser,TF./lvlTree/lvl,TF./rvlTree/rvl,Right Virtual Scan.Enabled.Right Virtual Scan.StatusTopStatus,Mid Virtual Scan.Enabled,Left Virtual Scan.Enabled.Left Virtual Scan.StatusTopStatus;scrollpos=0,0;splitterpos=133,266;ispageselected=1
+Camera\ Config=1.086 1.54659 3.86409 -0.427007 0.32026 0.282733
+Property\ Grid\ State=selection=Mid Virtual Scan.Enabled.Mid Virtual Scan..Height mapMin Height;expanded=.Global Options,TF./base_link/base_link,TF./camera/camera,TF./camera_0/camera_0,TF./imu/imu,TF./laser/laser,TF./lvl/lvl,TF./odom/odom,TF./rvl/rvl,TF./laser_ortho/laser_ortho,TF.Enabled.TF.Tree,TF./odomTree/odom,TF./base_linkTree/base_link,TF./camera_0Tree/camera_0,TF./cameraTree/camera,TF./imuTree/imu,TF./laserTree/laser,TF./lvlTree/lvl,TF./rvlTree/rvl,TF./laser_orthoTree/laser_ortho,Mid Virtual Scan.Enabled,Left Virtual Scan.Enabled.Left Virtual Scan.StatusTopStatus;scrollpos=0,0;splitterpos=133,266;ispageselected=1
 [Display0]
 Name=TF
 Package=rviz
@@ -144,6 +144,7 @@ cameraEnabled=0
 camera_0Enabled=0
 imuEnabled=0
 laserEnabled=0
+laser_orthoEnabled=1
 lvlEnabled=0
 odomEnabled=0
 rvlEnabled=0

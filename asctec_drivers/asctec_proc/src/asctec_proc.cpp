@@ -43,6 +43,7 @@ AsctecProc::AsctecProc()
 
   imuPublisher_    = nh_private.advertise<sensor_msgs::Imu>(imuTopic_, 10);
   heightPublisher_ = nh_private.advertise<asctec_msgs::Height>(heightTopic_, 10);
+  heightFilteredPublisher_ = nh_private.advertise<asctec_msgs::Height>(heightFilteredTopic_, 10);
 }
 
 AsctecProc::~AsctecProc()
@@ -58,10 +59,15 @@ void AsctecProc::imuCalcDataCallback(const asctec_msgs::IMUCalcDataConstPtr& imu
   createImuMsg (imuCalcDataMsg, imuMsg);
   imuPublisher_.publish(imuMsg);
 
-  // publish height message
+  // publish unfiltered height message
   asctec_msgs::Height heightMsg;
   createHeightMsg (imuCalcDataMsg, heightMsg);
   heightPublisher_.publish(heightMsg);
+
+  // publish filtered height message
+  asctec_msgs::Height heightFilteredMsg;
+  createHeightFilteredMsg (imuCalcDataMsg, heightFilteredMsg);
+  heightFilteredPublisher_.publish(heightFilteredMsg);
 
 /*
   printf("IMU: %f %f %f\n", imuCalcDataMsg->angle_roll * ASC_TO_ROS_ANGLE,
@@ -95,6 +101,17 @@ void AsctecProc::createHeightMsg(const asctec_msgs::IMUCalcDataConstPtr& imuCalc
 
   heightMsg.height = imuCalcDataMsg->height_reference  * ASC_TO_ROS_HEIGHT;
   heightMsg.climb  = imuCalcDataMsg->dheight_reference * ASC_TO_ROS_HEIGHT;   
+}
+
+void AsctecProc::createHeightFilteredMsg(const asctec_msgs::IMUCalcDataConstPtr& imuCalcDataMsg,
+                                               asctec_msgs::Height& heightMsg)
+{
+  // set header info
+  heightMsg.header.stamp    = ros::Time::now();
+  heightMsg.header.frame_id = "imu";             // the frame seems arbitrary here
+
+  heightMsg.height = imuCalcDataMsg->height  * ASC_TO_ROS_HEIGHT;
+  heightMsg.climb  = imuCalcDataMsg->dheight * ASC_TO_ROS_HEIGHT;   
 }
 
 void AsctecProc::createImuMsg(const asctec_msgs::IMUCalcDataConstPtr& imuCalcDataMsg,
