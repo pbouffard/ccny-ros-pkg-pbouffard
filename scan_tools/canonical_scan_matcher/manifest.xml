@@ -2,6 +2,7 @@
   <description brief="canonical_scan_matcher">
 
      A wrapper around Andrea Censi's Canonical Scan Matcher implementation, used for laser scan registration.
+     More about CSM: http://www.cds.caltech.edu/~andrea/research/sw/csm.html
 
   </description>
   <author>Ivan Dryanovski</author>
