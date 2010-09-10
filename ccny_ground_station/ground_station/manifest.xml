@@ -20,7 +20,7 @@
   <depend package="gps_common"/>
   <depend package="tf"/>
   <rosdep name="libgtk2.0-dev"/>
-  
+  <rosdep name="libglade2-dev"/> 
 
 </package>
 
