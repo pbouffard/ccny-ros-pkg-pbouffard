@@ -2,9 +2,9 @@
 
   <include file="$(find pelican_launch)/launch/pelican/autopilot.launch"/>
 
-  <include file="$(find pelican_launch)/launch/pelican/hokuyo_240deg.launch"/>  
+  <include file="$(find pelican_launch)/launch/pelican/hokuyo_270deg.launch"/>  
 
-  <include file="$(find pelican_launch)/launch/pelican/gscam.launch"/>
+  <include file="$(find pelican_launch)/launch/pelican/pgr_cam.launch"/>
 
 </launch>
 

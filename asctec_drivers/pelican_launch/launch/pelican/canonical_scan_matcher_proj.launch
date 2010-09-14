@@ -15,7 +15,7 @@
     <param name="base_frame"     type="string" value="laser_ortho"/>
     <param name="odometry_type"  type="string" value="imu"/>
 
-    <param name="max_iterations"               value="7"/>
+    <param name="max_iterations"               value="5"/>
     <param name="clustering_threshold"         value="0.05"/>
     <param name="outliers_remove_doubles"      value="1"/>
     <param name="outliers_maxPerc"             value="1.0"/>

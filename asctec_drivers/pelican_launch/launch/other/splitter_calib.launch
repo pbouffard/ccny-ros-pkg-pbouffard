@@ -1,10 +1,12 @@
 <launch>
 
-  <node pkg="rviz" type="rviz" name="rviz"
-    args="-d $(find pelican_launch)/launch/splitter_calib.vcg"/>
-
   <node pkg="tf" type="static_transform_publisher" name="base_link_to_laser_link" 
    args="0.00 0.00 0.20   0 0 0 /base_link /laser 20" />
+
+  <rosparam>
+    /hokuyo_node/min_ang: -2.356194
+    /hokuyo_node/max_ang:  2.356194
+  </rosparam>
 
   <node pkg="hokuyo_node" type="hokuyo_node" name="hokuyo_node" output="screen">
     <param name="frame_id" value="/laser"/>
@@ -12,9 +14,9 @@
   </node>
 
   <node pkg="laser_scan_splitter" type="laser_scan_splitter" name="splitter" output="screen">
-    <param name="sizes" value="9 22 17 593 23 17"/>
-    <param name="topics" value="m1 vsd1 m2 vsm m3 vsd2"/>
-    <param name="frames" value="/laser /laser /laser /laser /laser /laser"/>
+    <param name="sizes"  type="string" value="40 15 1025"/>
+    <param name="topics" type="string" value="rvs m2 mvs"/>
+    <param name="frames" type="string" value="/laser /laser /laser"/>
   </node>
 
 </launch>

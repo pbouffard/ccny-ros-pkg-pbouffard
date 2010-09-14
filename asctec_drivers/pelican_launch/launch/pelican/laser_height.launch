@@ -1,7 +1,7 @@
 <launch>
 
   <node pkg="tf" type="static_transform_publisher" name="base_link_to_laser" 
-   args="0.00  0.00  0.103  0.0  0.0  0.0 /base_link /laser 20" />
+   args="0.00  0.00  0.07  0.0  0.0  0.0 /base_link /laser 20" />
 
   ####################################################################
 
@@ -16,9 +16,9 @@
   ####################################################################
 
   <node pkg="laser_scan_splitter" type="laser_scan_splitter" name="splitter" output="screen">
-    <param name="sizes"  type="string" value="9 17 22 593 23 17"/>
-    <param name="topics" type="string" value="m1 rvs m2 mvs m3 lvs"/>
-    <param name="frames" type="string" value="/laser /rvl /laser /laser /laser /lvl"/>
+    <param name="sizes"  type="string" value="20 8 512"/>
+    <param name="topics" type="string" value="rvs m2 mvs"/>
+    <param name="frames" type="string" value="/rvl /laser /laser"/>
   </node>
 
   ####################################################################
