@@ -13,6 +13,8 @@
   <depend package="sensor_msgs"/>
   <depend package="asctec_msgs"/>
   <depend package="geometry_msgs"/>
+  <depend package="bfl" />
+  <depend package="bullet"/>
 </package>
 
 

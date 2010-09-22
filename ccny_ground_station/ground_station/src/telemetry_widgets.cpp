@@ -59,37 +59,7 @@ void updateAltitudeCallback (const geometry_msgs::PoseConstPtr & msg)
 
   // **** update variometer
   if (IS_GTK_VARIOMETER (data->vario))
-    gtk_variometer_set_alti (GTK_VARIOMETER (data->vario), msg->position.z);
-
-  // **** release GTK thread lock 
-  gdk_threads_leave ();
-}
-
-void imuCallback (const sensor_msgs::ImuConstPtr & imu)
-{
-  // **** get GTK thread lock
-  gdk_threads_enter ();
-  imuData_ = (*imu);
-
-  double yaw, pitch, roll;
-  yaw = atan2f (imuData_.orientation.w * imuData_.orientation.z +
-                imuData_.orientation.x * imuData_.orientation.y,
-                0.5f - imuData_.orientation.y * imuData_.orientation.y -
-                imuData_.orientation.z * imuData_.orientation.z);
-  pitch = asinf (2.0f * (imuData_.orientation.w * imuData_.orientation.y -
-                         imuData_.orientation.z * imuData_.orientation.x));
-  roll = atan2f (imuData_.orientation.w * imuData_.orientation.x +
-                 imuData_.orientation.y * imuData_.orientation.z,
-                 0.5f - imuData_.orientation.x * imuData_.orientation.x +
-                 imuData_.orientation.y * imuData_.orientation.y);
-
-  ROS_INFO ("Yaw %.1f, Pitch %.1f, Roll %.1f", yaw, pitch, roll);
-
-  if (IS_GTK_COMPASS (data->comp))
-    gtk_compass_set_angle (GTK_COMPASS (data->comp), 0);
-
-  if (IS_GTK_ARTIFICIAL_HORIZON (data->arh))
-    gtk_artificial_horizon_set_value (GTK_ARTIFICIAL_HORIZON (data->arh), 0, 0);
+    gtk_variometer_set_value (GTK_VARIOMETER (data->vario), ((int)msg->position.z)%100);
 
   // **** release GTK thread lock 
   gdk_threads_leave ();
@@ -323,7 +293,6 @@ void *startROS (void *user)
     // **** topics subscribing
     ROS_INFO ("Subscribing to info topic");
     ros::Subscriber sub;
-    sub = n.subscribe (imuTopic, 1, imuCallback);
     sub = n.subscribe ("fake_alti", 1, updateAltitudeCallback);
 
     ROS_INFO ("Spinning");
@@ -540,7 +509,7 @@ int main (int argc, char **argv)
   data->widget_created = true;
 
   // **** udpate all widgets
-  g_timeout_add (500, window_update, NULL);
+  g_timeout_add (100, window_update, NULL);
 
   gtk_main ();
   gdk_threads_leave ();

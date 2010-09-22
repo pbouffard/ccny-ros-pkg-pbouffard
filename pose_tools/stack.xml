@@ -1,0 +1,8 @@
+<stack>
+  <description brief="pose_tools">Pose Tools</description>
+  <author>Maintained by Ivan Dryanovski, William Morris et al</author>
+  <license>GPL</license>  
+  <review status="unreviewed test" notes=""/>
+  <url>http://ros.org/wiki/pose_tools</url>
+  <depend stack="ros" />
+</stack>

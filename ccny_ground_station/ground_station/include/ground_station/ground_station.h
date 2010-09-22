@@ -39,15 +39,22 @@
 #include <pthread.h>
 #include <math.h>
 #include <glib.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 #include <ros/ros.h>
 #include <ros/package.h>
-
+#include <tf/transform_datatypes.h>
+#include <tf/transform_broadcaster.h>
 #include <asctec_msgs/GPSData.h>
 #include <asctec_msgs/IMUCalcData.h>
 #include <asctec_msgs/LLStatus.h>
+#include <asctec_msgs/Height.h>
 #include <gps_common/GPSFix.h>
 #include <gps_common/GPSStatus.h>
+#include <sensor_msgs/Imu.h>
 
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
@@ -62,9 +69,13 @@
 #include <ground_station/gui/gtkartificialhorizon.h>
 #include <ground_station/gui/gpsd_viewer_osd.h>
 
+const std::string imuTopic = "/asctec_proc/imu";
+const std::string heightTopic = "/asctec_proc/pressure_height";
 const std::string imuCalcDataTopic = "/autopilot/IMU_CALCDATA";
 const std::string gpsDataTopic = "/autopilot/GPS_DATA";
 const std::string llStatusTopic = "/autopilot/LL_STATUS";
+
+#define RAD2DEG(RAD) ((RAD)*((180.)/(M_PI)))
 
 /**
  * @struct arg
@@ -77,11 +88,15 @@ struct arg
   char **argv;
 };
 
+ros::Subscriber imuSub;
+ros::Subscriber heightSub;
 ros::Subscriber imuCalcDataSub;
 ros::Subscriber gpsDataSub;
 ros::Subscriber llStatusSub;
 ros::Subscriber gpsFixSub;
 
+sensor_msgs::Imu imuData_;
+asctec_msgs::Height heightData_;
 asctec_msgs::IMUCalcData imuCalcData_;
 asctec_msgs::GPSData gpsData_;
 asctec_msgs::LLStatus llStatus_;

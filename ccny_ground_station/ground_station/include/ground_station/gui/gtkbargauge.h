@@ -22,8 +22,8 @@
  * @file gtkbargauge.h
  * @brief Gtk+ based Bar Gauge Widget
  * @author Gautier Dumonteil <gautier.dumonteil@gmail.com>
- * @version 0.1
- * @date 06/06/2010
+ * @version 0.2
+ * @date 02/09/2010
  *
  * Gtk Bar Gauge Widget
  * Copyright (C) 2010, CCNY Robotics Lab <br>
@@ -109,8 +109,6 @@
 #include <math.h>
 
 #define GTK_BAR_GAUGE_MAX_STRING  256       /* Size of a text string */
-#define GTK_BAR_GAUGE_MODEL_X 300
-#define GTK_BAR_GAUGE_MODEL_Y 300
 
 G_BEGIN_DECLS 
 

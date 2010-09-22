@@ -1,0 +1,10 @@
+<launch>
+
+  <node pkg="rviz" type="rviz" name="rviz"
+    args="-d $(find pelican_launch)/launch/vcg/pelican.vcg">
+
+  </node>
+
+</launch>
+
+

@@ -22,8 +22,8 @@
  * @file gtkartificialhorizon.h
  * @brief Gtk+ based Artificial Horizon Widget
  * @author Gautier Dumonteil <gautier.dumonteil@gmail.com>
- * @version 0.1
- * @date 06/06/2010
+ * @version 0.2
+ * @date 02/09/2010
  *
  * Gtk Artificial Horizon Widget <br>
  * Copyright (C) 2010, CCNY Robotics Lab <br>
@@ -72,7 +72,7 @@
  * @b Widget @b values:<br>
  * - "rotation_angle": double, provide rotation of the widget sphere<br>
  * and external arc - the value is from 0 to 360.<br>
- * - "trans_y": double, provide sphere translation - the value is from -30 to 30
+ * - "trans_y": double, provide sphere translation - the value is from -70 to 70
  */
 
 #ifndef __GTK_ARTIFICIAL_HORIZON_H__
@@ -84,8 +84,6 @@
 #include <time.h>
 
 #define GTK_ARTIFICIAL_HORIZON_MAX_STRING  256  // **** Size of a text string
-#define GTK_ARTIFICIAL_HORIZON_MODEL_X 300
-#define GTK_ARTIFICIAL_HORIZON_MODEL_Y 300
 #define DEG2RAD(DEG) ((DEG)*((M_PI)/(180.0)))
 
 G_BEGIN_DECLS

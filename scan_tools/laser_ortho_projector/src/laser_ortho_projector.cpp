@@ -44,7 +44,7 @@ LaserOrthoProjector::LaserOrthoProjector ()
     laserOrthoFrame_ = "laser_ortho";
   if (!nh_private.getParam ("publish_cloud", publishCloud_))
     publishCloud_ = true;
-  if (!nh_private.getParam ("tf_tolerace", tfTolerance_))
+  if (!nh_private.getParam ("tf_tolerance", tfTolerance_))
     tfTolerance_ = 0.01;
 
   // **** subscribe to laser scan messages

@@ -39,12 +39,11 @@ AsctecProc::AsctecProc()
   ros::NodeHandle nh_private("~");
   ros::NodeHandle nh;
 
-  // **** subscribe to point cloud messages
   imuCalcDataSubscriber_ = nh.subscribe(imuCalcDataTopic_, 10,  &AsctecProc::imuCalcDataCallback, this);
 
-  // **** advertise published filtered pointcloud
-  imuPublisher_ = nh_private.advertise<sensor_msgs::Imu>(imuTopic_, 10);
-
+  imuPublisher_    = nh_private.advertise<sensor_msgs::Imu>(imuTopic_, 10);
+  heightPublisher_ = nh_private.advertise<asctec_msgs::Height>(heightTopic_, 10);
+  heightFilteredPublisher_ = nh_private.advertise<asctec_msgs::Height>(heightFilteredTopic_, 10);
 }
 
 AsctecProc::~AsctecProc()
@@ -59,6 +58,16 @@ void AsctecProc::imuCalcDataCallback(const asctec_msgs::IMUCalcDataConstPtr& imu
   sensor_msgs::Imu imuMsg;
   createImuMsg (imuCalcDataMsg, imuMsg);
   imuPublisher_.publish(imuMsg);
+
+  // publish unfiltered height message
+  asctec_msgs::Height heightMsg;
+  createHeightMsg (imuCalcDataMsg, heightMsg);
+  heightPublisher_.publish(heightMsg);
+
+  // publish filtered height message
+  asctec_msgs::Height heightFilteredMsg;
+  createHeightFilteredMsg (imuCalcDataMsg, heightFilteredMsg);
+  heightFilteredPublisher_.publish(heightFilteredMsg);
 
 /*
   printf("IMU: %f %f %f\n", imuCalcDataMsg->angle_roll * ASC_TO_ROS_ANGLE,
@@ -81,6 +90,28 @@ void AsctecProc::imuCalcDataCallback(const asctec_msgs::IMUCalcDataConstPtr& imu
   tf::StampedTransform worldToOdomTf (t, ros::Time::now(), "navigation", "imu_raw");
   tfBroadcaster_.sendTransform (worldToOdomTf);
 */
+}
+
+void AsctecProc::createHeightMsg(const asctec_msgs::IMUCalcDataConstPtr& imuCalcDataMsg,
+                                       asctec_msgs::Height& heightMsg)
+{
+  // set header info
+  heightMsg.header.stamp    = ros::Time::now();
+  heightMsg.header.frame_id = "imu";             // the frame seems arbitrary here
+
+  heightMsg.height = imuCalcDataMsg->height_reference  * ASC_TO_ROS_HEIGHT;
+  heightMsg.climb  = imuCalcDataMsg->dheight_reference * ASC_TO_ROS_HEIGHT;   
+}
+
+void AsctecProc::createHeightFilteredMsg(const asctec_msgs::IMUCalcDataConstPtr& imuCalcDataMsg,
+                                               asctec_msgs::Height& heightMsg)
+{
+  // set header info
+  heightMsg.header.stamp    = ros::Time::now();
+  heightMsg.header.frame_id = "imu";             // the frame seems arbitrary here
+
+  heightMsg.height = imuCalcDataMsg->height  * ASC_TO_ROS_HEIGHT;
+  heightMsg.climb  = imuCalcDataMsg->dheight * ASC_TO_ROS_HEIGHT;   
 }
 
 void AsctecProc::createImuMsg(const asctec_msgs::IMUCalcDataConstPtr& imuCalcDataMsg,

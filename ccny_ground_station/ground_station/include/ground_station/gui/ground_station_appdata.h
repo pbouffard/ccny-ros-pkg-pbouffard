@@ -41,75 +41,99 @@ public:
 
   // **** main window
   GtkWidget * window;
+  GtkWidget *notebook;
   bool ros_param_read;
   bool widget_created;
   bool grayscale_color;
   bool radial_color;
+  bool fullscreen;
+  int current_page;
+  int telemetry_refresh_rate;
   char icon_directory[FILENAME_MAX];
-  
-  // **** Icon
-  GdkPixbuf * leftarrow_icon;
-  GdkPixbuf * rightarrow_icon;
-  GdkPixbuf * record_icon;
-  GdkPixbuf * pause_icon;
-  GdkPixbuf * stop_icon;
-  GdkPixbuf * refresh_icon;
+
+  // **** Icon 64*64
+  GdkPixbuf *leftarrow_icon_64;
+  GdkPixbuf *rightarrow_icon_64;
+  GdkPixbuf *record_icon_64;
+  GdkPixbuf *pause_icon_64;
+  GdkPixbuf *stop_icon_64;
+  GdkPixbuf *refresh_icon_64;
+  GdkPixbuf *status_ok_icon_64;
+  GdkPixbuf *status_fail_icon_64;
+  GdkPixbuf *record_g_icon_64;
+
+  // **** Icon resized (Status bar)
+  GtkWidget *record_icon;
+  GtkWidget *record_g_icon;
+  GtkWidget *status_ok_icon_motor;
+  GtkWidget *status_fail_icon_motor;
+  GtkWidget *status_ok_icon_gps;
+  GtkWidget *status_fail_icon_gps;
+  GtkWidget *status_ok_icon_flying;
+  GtkWidget *status_fail_icon_flying;
+
+  // -------------------------------------------------------------------
+  // -------------------------------------------------------------------
+  // **** Status bar
+  GtkWidget *box_MotorStatus;
+  GtkWidget *box_Flying;
+  GtkWidget *box_Gps;
+  GtkWidget *flightMode_label;
+  GtkWidget *upTime_label;
+  GtkWidget *cpuLoad_label;
+  GtkWidget *box_RecordStatus;
 
   // -------------------------------------------------------------------
   // -------------------------------------------------------------------
   // **** Tab 1: Telemetry
-  GtkWidget * widget_table;
+  GtkWidget *widget_table;
 
   // **** altimeter
   GtkWidget *alt;
   int altimeter_step_value;
   bool altimeter_unit_is_feet;
-  
-    // **** variometer
-  GtkWidget * vario;
+
+  // **** variometer
+  GtkWidget *vario;
   int variometer_step_value;
   bool variometer_unit_is_feet;
 
   // **** compass
   GtkWidget *comp;
-  GtkWidget *comp2;  
-  
-  // **** bar gauge widget
-  GtkWidget * bg;
-  char widget_name[FILENAME_MAX];
-  char name_bar_gauge1_f[FILENAME_MAX];
-  char name_bar_gauge2_f[FILENAME_MAX];
-  char name_bar_gauge3_f[FILENAME_MAX];
-  int bar_number;
-  int start_value_bar_1;
-  int start_value_bar_2;
-  int start_value_bar_3;
-  int end_value_bar_1;
-  int end_value_bar_2;
-  int end_value_bar_3;
-  int green_strip_start_1;
-  int yellow_strip_start_1;
-  
+  GtkWidget *comp2;
+
+  // **** gauge widget
+  GtkWidget *gauge1;
+  char gauge1_name_f[FILENAME_MAX];
+  char gauge1_color_strip_order[FILENAME_MAX];
+  int gauge1_start_value;
+  int gauge1_end_value;
+  int gauge1_initial_step;
+  double gauge1_sub_step;
+  int gauge1_drawing_step;
+  int gauge1_green_strip_start;
+  int gauge1_yellow_strip_start;
+  int gauge1_red_strip_start;
+
   // **** artificial horizon 
-  GtkWidget * arh;
-  
+  GtkWidget *arh;
+
   // **** Option Popup
-  GtkWidget *box_telemetry;
+  bool telemetry_opt_popup_state;
   GtkWidget *telemetry_option_popup;
   GtkWidget *btn_open_telemetry_option_popup;
   GtkWidget *btn_close_telemetry_option_popup;
-  
+
   // -------------------------------------------------------------------
   // -------------------------------------------------------------------
   // **** Tab 2: GpsdViewer
-  OsmGpsMap * map;
+  OsmGpsMap *map;
   OsmGpsMapSource_t map_provider;
-  OsmGpsMapTrack * uav_track;
-  GpsdViewerOsd * osd;
+  OsmGpsMapTrack *uav_track;
+  GpsdViewerOsd *osd;
   GtkWidget *map_box;
   GtkWidget *map_container;
-  GtkWidget *box_gpsd_viewer;
-    
+
   bool draw_path;
   bool lock_view;
   int map_zoom_max;
@@ -117,8 +141,9 @@ public:
   const char *repo_uri;
   const char *friendly_name;
   char *cachedir;
-  
+
   // **** Option Popup
+  bool gps_opt_popup_state;
   GtkWidget *gpsd_option_popup;
   GtkWidget *btn_open_gpsd_option_popup;
   GtkWidget *btn_close_gpsd_option_popup;
@@ -127,24 +152,20 @@ public:
   // -------------------------------------------------------------------
   // **** Tab 3: ROSBag Record
   pid_t rosbag_pid;
-  FILE * rosbag_record;
-  pthread_t rosbagRecordThread;
   GtkListStore *topicsList;
-  GtkWidget * cmd_line_entry;
-  GtkWidget * prefix_entry;
-  GtkWidget * info_textview;
-  
-  char * rosbag_record_cmd;
-  char * file_prefix;
+  GtkWidget *cmd_line_entry;
+  GtkWidget *prefix_entry;
+  GtkWidget *info_textview;
+  bool recording;
+
+  char *rosbag_record_cmd;
+  char *file_prefix;
   char cmd_line[FILENAME_MAX];
   char list_topic[FILENAME_MAX];
-   
-  GtkWidget * update_btn;  
-  GtkWidget * record_btn;
-  GtkWidget * stop_btn;
-  
-  int record_state;
+  char rosbag_rec_path[FILENAME_MAX];
 
+  GtkWidget *update_btn;
+  GtkWidget *record_stop_btn;
 };
 
 #endif

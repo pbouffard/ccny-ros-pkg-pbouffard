@@ -22,15 +22,15 @@
  * @file gtkaltimeter.h 
  * @brief Gtk+ based Altimeter Widget
  * @author Gautier Dumonteil <gautier.dumonteil@gmail.com>
- * @version 0.1
- * @date 06/06/2010
+ * @version 0.2
+ * @date 02/09/2010
  *
  * Gtk Altimeter Widget <br>
  * Copyright (C) 2010, CCNY Robotics Lab <br>
  * http://robotics.ccny.cuny.edu <br>
  * 
  * This widget provide an easy to read altimeter instrument. <br>
- * The design is volontary based on a real altimeter flight instrument <br>
+ * The design is based on a real altimeter flight instrument <br>
  * in order to be familiar to aircraft and helicopter pilots.<br>
  * 
  * @b Pictures:<br>
@@ -86,8 +86,6 @@
 #include <math.h>
 
 #define GTK_ALTIMETER_MAX_STRING  256   /* Size of a text string */
-#define GTK_ALTIMETER_MODEL_X 300
-#define GTK_ALTIMETER_MODEL_Y 300
 
 G_BEGIN_DECLS
 /**

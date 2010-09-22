@@ -22,8 +22,8 @@
  * @file gtkvariometer.h
  * @brief Gtk+ based Variometer Widget
  * @author Gautier Dumonteil <gautier.dumonteil@gmail.com>
- * @version 0.1
- * @date 06/06/2010
+ * @version 0.2
+ * @date 02/09/2010
  *
  * Gtk Variometer Widget <br>
  * Copyright (C) 2010, CCNY Robotics Lab <br>
@@ -89,8 +89,6 @@
 #include <sys/time.h>
 
 #define GTK_VARIOMETER_MAX_STRING  256   /* Size of a text string */
-#define GTK_VARIOMETER_MODEL_X 300
-#define GTK_VARIOMETER_MODEL_Y 300
 
 G_BEGIN_DECLS 
 
@@ -129,7 +127,7 @@ typedef struct _GtkVariometer
 
 extern GType gtk_variometer_get_type (void) G_GNUC_CONST;
 extern GtkWidget *gtk_variometer_new (void);
-extern void gtk_variometer_set_alti (GtkVariometer * vario, gdouble alti);
+extern void gtk_variometer_set_value (GtkVariometer * vario, gdouble dheight);
 extern void gtk_variometer_redraw (GtkVariometer * vario);
 
 G_END_DECLS

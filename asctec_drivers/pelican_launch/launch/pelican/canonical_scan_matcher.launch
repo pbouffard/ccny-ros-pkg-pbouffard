@@ -1,0 +1,29 @@
+<launch>
+  <node pkg="canonical_scan_matcher" type="csm_node" name="csm_node" output="screen">
+
+    <param name="publish_tf"     type="bool"   value="false"/>
+    <param name="world_frame"    type="string" value="odom"/>
+    <param name="odometry_type"  type="string" value="imu"/>
+
+    <param name="max_iterations"               value="7"/>
+    <param name="clustering_threshold"         value="0.05"/>
+    <param name="outliers_remove_doubles"      value="1"/>
+    <param name="outliers_maxPerc"             value="1.0"/>
+    <param name="epsilon_xy"                   value="0.0000001"/>
+    <param name="epsilon_theta"                value="0.00001"/>
+    <param name="max_correspondence_dist"      value="0.10"/>
+    <param name="max_angular_correction_deg"   value="5.0"/>
+    <param name="max_linear_correction"        value="0.10"/>
+    <param name="outliers_adaptive_mult"       value="1.0"/>
+    <param name="outliers_adaptive_order"      value="1.0"/>
+    <param name="sigma"                        value="0.001"/>
+    <param name="do_alpha_test"                value="0"/>
+    <param name="do_alpha_test_thresholdDeg"   value="2.0"/>
+    <param name="use_point_to_line_distance"   value="1"/>
+
+    <remap from="/imu"  to="asctec_proc/imu"/>
+    <remap from="/scan" to="/splitter/mvs"/>   
+  </node>
+</launch>
+
+

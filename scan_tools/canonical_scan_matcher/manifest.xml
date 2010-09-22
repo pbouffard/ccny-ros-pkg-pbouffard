@@ -1,0 +1,22 @@
+<package>
+  <description brief="canonical_scan_matcher">
+
+     A wrapper around Andrea Censi's Canonical Scan Matcher implementation, used for laser scan registration.
+     More about CSM: http://www.cds.caltech.edu/~andrea/research/sw/csm.html
+
+  </description>
+  <author>Ivan Dryanovski</author>
+  <license>GPL</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ccny_csm</url>
+
+  <depend package="tf"/>
+  <depend package="roscpp"/>
+  <depend package="sensor_msgs"/>
+  <depend package="geometry_msgs"/>
+  <depend package="csm_install"/>
+  <depend package="laser_ortho_projector"/>
+
+</package>
+
+

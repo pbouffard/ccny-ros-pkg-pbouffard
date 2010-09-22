@@ -1,0 +1,57 @@
+=====================================================
+RUNNING A LIVE EXPERIMENT
+=====================================================
+
+[PELICAN]
+  roscd pelican_launch
+  ./scripts/start_gst.sh
+
+[PELICAN]
+  roscd pelican_launch
+  source scripts/network.strange.sh
+  roslaunch pelican_launch pelican_live.launch
+
+[DESKTOP]
+  roscd pelican_launch
+  source scripts/network.strange.sh
+  roslaunch pelican_launch rviz.launch 
+
+[DESKTOP]
+  roscd pelican_launch
+  source scripts/network.strange.sh
+  roslaunch pelican_launch gmapping.launch 
+
+=====================================================
+RECORDING A BAG (BASIC TOPICS)
+=====================================================
+
+[PELICAN]
+  roscd pelican_launch
+  ./scripts/start_gst.sh
+
+[PELICAN]
+  roscd pelican_launch
+  source scripts/network.strange.sh
+  roslaunch pelican_launch pelican_record.launch
+
+=====================================================
+PLAYING A BAG (BASIC TOPICS)
+=====================================================
+
+[PELICAN]
+  roscd pelican_launch
+  source scripts/network.strange.sh
+  roslaunch pelican_launch pelican_play.launch
+
+[DESKTOP]
+  roscd pelican_launch
+  source scripts/network.strange.sh
+  roslaunch pelican_launch rviz.launch 
+
+[DESKTOP]
+  roscd pelican_launch
+  source scripts/network.strange.sh
+  roslaunch pelican_launch gmapping.launch 
+
+
+

@@ -22,15 +22,15 @@
  * @file gtkgauge.h
  * @brief Gtk+ based Gauge Widget
  * @author Gautier Dumonteil <gautier.dumonteil@gmail.com>
- * @version 0.1
- * @date 06/06/2010
+ * @version 0.2
+ * @date 02/09/2010
  *
  * Gtk Gauge Widget <br>
  * Copyright (C) 2010, CCNY Robotics Lab <br>
  * http://robotics.ccny.cuny.edu <br>
  * 
  * This widget provide an easy to read gauge instrument. <br>
- * The design is volontary made to look like to a real gauge<br>
+ * The design is made to look like to a real gauge<br>
  * flight instrument in order to be familiar to aircraft and<br>
  * helicopter pilots. This widget is fully comfigurable and<br>
  * useable for several gauge type (Battery Voltage, Current,<br> 
@@ -112,8 +112,6 @@
 #include <math.h>
 
 #define GTK_GAUGE_MAX_STRING  256       /* Size of a text string */
-#define GTK_GAUGE_MODEL_X 300
-#define GTK_GAUGE_MODEL_Y 300
 
 G_BEGIN_DECLS 
 

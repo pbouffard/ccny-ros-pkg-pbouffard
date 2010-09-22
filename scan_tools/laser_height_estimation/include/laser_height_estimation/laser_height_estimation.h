@@ -12,9 +12,16 @@
 #include <boost/thread/mutex.hpp>
 #include <asctec_msgs/Height.h>
 
-const std::string imuTopic_    = "imu";
-const std::string scanTopic_   = "scan";
-const std::string heightTopic_ = "height";
+// bfl
+#include <filter/extendedkalmanfilter.h>
+#include <model/linearanalyticsystemmodel_gaussianuncertainty.h>
+#include <model/linearanalyticmeasurementmodel_gaussianuncertainty.h>
+#include <pdf/analyticconditionalgaussian.h>
+#include <pdf/linearanalyticconditionalgaussian.h>
+
+const std::string pHeightTopic_ = "pressure_height";
+const std::string scanTopic_    = "scan";
+const std::string heightTopic_  = "height";
 
 const double tfTolerance_ = 0.10;
 
@@ -22,9 +29,18 @@ class LaserHeightEstimation
 {
 	private:
 
-    boost::mutex imuMutex_;
-    sensor_msgs::Imu lastImuMsg_;
-    bool scanReceived_;
+    bool initialized_;
+    ros::Timer timer_;
+    bool useKF_;
+
+    boost::mutex filterMutex_;
+    BFL::ExtendedKalmanFilter* filter_;
+
+    bool heightInitialized_;
+    asctec_msgs::Height lastHeightMsg_;
+    double floorHeight_;
+    double prevHeight_;
+    double initialHeight_;
 
     btTransform baseToLaser_;
 
@@ -34,19 +50,34 @@ class LaserHeightEstimation
     tf::TransformListener tfListener_;
     geometry_msgs::PoseWithCovarianceStamped poseMsg_;
 
-    // parameters
+    // **** parameters
   
     std::string baseFrame_;
     std::string worldFrame_;
+    int minValues_;
+    double maxStdev_;
+    double maxHeightJump_;
 
-		// publishers & subscirbers
+		// **** publishers & subscirbers
 
+    ros::Subscriber imuSubscriber_;
     ros::Subscriber scanSubscriber_;
+    ros::Subscriber pHeightSubscriber_;
 		ros::Publisher  heightPublisher_;
 
-		void scanCallback(const sensor_msgs::LaserScanConstPtr& scan);
+    void initializeFilter();
 
+		void scanCallback    (const sensor_msgs::LaserScanConstPtr& scan);
+    void pHeightCallback (const asctec_msgs::Height& heightMsg);
+    
     bool setBaseToLaserTf(const sensor_msgs::LaserScanConstPtr& scan);
+
+    void getStats(const std::vector<double> values, double& ave, double& stdev);
+
+    bool getWorldToBaseTf(const sensor_msgs::LaserScanConstPtr& scan,
+                                btTransform& worldToLaser);
+
+    void spin(const ros::TimerEvent& e);
 
 	public:
   
