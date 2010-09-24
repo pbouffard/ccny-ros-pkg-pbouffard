@@ -401,7 +401,7 @@ def listener():
     curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)
     curses.init_pair(4, curses.COLOR_BLACK, curses.COLOR_WHITE)
     curses.init_pair(5, curses.COLOR_BLACK, curses.COLOR_RED)
-    r = rospy.Rate(5) # 10hz
+    r = rospy.Rate(20) # Hz
     (maxx,maxy) = myscreen.getmaxyx()
     while not rospy.is_shutdown():
         c = myscreen.getch()
