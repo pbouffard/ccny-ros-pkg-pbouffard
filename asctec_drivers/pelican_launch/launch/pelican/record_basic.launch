@@ -1,10 +1,10 @@
 <launch>
 
   <node pkg="rosbag" type="record" name="record" output="screen"
-    args="/scan \
-          /autopilot/IMU_CALCDATA \
-          /camera/camera_info \
-          /camera/image_raw \
+    args="/scan 
+          /autopilot/IMU_CALCDATA 
+          /camera/camera_info 
+          /camera/image_raw 
           -o $(env HOME)/ros/bags/basictopics"/>
 
 </launch>
