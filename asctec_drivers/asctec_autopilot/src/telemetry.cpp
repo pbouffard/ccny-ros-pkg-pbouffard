@@ -88,6 +88,7 @@ namespace asctec
             break;
           case RequestTypes::IMU_RAWDATA:
             copyIMU_RAWDATA ();
+            IMURawData_.header.stamp = timestamps_[RequestTypes::IMU_RAWDATA];
             //dumpIMU_RAWDATA();
             requestPublisher_[i].publish (IMURawData_);
             break;
@@ -114,7 +115,8 @@ namespace asctec
             break;
           case RequestTypes::GPS_DATA_ADVANCED:
             copyGPS_DATA_ADVANCED ();
-            //dumpGPS_DATA_ADVANCED();
+            GPSDataAdvanced_.header.stamp = timestamps_[RequestTypes::GPS_DATA_ADVANCED];
+           //dumpGPS_DATA_ADVANCED();
             requestPublisher_[i].publish (GPSDataAdvanced_);
             break;
           default:
