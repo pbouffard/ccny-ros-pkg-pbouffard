@@ -26,7 +26,7 @@
   <node pkg="laser_height_estimation" type="laser_height_estimation" name="right_floor_altimeter" output="screen">
     <param name="base_frame" value="/base_link"/>
     <param name="world_frame" value="/odom"/>
-    <param name="max_height_jump" value="0.25"/>
+    <param name="max_height_jump" value="0.40"/>
     <param name="use_kf" type="bool" value="false"/>
 
     <remap from="/scan"            to="/splitter/rvs"/>

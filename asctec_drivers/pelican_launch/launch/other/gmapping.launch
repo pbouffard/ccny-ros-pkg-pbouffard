@@ -17,7 +17,7 @@
 
   <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" output="screen">
 
-    <param name="maxUrange" value="5.5"/>
+    <param name="maxUrange" value="28"/>
     <param name="sigma" value="0.05"/>
     <param name="kernelSize" value="1"/>
     <param name="lstep" value="0.15"/>

@@ -1,10 +1,14 @@
 <launch>
 
-  <arg name="BAG_NAME" value="first\ exp\ 30m\ laser/alltopics_2009-01-01-07-06-34"/>
+  <arg name="BAG_NAME1" value="Sep13_ICRA_Experiments/asctec_stipped/exp2"/>
+  <arg name="BAG_NAME2" value="Sep13_ICRA_Experiments/external_withtf/exp2"/>
 
   <param name="use_sim_time" value="true"/>
 
-  <node pkg="rosbag" type="play" name="play" output="screen"
-    args="$(env HOME)/ros/bags/$(arg BAG_NAME).bag -d 10 --clock"/>
+  <node pkg="rosbag" type="play" name="play1" output="screen"
+    args="$(env HOME)/ros/bags/$(arg BAG_NAME1).bag -d 10 --clock"/>
+
+  <node pkg="rosbag" type="play" name="play2" output="screen"
+    args="$(env HOME)/ros/bags/$(arg BAG_NAME2).bag -d 28.5 "/>
 
 </launch>

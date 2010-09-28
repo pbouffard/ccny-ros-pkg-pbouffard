@@ -1,0 +1,545 @@
+Index: sensor/sensor_range/rangesensor.h
+===================================================================
+--- sensor/sensor_range/rangesensor.h (revision 39)
++++ sensor/sensor_range/rangesensor.h (working copy)
+@@ -21,12 +21,13 @@
+ 		};	
+ 		RangeSensor(std::string name);
+ 		RangeSensor(std::string name, unsigned int beams, double res, const OrientedPoint& position=OrientedPoint(0,0,0), double span=0, double maxrange=89.0);
++		RangeSensor(std::string name, unsigned int beams, double* angles, const OrientedPoint& position=OrientedPoint(0,0,0), double span=0, double maxrange=89.0);
+ 		inline const std::vector<Beam>& beams() const {return m_beams;}
+ 		inline std::vector<Beam>& beams() {return m_beams;}
+ 		inline OrientedPoint getPose() const {return m_pose;}
+ 		void updateBeamsLookup();
+ 		bool newFormat;
+-	protected:
++//	protected:
+ 		OrientedPoint m_pose;
+ 		std::vector<Beam> m_beams;
+ };
+
+Index: sensor/sensor_range/rangesensor.cpp
+===================================================================
+--- sensor/sensor_range/rangesensor.cpp (revision 39)
++++ sensor/sensor_range/rangesensor.cpp (working copy)
+@@ -19,6 +19,22 @@
+ 	updateBeamsLookup();
+ }
+ 
++RangeSensor::RangeSensor(std::string name, unsigned int beams_num, double* angles, const OrientedPoint& position, double span, double maxrange):Sensor(name),
++	m_pose(position), m_beams(beams_num){
++	double angle;
++	for (unsigned int i=0; i<beams_num; i++){
++   angle = angles[i];
++		RangeSensor::Beam& beam(m_beams[i]);
++		beam.span=span;
++		beam.pose.x=0;
++		beam.pose.y=0;
++		beam.pose.theta=angle;
++		beam.maxRange=maxrange;
++	}
++	newFormat=0;
++	updateBeamsLookup();
++}
++
+ void RangeSensor::updateBeamsLookup(){
+ 	for (unsigned int i=0; i<m_beams.size(); i++){
+ 		RangeSensor::Beam& beam(m_beams[i]);
+Index: utils/point.h
+===================================================================
+--- utils/point.h	(revision 39)
++++ utils/point.h	(working copy)
+@@ -11,9 +11,9 @@
+ 
+ template <class T>
+ struct point{
+-	inline point():x(0),y(0) {}
+-	inline point(T _x, T _y):x(_x),y(_y){}
+-	T x, y;
++	inline point():x(0),y(0),z(0) {}
++	inline point(T _x, T _y):x(_x),y(_y),z(0){}
++	T x, y, z;
+ };
+ 
+ template <class T>
+@@ -44,10 +44,10 @@
+ 
+ template <class T, class A>
+ struct orientedpoint: public point<T>{
+-  inline orientedpoint() : point<T>(0,0), theta(0) {};
++  inline orientedpoint() : point<T>(0,0), roll(0), pitch(0), theta(0) {};
+ 	inline orientedpoint(const point<T>& p);
+-	inline orientedpoint(T x, T y, A _theta): point<T>(x,y), theta(_theta){}
+-        inline void normalize();
++	inline orientedpoint(T x, T y, A _theta): point<T>(x,y), roll(0), pitch(0), theta(_theta){}
++  inline void normalize();
+ 	inline orientedpoint<T,A> rotate(A alpha){
+ 		T s=sin(alpha), c=cos(alpha);
+ 		A a=alpha+theta;
+@@ -57,7 +57,7 @@
+ 			s*this->x+c*this->y, 
+ 			a);
+ 	}
+-	A theta;
++	A roll, pitch, theta;
+ };
+ 
+ 
+
+Index: gridfastslam/gfs2neff.cpp
+===================================================================
+--- gridfastslam/gfs2neff.cpp	(revision 39)
++++ gridfastslam/gfs2neff.cpp	(working copy)
+@@ -4,7 +4,7 @@
+ 
+ using namespace std;
+ 
+-int main(unsigned int argc, const char* const *argv){
++int main(int argc, const char* const *argv){
+ 	if (argc<3){
+ 		cout << "usage gfs2neff <infilename> <nefffilename>" << endl;
+ 		return -1;
+Index: gridfastslam/gfsreader.cpp
+===================================================================
+--- gridfastslam/gfsreader.cpp	(revision 39)
++++ gridfastslam/gfsreader.cpp	(working copy)
+@@ -1,6 +1,7 @@
+ #include "gfsreader.h"
+ #include <iomanip>
+ #include <limits>
++#include <cstring>
+ 
+ namespace  GMapping { 
+
+Index: gridfastslam/gridslamprocessor.cpp
+===================================================================
+--- gridfastslam/gridslamprocessor.cpp	(revision 39)
++++ gridfastslam/gridslamprocessor.cpp	(working copy)
+@@ -19,13 +19,16 @@
+ 
+   GridSlamProcessor::GridSlamProcessor(): m_infoStream(cout){
+     
++    period_ = 5.0;
+     m_obsSigmaGain=1;
+     m_resampleThreshold=0.5;
+     m_minimumScore=0.;
+   }
+   
+   GridSlamProcessor::GridSlamProcessor(const GridSlamProcessor& gsp) 
+-    :m_particles(gsp.m_particles), m_infoStream(cout){
++    :last_update_time_(0.0), m_particles(gsp.m_particles), m_infoStream(cout){
++
++    period_ = 5.0;
+     
+     m_obsSigmaGain=gsp.m_obsSigmaGain;
+     m_resampleThreshold=gsp.m_resampleThreshold;
+@@ -85,6 +88,7 @@
+   }
+   
+   GridSlamProcessor::GridSlamProcessor(std::ostream& infoS): m_infoStream(infoS){
++    period_ = 5.0;
+     m_obsSigmaGain=1;
+     m_resampleThreshold=0.5;
+     m_minimumScore=0.;
+@@ -146,7 +150,7 @@
+   
+   GridSlamProcessor::~GridSlamProcessor(){
+     cerr << __PRETTY_FUNCTION__ << ": Start" << endl;
+-    cerr << __PRETTY_FUNCTION__ << ": Deeting tree" << endl;
++    cerr << __PRETTY_FUNCTION__ << ": Deleting tree" << endl;
+     for (std::vector<Particle>::iterator it=m_particles.begin(); it!=m_particles.end(); it++){
+ #ifdef TREE_CONSISTENCY_CHECK		
+       TNode* node=it->node;
+@@ -374,10 +378,12 @@
+     
+     bool processed=false;
+ 
+-    // process a scan only if the robot has traveled a given distance
++    // process a scan only if the robot has traveled a given distance or a certain amount of time has elapsed
+     if (! m_count 
+ 	|| m_linearDistance>m_linearThresholdDistance 
+-	|| m_angularDistance>m_angularThresholdDistance){
++	|| m_angularDistance>m_angularThresholdDistance
++  || (period_ >= 0.0 && (reading.getTime() - last_update_time_) > period_)){
++      last_update_time_ = reading.getTime();
+       
+       if (m_outputStream.is_open()){
+ 	m_outputStream << setiosflags(ios::fixed) << setprecision(6);
+@@ -402,6 +408,13 @@
+ 	plainReading[i]=reading[i];
+       }
+       m_infoStream << "m_count " << m_count << endl;
++
++      RangeReading* reading_copy = 
++              new RangeReading(reading.size(),
++                               &(reading[0]),
++                               static_cast<const RangeSensor*>(reading.getSensor()),
++                               reading.getTime());
++
+       if (m_count>0){
+ 	scanMatch(plainReading);
+ 	if (m_outputStream.is_open()){
+@@ -432,7 +445,7 @@
+ 	  m_outputStream << setiosflags(ios::fixed) << setprecision(6);
+ 	  m_outputStream << "NEFF " << m_neff << endl;
+ 	}
+-	resample(plainReading, adaptParticles);
++	resample(plainReading, adaptParticles, reading_copy);
+ 	
+       } else {
+ 	m_infoStream << "Registering First Scan"<< endl;
+@@ -443,9 +456,9 @@
+ 	  
+ 	  // cyr: not needed anymore, particles refer to the root in the beginning!
+ 	  TNode* node=new	TNode(it->pose, 0., it->node,  0);
+-	  node->reading=0;
++	  //node->reading=0;
++          node->reading = reading_copy;
+ 	  it->node=node;
+-	  
+ 	}
+       }
+       //		cerr  << "Tree: normalizing, resetting and propagating weights at the end..." ;
+Index: gridfastslam/gfs2log.cpp
+===================================================================
+--- gridfastslam/gfs2log.cpp	(revision 39)
++++ gridfastslam/gfs2log.cpp	(working copy)
+@@ -3,6 +3,7 @@
+ #include <sstream>
+ #include <vector>
+ #include <list>
++#include <cstring>
+ #include <utils/point.h>
+ #include "gfsreader.h"
+ 
+@@ -12,7 +13,7 @@
+ using namespace GMapping;
+ using namespace GMapping::GFSReader;
+ 
+-int main (unsigned int argc, const char * const * argv){
++int main (int argc, const char * const * argv){
+ 	if (argc<3){
+ 		cout << "usage gfs2log [-err] [-neff] [-part] [-odom] <infilename> <outfilename>" << endl;
+ 		cout << "  -odom : dump raw odometry in ODOM message instead of inpolated corrected one" << endl;
+Index: gridfastslam/gridslamprocessor.h
+===================================================================
+--- gridfastslam/gridslamprocessor.h	(revision 39)
++++ gridfastslam/gridslamprocessor.h	(working copy)
+@@ -148,6 +148,7 @@
+ 			       int iterations, double likelihoodSigma=1, double likelihoodGain=1, unsigned int likelihoodSkip=0);
+     void setMotionModelParameters(double srr, double srt, double str, double stt);
+     void setUpdateDistances(double linear, double angular, double resampleThreshold);
++    void setUpdatePeriod(double p) {period_=p;}
+     
+     //the "core" algorithm
+     void processTruePos(const OdometryReading& odometry);
+@@ -176,7 +177,7 @@
+     virtual void onOdometryUpdate();
+     virtual void onResampleUpdate();
+     virtual void onScanmatchUpdate();
+-	
++
+     //accessor methods
+     /**the maxrange of the laser to consider */
+     MEMBER_PARAM_SET_GET(m_matcher, double, laserMaxRange, protected, public, public);
+@@ -248,6 +249,9 @@
+  
+     /**the laser beams*/
+     unsigned int m_beams;
++    double last_update_time_;
++    double period_;
++	
+     
+     
+     /**the particles*/
+Index: gridfastslam/gridslamprocessor.hxx
+===================================================================
+--- gridfastslam/gridslamprocessor.hxx	(revision 39)
++++ gridfastslam/gridslamprocessor.hxx	(working copy)
+@@ -67,7 +67,7 @@
+   
+ }
+ 
+-inline bool GridSlamProcessor::resample(const double* plainReading, int adaptSize, const RangeReading* ){
++inline bool GridSlamProcessor::resample(const double* plainReading, int adaptSize, const RangeReading* reading){
+   
+   bool hasResampled = false;
+   
+@@ -112,7 +112,7 @@
+       TNode* oldNode=oldGeneration[m_indexes[i]];
+       //			cerr << i << "->" << m_indexes[i] << "B("<<oldNode->childs <<") ";
+       node=new	TNode(p.pose, 0, oldNode, 0);
+-      node->reading=0;
++      node->reading=reading;
+       //			cerr << "A("<<node->parent->childs <<") " <<endl;
+       
+       temp.push_back(p);
+@@ -155,7 +155,8 @@
+       TNode* node=0;
+       node=new TNode(it->pose, 0.0, *node_it, 0);
+       
+-      node->reading=0;
++      //node->reading=0;
++      node->reading=reading;
+       it->node=node;
+ 
+       //END: BUILDING TREE
+Index: gridfastslam/gfs2rec.cpp
+===================================================================
+--- gridfastslam/gfs2rec.cpp	(revision 39)
++++ gridfastslam/gfs2rec.cpp	(working copy)
+@@ -3,6 +3,7 @@
+ #include <sstream>
+ #include <vector>
+ #include <list>
++#include <cstring>
+ #include <utils/point.h>
+ 
+ #define MAX_LINE_LENGHT (1000000)
+@@ -368,7 +369,7 @@
+ 
+ 
+ 
+-int main (unsigned int argc, const char * const * argv){
++int main ( int argc, const char * const * argv){
+ 	if (argc<3){
+ 		cout << "usage gfs2rec [-err] <infilename> <outfilename>" << endl;
+ 		return -1;
+Index: log/log_plot.cpp
+===================================================================
+--- log/log_plot.cpp	(revision 39)
++++ log/log_plot.cpp	(working copy)
+@@ -1,5 +1,6 @@
+ #include <fstream>
+ #include <iostream>
++#include <cstdlib>
+ #include <sys/types.h>
+ #include <log/carmenconfiguration.h>
+ #include <log/sensorlog.h>
+@@ -8,7 +9,7 @@
+ using namespace std;
+ using namespace GMapping;
+ 
+-int main(char argc, char ** argv){
++int main(int argc, char ** argv){
+   double maxrange=2.;
+ 	if (argc<2){
+ 		cout << "usage log_plot <filename> | gnuplot" << endl;
+Index: log/log_test.cpp
+===================================================================
+--- log/log_test.cpp	(revision 39)
++++ log/log_test.cpp	(working copy)
+@@ -1,5 +1,6 @@
+ #include <fstream>
+ #include <iostream>
++#include <cstdlib>
+ #include <log/carmenconfiguration.h>
+ #include <log/sensorlog.h>
+ 
+@@ -7,7 +8,7 @@
+ using namespace std;
+ using namespace GMapping;
+ 
+-int main(char argc, char ** argv){
++int main(int argc, char ** argv){
+ 	if (argc<2){
+ 		cout << "usage log_test <filename>" << endl;
+ 		exit (-1);
+Index: log/scanstudio2carmen.cpp
+===================================================================
+--- log/scanstudio2carmen.cpp	(revision 39)
++++ log/scanstudio2carmen.cpp	(working copy)
+@@ -1,6 +1,7 @@
+ #include <iostream>
+ #include <fstream>
+ #include <sstream>
++#include <cstdlib>
+ #include <assert.h>
+ #include <utils/point.h>
+ 
+Index: log/rdk2carmen.cpp
+===================================================================
+--- log/rdk2carmen.cpp	(revision 39)
++++ log/rdk2carmen.cpp	(working copy)
+@@ -1,5 +1,6 @@
+ #include <fstream>
+ #include <iostream>
++#include <cstdlib>
+ #include <log/carmenconfiguration.h>
+ #include <log/sensorlog.h>
+ 
+@@ -7,7 +8,7 @@
+ using namespace std;
+ using namespace GMapping;
+ 
+-int main(char argc, char ** argv){
++int main(int argc, char ** argv){
+ 	if (argc<2){
+ 		cerr << "usage "<<argv[0]<<" <filename> <outfilename>" << endl;
+ 		cerr << "or "<<argv[0]<<" <filename> for standard output" << endl;
+Index: log/carmenconfiguration.cpp
+===================================================================
+--- log/carmenconfiguration.cpp	(revision 39)
++++ log/carmenconfiguration.cpp	(working copy)
+@@ -2,6 +2,7 @@
+ #include <iostream>
+ #include <sstream>
+ #include <assert.h>
++#include <cstdlib>
+ #include <sys/types.h>
+ #include <sensor_odometry/odometrysensor.h>
+ #include <sensor_range/rangesensor.h>
+Index: gui/gfs2img.cpp
+===================================================================
+--- gui/gfs2img.cpp	(revision 39)
++++ gui/gfs2img.cpp	(working copy)
+@@ -1,4 +1,5 @@
+ #include <limits.h>
++#include <cstdlib>
+ #include <scanmatcher/scanmatcher.h>
+ #include <gridfastslam/gfsreader.h>
+ #include <qpixmap.h>
+Index: grid/harray2d.h
+===================================================================
+--- grid/harray2d.h	(revision 39)
++++ grid/harray2d.h	(working copy)
+@@ -137,10 +137,12 @@
+ template <class Cell>
+ AccessibilityState  HierarchicalArray2D<Cell>::cellState(int x, int y) const {
+ 	if (this->isInside(patchIndexes(x,y)))
++        {
+ 		if(isAllocated(x,y))
+ 			return (AccessibilityState)((int)Inside|(int)Allocated);
+ 		else
+ 			return Inside;
++        }
+ 	return Outside;
+ }
+ 
+Index: scanmatcher/scanmatch_test.cpp
+===================================================================
+--- scanmatcher/scanmatch_test.cpp	(revision 39)
++++ scanmatcher/scanmatch_test.cpp	(working copy)
+@@ -1,4 +1,5 @@
+ 
++#include <cstdlib>
+ #include <fstream>
+ #include <iostream>
+ #include <log/carmenconfiguration.h>
+Index: scanmatcher/icptest.cpp
+===================================================================
+--- scanmatcher/icptest.cpp	(revision 39)
++++ scanmatcher/icptest.cpp	(working copy)
+@@ -1,5 +1,6 @@
+ #include <iostream>
+ #include <fstream>
++#include <cstdlib>
+ 
+ #include <list>
+ #include "icp.h"
+Index: scanmatcher/gridlinetraversal.h
+===================================================================
+--- scanmatcher/gridlinetraversal.h	(revision 39)
++++ scanmatcher/gridlinetraversal.h	(working copy)
+@@ -1,6 +1,7 @@
+ #ifndef GRIDLINETRAVERSAL_H
+ #define GRIDLINETRAVERSAL_H
+ 
++#include <cstdlib>
+ #include <utils/point.h>
+ 
+ namespace GMapping {
+Index: scanmatcher/scanmatcher.cpp
+===================================================================
+--- scanmatcher/scanmatcher.cpp	(revision 39)
++++ scanmatcher/scanmatcher.cpp	(working copy)
+@@ -1,5 +1,7 @@
+ #include <list>
+ #include <iostream>
++#include <cstring>
++#include <limits>
+ 
+ #include "scanmatcher.h"
+ #include "gridlinetraversal.h"
+Index: scanmatcher/scanmatcher.h
+===================================================================
+--- scanmatcher/scanmatcher.h	(revision 39)
++++ scanmatcher/scanmatcher.h	(working copy)
+@@ -7,7 +7,7 @@
+ #include <utils/stat.h>
+ #include <iostream>
+ #include <utils/gvalues.h>
+-#define LASER_MAXBEAMS 1024
++#define LASER_MAXBEAMS 2048
+ 
+ namespace GMapping {
+ 
+Index: configfile/configfile_test.cpp
+===================================================================
+--- configfile/configfile_test.cpp	(revision 39)
++++ configfile/configfile_test.cpp	(working copy)
+@@ -23,6 +23,7 @@
+ 
+ 
+ #include <iostream>
++#include <cstdlib>
+ #include "configfile.h"
+ 
+ using namespace std;
+Index: configfile/configfile.cpp
+===================================================================
+--- configfile/configfile.cpp	(revision 39)
++++ configfile/configfile.cpp	(working copy)
+@@ -30,6 +30,7 @@
+ #include <sstream>
+ #include <iostream>
+ #include <ctype.h>
++#include <cstdlib>
+ 
+ namespace GMapping{
+ using namespace std;
+Index: particlefilter/particlefilter.h
+===================================================================
+--- particlefilter/particlefilter.h	(revision 39)
++++ particlefilter/particlefilter.h	(working copy)
+@@ -1,6 +1,7 @@
+ #ifndef PARTICLEFILTER_H
+ #define PARTICLEFILTER_H
+ #include <stdlib.h>
++#include <float.h>
+ #include <sys/types.h>
+ #include<vector>
+ #include<utility>
+@@ -23,7 +24,8 @@
+ template <class OutputIterator, class Iterator>
+ double toNormalForm(OutputIterator& out, const Iterator & begin, const Iterator & end){
+ 	//determine the maximum
+-	double lmax=-MAXDOUBLE;
++	//double lmax=-MAXDOUBLE;
++	double lmax=-DBL_MAX;
+ 	for (Iterator it=begin; it!=end; it++){
+ 		lmax=lmax>((double)(*it))? lmax: (double)(*it);
+ 	}
+Index: sensor/sensor_range/rangereading.cpp
+===================================================================
+--- sensor/sensor_range/rangereading.cpp	(revision 39)
++++ sensor/sensor_range/rangereading.cpp	(working copy)
+@@ -1,3 +1,4 @@
++#include <limits>
+ #include <iostream>
+ #include <assert.h>
+ #include <sys/types.h>
+Index: Makefile
+===================================================================
+--- Makefile	(revision 39)
++++ Makefile	(working copy)
+@@ -6,7 +6,8 @@
+ ifeq ($(MACOSX),1)
+ SUBDIRS=utils sensor log configfile scanmatcher gridfastslam 
+ else
+-SUBDIRS=utils sensor log configfile scanmatcher gridfastslam gui 
++#SUBDIRS=utils sensor log configfile scanmatcher gridfastslam gui 
++SUBDIRS=utils sensor log configfile scanmatcher gridfastslam
+ endif
+ endif
+
