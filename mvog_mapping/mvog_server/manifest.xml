@@ -1,0 +1,17 @@
+<package>
+  <description brief="mvog_server">
+
+     mvog_server
+
+  </description>
+  <author>Ivan Dryanovski</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mvog_server</url>
+  <depend package="roscpp"/>
+  <depend package="mvog_model"/>
+  <depend package="mvog_gtk_gui"/>
+
+</package>
+
+
