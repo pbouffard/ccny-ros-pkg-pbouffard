@@ -15,4 +15,5 @@ This driver is not yet complete and the interfaces are not yet finalized. Full f
   <depend package="sensor_msgs"/>
   <depend package="nav_msgs"/>
   <depend package="asctec_msgs"/>
+  <depend package="diagnostic_updater"/>
 </package>

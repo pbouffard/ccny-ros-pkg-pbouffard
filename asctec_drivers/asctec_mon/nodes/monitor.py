@@ -392,16 +392,16 @@ def listener():
     global alarm, alarm_count, alarm_interval
     global rec_enable
 
-    rospy.init_node('cursed_controller', anonymous=True)
-    rospy.Subscriber("/autopilot/LL_STATUS", LLStatus, callback)
-    rospy.Subscriber("/autopilot/IMU_CALCDATA", IMUCalcData, imu_callback)
-    rospy.Subscriber("/autopilot/GPS_DATA", GPSData, gps_callback)
+    rospy.init_node('asctec_monitor')
+    rospy.Subscriber("autopilot/LL_STATUS", LLStatus, callback)
+    rospy.Subscriber("autopilot/IMU_CALCDATA", IMUCalcData, imu_callback)
+    rospy.Subscriber("autopilot/GPS_DATA", GPSData, gps_callback)
     curses.init_pair(1, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
     curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
     curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)
     curses.init_pair(4, curses.COLOR_BLACK, curses.COLOR_WHITE)
     curses.init_pair(5, curses.COLOR_BLACK, curses.COLOR_RED)
-    r = rospy.Rate(20) # Hz
+    r = rospy.Rate(10) # Hz
     (maxx,maxy) = myscreen.getmaxyx()
     while not rospy.is_shutdown():
         c = myscreen.getch()

@@ -288,9 +288,9 @@ namespace asctec
       }
       output(cmd,5);
       output((unsigned char*) &telemetry->CTRL_INPUT_, 12);
-      ROS_INFO("writing control to pelican: size of CTRL_INPUT_ %zd", sizeof(telemetry->CTRL_INPUT_));
+      //ROS_INFO("writing control to pelican: size of CTRL_INPUT_ %zd", sizeof(telemetry->CTRL_INPUT_));
       wait(5);
-      ROS_INFO("Data Available");
+      //ROS_INFO("Data Available");
       i = read (dev_,data,5);
       if (i != 5) {
         ROS_ERROR("Control Response : Insufficient Data");
@@ -310,6 +310,16 @@ namespace asctec
       ROS_DEBUG("Control Response Code %0x",data[2]);
     }
     //ROS_INFO ("sendControl completed" );
+  }
+
+  void SerialInterface::sendEstop (Telemetry * telemetry)
+  {
+    if(!telemetry->controlEnabled_) return;
+    //ROS_DEBUG ("sendControl started");
+    flush();
+    unsigned char cmd[] = ">*>me";
+    output(cmd,5);
+    ROS_INFO("Sent E-Stop command!");
   }
 
   bool SerialInterface::getPackets (Telemetry * telemetry)
@@ -440,3 +450,4 @@ namespace asctec
     return result;
   }
 }
+

@@ -55,6 +55,7 @@ namespace asctec
     REQUEST_BITMASK[RequestTypes::WAYPOINT] = 0x0100;
     REQUEST_BITMASK[RequestTypes::GPS_DATA_ADVANCED] = 0x0200;
     REQUEST_BITMASK[RequestTypes::CAM_DATA] = 0x0800;
+    estop_ = false;
   }
   Telemetry::~Telemetry ()
   {
@@ -170,12 +171,22 @@ namespace asctec
   void Telemetry::enableControl (Telemetry * telemetry_, uint8_t interval, uint8_t offset)
   {
     ros::NodeHandle nh_private ("~");
-    controlSubscriber_ = nh_private.subscribe("CTRL_INPUT", 10, &Telemetry::copyCTRL_INPUT, telemetry_);
+    controlSubscriber_ = nh_private.subscribe("CTRL_INPUT", 1, &Telemetry::copyCTRL_INPUT, telemetry_, ros::TransportHints().tcpNoDelay());
     ROS_INFO("Listening to %s data on topic: %s", "CTRL_INPUT","CTRL_INPUT");
-    ROS_DEBUG ("Telemetry::enableCommanding()");
+    ROS_DEBUG ("Telemetry::enableControl()");
+    estopSubscriber_ = nh_private.subscribe("ESTOP", 1, &Telemetry::estopCallback, telemetry_, ros::TransportHints().tcpNoDelay());
     controlInterval_ = interval;
     controlOffset_ = offset;
     controlEnabled_ = true;
+  }
+  void Telemetry::estopCallback(const std_msgs::Bool msg)
+  {
+    if (msg.data) {
+      estop_ = true;
+      ROS_INFO("Heard e-stop command!");
+    } else {
+      ROS_WARN("Got e-stop message, but value was false");
+    }
   }
 
   std::string Telemetry::requestToString (RequestTypes::RequestType t)

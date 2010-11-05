@@ -1,7 +1,7 @@
 <launch>
   <node name="autopilot" pkg="asctec_autopilot" type="autopilot" respawn="false" required="true" output="screen">
-    <param name="serial_port" type="string" value="/dev/ttyUSB0"/>
-    <param name="serial_speed" type="int" value="57600"/>
+    <param name="port" type="string" value="/dev/ttyUSB0"/>
+    <param name="speed" type="int" value="57600"/>
     <param name="freq" value="20.0"/>
 
     <param name="enable_LL_STATUS" type="bool" value="true"/>

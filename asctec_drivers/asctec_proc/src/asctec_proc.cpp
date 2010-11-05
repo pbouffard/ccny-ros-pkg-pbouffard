@@ -76,20 +76,21 @@ void AsctecProc::imuCalcDataCallback(const asctec_msgs::IMUCalcDataConstPtr& imu
 */
   // publish tf for testing
 
-/*
+
   btTransform t;
 
   btQuaternion orientation;
-  orientation.setRPY(imuCalcDataMsg->angle_roll * ASC_TO_ROS_ANGLE,
-                     imuCalcDataMsg->angle_nick * ASC_TO_ROS_ANGLE,
-                     imuCalcDataMsg->angle_yaw  * ASC_TO_ROS_ANGLE);
+//  orientation.setRPY(imuCalcDataMsg->angle_roll * ASC_TO_ROS_ANGLE,
+//                     imuCalcDataMsg->angle_nick * ASC_TO_ROS_ANGLE,
+//                     imuCalcDataMsg->angle_yaw  * ASC_TO_ROS_ANGLE);
 
+  orientation.setValue(imuMsg.orientation.x, imuMsg.orientation.y, imuMsg.orientation.z, imuMsg.orientation.w);
   t.setRotation (orientation);
   t.setOrigin (btVector3(0,0,0));
 
   tf::StampedTransform worldToOdomTf (t, ros::Time::now(), "navigation", "imu_raw");
   tfBroadcaster_.sendTransform (worldToOdomTf);
-*/
+
 }
 
 void AsctecProc::createHeightMsg(const asctec_msgs::IMUCalcDataConstPtr& imuCalcDataMsg,

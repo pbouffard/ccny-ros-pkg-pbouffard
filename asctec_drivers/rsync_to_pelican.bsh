@@ -1,0 +1,2 @@
+#!/bin/bash
+rsync -avz --exclude-from=.rsync-exclude ~/dev/ros/ccny-ros-pkg/ starmac@pelican1:ros/ccny-ros-pkg/

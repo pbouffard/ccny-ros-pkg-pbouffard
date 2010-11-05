@@ -33,6 +33,7 @@
 #include <bitset>
 
 #include <ros/ros.h>
+#include <diagnostic_updater/diagnostic_updater.h>
 
 #include "asctec_autopilot/crc16.h"
 #include "asctec_autopilot/telemetry.h"
@@ -74,8 +75,15 @@ namespace asctec
       int interval_CONTROL_;
       int offset_CONTROL_;
 
+
       SerialInterface* serialInterface_;
       Telemetry* telemetry_;
+
+      // Diagnostics
+      diagnostic_updater::Updater diag_updater_;
+      double last_spin_time_;
+
+      void diagnostics(diagnostic_updater::DiagnosticStatusWrapper& stat);
 
     public:
 

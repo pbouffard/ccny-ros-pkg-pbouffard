@@ -68,7 +68,9 @@ def talker():
         # axis seperately.
         ctrl = int(0b1000)
         csum = pitch + roll + yaw + thrust + int(ctrl) - 21846
-        pub.publish(pitch,roll,yaw,thrust,ctrl,csum)
+        cin = CtrlInput()
+        cin.pitch, cin.roll, cin.yaw, cin.thrust, cin.ctrl, cin.chksum = pitch,roll,yaw,thrust,ctrl,csum
+        pub.publish(cin)
         rospy.sleep(0.05)
     curses.nocbreak(); myscreen.keypad(0); curses.echo(); curses.curs_set(1)
     curses.endwin()

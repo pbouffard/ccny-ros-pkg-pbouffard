@@ -34,7 +34,7 @@ int main (int argc, char **argv)
 
 namespace asctec
 {
-  AutoPilot::AutoPilot ()
+  AutoPilot::AutoPilot () : diag_updater_()
   {
     ROS_INFO ("Creating AutoPilot Interface");
 
@@ -42,6 +42,7 @@ namespace asctec
     ros::NodeHandle nh_private ("~");
 
     // **** get parameters
+
 
     if (!nh_private.getParam ("freq", freq_))
       freq_ = 50.0;
@@ -115,6 +116,11 @@ namespace asctec
     serialInterface_->serialport_bytes_tx_ = 0;
     telemetry_ = new asctec::Telemetry::Telemetry ();
 
+    // Diagnostics
+    diag_updater_.add("AscTec Autopilot Status", this, &AutoPilot::diagnostics);
+    diag_updater_.setHardwareID("none");
+    diag_updater_.force_update();
+
     // **** enable polling
     if(enable_LL_STATUS_ == true)
     {
@@ -156,21 +162,46 @@ namespace asctec
     ROS_INFO ("Destroying AutoPilot Interface");
   }
 
-  void AutoPilot::spin (const ros::TimerEvent & e)
+  void AutoPilot::spin(const ros::TimerEvent & e)
   {
     //ROS_INFO ("spin()");
     //ROS_INFO ("RX: %03.3f Bps",float(serialInterface_->serialport_bytes_rx_)/1000*freq_);
     //ROS_INFO ("TX: %03.3f Bps",float(serialInterface_->serialport_bytes_tx_)/1000*freq_);
-    serialInterface_->serialport_bytes_rx_ = 0;
-    serialInterface_->serialport_bytes_tx_ = 0;
-    telemetry_->publishPackets ();
+    //serialInterface_->serialport_bytes_rx_ = 0;
+    //serialInterface_->serialport_bytes_tx_ = 0;
+    telemetry_->publishPackets();
     telemetry_->controlCount_++;
-    serialInterface_->sendControl (telemetry_);
-    telemetry_->buildRequest ();
-    telemetry_->requestCount_++;
-    if (telemetry_->requestPackets_.count() > 0 )
+    if (telemetry_->estop_)
     {
-      serialInterface_->getPackets (telemetry_);
+      serialInterface_->sendEstop(telemetry_);
     }
+    else
+    {
+      serialInterface_->sendControl(telemetry_);
+    }
+    telemetry_->buildRequest();
+    telemetry_->requestCount_++;
+    if (telemetry_->requestPackets_.count() > 0)
+    {
+      serialInterface_->getPackets(telemetry_);
+    }
+    last_spin_time_ = e.profile.last_duration.toSec();
+    diag_updater_.update();
   }
+
+  void AutoPilot::diagnostics(diagnostic_updater::DiagnosticStatusWrapper& stat)
+  {
+    if (telemetry_->estop_)
+    {
+      stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "E-STOP");
+    }
+    else
+    {
+      stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "OK");
+    }
+    stat.add("Serial Bytes TX", serialInterface_->serialport_bytes_tx_);
+    stat.add("Serial Bytes RX", serialInterface_->serialport_bytes_rx_);
+    stat.add("Last spin() duration [s]", last_spin_time_);
+  }
+
 }

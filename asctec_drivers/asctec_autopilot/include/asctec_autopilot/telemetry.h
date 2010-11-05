@@ -30,6 +30,7 @@
 #include "asctec_msgs/GPSData.h"
 #include "asctec_msgs/GPSDataAdvanced.h"
 #include "asctec_msgs/CtrlInput.h"
+#include <std_msgs/Bool.h>
 
 namespace asctec
 {
@@ -132,6 +133,7 @@ namespace asctec
     void copyGPS_DATA();
     void copyGPS_DATA_ADVANCED();
     void copyCTRL_INPUT(asctec_msgs::CtrlInput msg);
+    void estopCallback(const std_msgs::Bool msg);
     
     bool pollingEnabled_;
     bool controlEnabled_;
@@ -155,6 +157,7 @@ namespace asctec
     uint8_t controlInterval_;
     uint8_t controlOffset_;
     ros::Subscriber controlSubscriber_;
+    ros::Subscriber estopSubscriber_;
 
     //packet descriptors
     static const uint8_t PD_IMURAWDATA = 0x01;
@@ -436,6 +439,7 @@ You will receive an acknowledge if a command or a waypoint was received correctl
     asctec_msgs::GPSData GPSData_;
     asctec_msgs::GPSDataAdvanced GPSDataAdvanced_;
     //asctec_msgs::CtrlInput CtrlInput_;
+    bool estop_;
     
   };                            // end class Telemetry
 }                               //end namespace asctec
