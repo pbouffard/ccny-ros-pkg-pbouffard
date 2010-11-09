@@ -15,6 +15,8 @@ gboolean on_drawArea_idle(void * data)
 {
 	GTKGui * gui = static_cast<GTKGui*>(data);
 
+  if (!GTK_IS_WIDGET(gui->getControls()->drawArea)) return TRUE;
+
   gtk_widget_draw(gui->getControls()->drawArea, NULL);
 
   return TRUE;
@@ -80,8 +82,6 @@ gboolean on_drawArea_expose_event (GtkWidget       *widget,
 		glFlush ();
 
 	gdk_gl_drawable_gl_end (gldrawable);
-
-  sleep(0.001);
 
 	return TRUE;
 }

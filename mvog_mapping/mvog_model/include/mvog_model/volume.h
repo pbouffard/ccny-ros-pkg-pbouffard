@@ -5,31 +5,23 @@
 
 namespace MVOG 
 {
+  typedef float Volume[3];
 
-class Volume
-{
-  private:
+  const size_t VOLUME_BYTE_SIZE = sizeof(Volume);
 
-		float bottom_;
-		float top_;
-		float mass_;  
+  void createVolume(float bot, float top, Volume& volume);
 
-  public:
+  float getBot (const Volume& volume);
+  float getTop (const Volume& volume);
+  float getMass(const Volume& volume);
 
-    float getTop()  const { return top_; }
-    float getBot()  const { return bottom_; }
-    float getMass() const { return mass_; }
+  float getDensity (const Volume& volume);
 
-    void setBot (float bot)  { bottom_ = bot;  }
-    void setTop (float top)  { top_    = top;  }
-    void setMass(float mass) { mass_   = mass; }
+  void setBot (Volume& volume, float bot);
+  void setTop (Volume& volume, float top);
+  void setMass(Volume& volume, float mass);
 
-    Volume(double bottom, double top);
-    virtual ~Volume();
-};
-
-bool intersects (const Volume& a, const Volume& b); 
-void join (Volume& a, const Volume& b); // merge volume b into a
+  typedef float MLVolume[2];
 
 }; // namespace MVOG
 

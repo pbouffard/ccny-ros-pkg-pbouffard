@@ -19,7 +19,7 @@ namespace MVOG
 class GTKGui;
 
 extern "C" G_MODULE_EXPORT 
-void on_winMain_destroy (GtkObject *object, gpointer user_data);
+void on_winMain_destroy (GtkObject *object, GTKGui  * gui);
 
 extern "C" G_MODULE_EXPORT 
 void on_ntbkViewOptions_switch_page (GtkNotebook    * notebook,
@@ -31,6 +31,21 @@ extern "C" G_MODULE_EXPORT
 void on_winMain_realize(GtkWidget * widget,
                         GTKGui    * gui);
 
+extern "C" G_MODULE_EXPORT 
+void on_btnView2D_toggled(GtkToggleButton * togglebutton,
+                          GTKGui          * gui);
+
+extern "C" G_MODULE_EXPORT 
+void on_btnView3D_toggled(GtkToggleButton * togglebutton,
+                          GTKGui          * gui);
+
+extern "C" G_MODULE_EXPORT 
+void on_btnDrawRawData_toggled (GtkToggleButton * togglebutton,
+                                GTKGui          * gui);
+
+extern "C" G_MODULE_EXPORT 
+void on_btnDrawObstacles_toggled (GtkToggleButton * togglebutton,
+                                  GTKGui          * gui);
 
 extern "C" G_MODULE_EXPORT 
 void on_btnDrawPVolumes_toggled (GtkToggleButton * togglebutton,
@@ -39,6 +54,10 @@ void on_btnDrawPVolumes_toggled (GtkToggleButton * togglebutton,
 extern "C" G_MODULE_EXPORT 
 void on_btnDrawNVolumes_toggled (GtkToggleButton * togglebutton,
                                  GTKGui          * gui);
+
+extern "C" G_MODULE_EXPORT 
+void on_btnColorByHeight_toggled (GtkToggleButton * togglebutton,
+                                  GTKGui          * gui);
 
 /*
 extern "C" G_MODULE_EXPORT 

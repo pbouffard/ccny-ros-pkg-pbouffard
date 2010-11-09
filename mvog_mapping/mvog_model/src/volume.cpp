@@ -3,42 +3,40 @@
 namespace MVOG
 {
 
-Volume::Volume(double bottom, double top)
+void createVolume(float bot, float top, Volume& volume)
 {
-  if (top >= bottom)
+  if (top < bot) // swap top and bottom if neccessary
   {
-    bottom_ = bottom;
-    top_    = top;
+    float temp = bot;
+    bot = top;
+    top = temp;
   }
-  else
+   
+  if (top - bot < 1.0) // ensure minimum height of 1
   {
-    bottom_ = top;
-    top_    = bottom;
+    double m = bot + (top - bot)/2.0;
+    top = m + 0.5;
+    bot = m - 0.5;
   }
-  
-  mass_   = top_ - bottom_;
+
+  double mass = top - bot; // ensure initial density of 1
+
+  setBot (volume, bot);
+  setTop (volume, top);
+  setMass(volume, mass); 
 }
 
-Volume::~Volume()
-{
-  
+float getBot (const Volume& volume) { return volume[0]; }
+float getTop (const Volume& volume) { return volume[1]; }
+float getMass(const Volume& volume) { return volume[2]; }
 
-}
-
-bool intersects (const Volume& a, const Volume& b)
-{
-  if (b.getBot() <= a.getTop() && a.getTop() <= b.getTop()) return true;
-  if (b.getBot() <= a.getBot() && a.getBot() <= b.getTop()) return true;
-  return false;
-}
-
-void join (Volume& a, const Volume& b)
+float getDensity(const Volume& volume) 
 { 
-  // merge volume b into a
-
-  a.setTop(std::max(a.getTop(), b.getTop()));
-  a.setBot(std::min(a.getBot(), b.getBot()));
-  a.setMass(a.getMass() + b.getMass());
+  return getMass(volume)/(getTop(volume) - getBot(volume)); 
 }
+
+void setBot (Volume& volume, float bot)  { volume[0] = bot;  }
+void setTop (Volume& volume, float top)  { volume[1] = top;  }
+void setMass(Volume& volume, float mass) { volume[2] = mass; }
 
 }

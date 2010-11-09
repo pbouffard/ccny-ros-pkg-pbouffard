@@ -1,6 +1,8 @@
 #ifndef MVOG_MODEL_MAP_H
 #define MVOG_MODEL_MAP_H
 
+#include <boost/thread.hpp>
+
 #include <mvog_model/cell.h>
 #include <sensor_msgs/LaserScan.h>
 #include <btBulletDynamicsCommon.h>
@@ -38,8 +40,17 @@ class Map
 
     // test
 
-    void addVolume(int x, int y, double top, double bottom);
-    void printVolumes(int x, int y);
+    void test();
+
+    void addPVolume(int x, int y, double top, double bottom);
+    void addNVolume(int x, int y, double top, double bottom);
+
+    void printPVolumes(int x, int y);
+    void printNVolumes(int x, int y);
+
+    boost::mutex mutex_;
+
+    double getMemorySize();
 
 };
 

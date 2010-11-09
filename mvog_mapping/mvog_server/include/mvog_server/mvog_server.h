@@ -4,6 +4,9 @@
 #include <ros/ros.h>
 #include <sensor_msgs/LaserScan.h>
 #include <sensor_msgs/PointCloud.h>
+#include <tf/transform_listener.h>
+#include <tf/message_filter.h>
+#include <message_filters/subscriber.h>
 
 #include <mvog_model/mapper.h>
 #include <mvog_gtk_gui/gtk_gui.h>
@@ -15,18 +18,25 @@ class MVOGServer
 {
   private:
 
-    ros::Subscriber scanSubscriber_;
+    MVOG::Mapper * mapper_;
+    MVOG::GTKGui * gui_;
+
+    // **** scan subscribers
+    message_filters::Subscriber < sensor_msgs::LaserScan > *scanFilterSub_;
+    tf::MessageFilter < sensor_msgs::LaserScan > *scanFilter_;
+
+    // **** transforms
+    tf::TransformListener tfListener_;
+    std::string worldFrame_;
 
     void scanCallback(const sensor_msgs::LaserScanConstPtr& scan);
-
-    MVOG::Mapper * mapper;
-    MVOG::GTKGui * gui;
 
   public:
 
     MVOGServer ();
     virtual ~MVOGServer();
 
+    void spinOnce();
 };
 
 #endif

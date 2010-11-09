@@ -5,9 +5,11 @@ namespace MVOG
 
 GTKGui::GTKGui()
 {
-  options_.draw3D = true;
-  options_.drawPVolumes = true;
-  options_.drawNVolumes = true;
+  options_.view3D = true;
+  options_.drawPVolumes = false;
+  options_.drawNVolumes = false;
+  options_.drawRawData = false;
+  options_.colorByHeight = true;
 
   mouseLeftIsDown_  = false;
   mouseMidIsDown_   = false;
@@ -27,6 +29,44 @@ GTKGui::~GTKGui()
 void GTKGui::updateControls()
 {
   char s[10] = "";
+
+  // **** update 3D/2D radio button
+  gtk_toggle_button_set_active(controls_.btnView3D,  options_.view3D);
+  gtk_toggle_button_set_active(controls_.btnView2D, !options_.view3D);
+
+  if(options_.view3D)
+  { 
+    gtk_widget_show(controls_.frameCamera);
+    gtk_widget_show(controls_.frame3DMapOptions);
+    gtk_widget_show(controls_.frame3DOtherOptions);
+
+    gtk_toggle_button_set_active(controls_.btnDrawRawData,    options_.drawRawData);
+    gtk_toggle_button_set_active(controls_.btnDrawObstacles, !options_.drawRawData);
+
+    if (options_.drawRawData)
+    {
+      gtk_widget_show(controls_.vboxRawOptions);
+      gtk_widget_hide(controls_.vboxObstacleOptions);
+    }
+    else
+    {
+      gtk_widget_hide(controls_.vboxRawOptions);
+      gtk_widget_show(controls_.vboxObstacleOptions);
+
+      gtk_toggle_button_set_active(controls_.btnColorByHeight,    options_.colorByHeight);
+
+      if (options_.colorByHeight)
+        gtk_widget_show(controls_.vboxColorByHeightOptions);
+      else
+        gtk_widget_hide(controls_.vboxColorByHeightOptions);
+    }
+  } 
+  else 
+  {
+    gtk_widget_hide(controls_.frameCamera);
+    gtk_widget_hide(controls_.frame3DMapOptions);
+    gtk_widget_hide(controls_.frame3DOtherOptions);
+  }
 
 	// update camera Position text fields
 	sprintf(s, "%3.2f", drawer3D_->getCameraPosX());
@@ -48,6 +88,8 @@ void GTKGui::updateControls()
 	sprintf(s, "%3.2f", drawer3D_->getCameraLookZ());
 	gtk_entry_set_text(controls_.txtCamLookZ, s);
 
+  
+
 }
 
 void GTKGui::setDrawPVolumes(bool drawPVolumes) 
@@ -60,6 +102,16 @@ void GTKGui::setDrawNVolumes(bool drawNVolumes)
   options_.drawNVolumes = drawNVolumes; 
 }
 
+void GTKGui::setDrawRawData(bool drawRawData) 
+{
+  options_.drawRawData = drawRawData; 
+}
+
+void GTKGui::setColorByHeight(bool colorByHeight) 
+{
+  options_.colorByHeight = colorByHeight; 
+}
+
 bool GTKGui::getDrawPVolumes() const 
 { 
   return options_.drawPVolumes;
@@ -68,6 +120,16 @@ bool GTKGui::getDrawPVolumes() const
 bool GTKGui::getDrawNVolumes() const 
 { 
   return options_.drawNVolumes;
+}
+
+bool GTKGui::getDrawRawData() const 
+{ 
+  return options_.drawRawData;
+}
+
+bool GTKGui::getColorByHeight() const 
+{ 
+  return options_.colorByHeight;
 }
 
 void GTKGui::mouseDown(double x, double y, int button)
@@ -86,7 +148,7 @@ void GTKGui::mouseUp(double x, double y, int button)
 
 void GTKGui::mouseMove(double x, double y)
 {
-  if (options_.draw3D)
+  if (options_.view3D)
   {
     if (mouseMidIsDown_ || (mouseLeftIsDown_ && mouseRightIsDown_))
     {
@@ -124,13 +186,13 @@ void GTKGui::setMap(MVOG::Map * map)
 
 void GTKGui::setView()
 {
-  if (options_.draw3D) drawer3D_->setView();
+  if (options_.view3D) drawer3D_->setView();
  // else                 drawer2D_.setView();
 }
 
 void GTKGui::draw()
 {
-  if (options_.draw3D) drawer3D_->draw();
+  if (options_.view3D) drawer3D_->draw();
  // else                 drawer2D_.draw();
 }
 
@@ -175,8 +237,22 @@ void GTKGui::setUpGTK()
   sleep(1.0);
 
   controls_.winMain  = GTK_WIDGET(gtk_builder_get_object(builder, "winMain" ));
-  controls_.btn1     = GTK_WIDGET(gtk_builder_get_object(builder, "btn1"    ));
   controls_.drawArea = GTK_WIDGET(gtk_builder_get_object(builder, "drawArea"));
+
+  controls_.btnView2D = GTK_TOGGLE_BUTTON(gtk_builder_get_object(builder, "btnView2D"));
+  controls_.btnView3D = GTK_TOGGLE_BUTTON(gtk_builder_get_object(builder, "btnView3D"));
+
+  controls_.frameCamera         = GTK_WIDGET(gtk_builder_get_object(builder, "frameCamera"));
+  controls_.frame3DMapOptions   = GTK_WIDGET(gtk_builder_get_object(builder, "frame3DMapOptions"));
+  controls_.frame3DOtherOptions = GTK_WIDGET(gtk_builder_get_object(builder, "frame3DOtherOptions"));
+
+  controls_.vboxRawOptions           = GTK_WIDGET(gtk_builder_get_object(builder, "vboxRawOptions" ));
+  controls_.vboxObstacleOptions      = GTK_WIDGET(gtk_builder_get_object(builder, "vboxObstacleOptions" ));
+  controls_.vboxColorByHeightOptions = GTK_WIDGET(gtk_builder_get_object(builder, "vboxColorByHeightOptions" ));
+
+  controls_.btnDrawRawData   = GTK_TOGGLE_BUTTON(gtk_builder_get_object(builder, "btnDrawRawData")); 
+  controls_.btnDrawObstacles = GTK_TOGGLE_BUTTON(gtk_builder_get_object(builder, "btnDrawObstacles")); 
+  controls_.btnColorByHeight = GTK_TOGGLE_BUTTON(gtk_builder_get_object(builder, "btnColorByHeight")); 
 
   controls_.ntbkViewOptions = GTK_NOTEBOOK(gtk_builder_get_object(builder, "ntbkViewOptions"));
 

@@ -5,6 +5,8 @@ namespace MVOG
 
 Map::Map (double resolution, double sizeXmeters, double sizeYmeters)
 {
+  printf("%d {}\n", sizeof(Volume));
+
   resolution_ = resolution;
 
   sizeX_ = sizeXmeters / resolution_ + 1;
@@ -25,14 +27,25 @@ Map::~Map ()
 
 }
 
-void Map::addVolume(int x, int y, double top, double bottom)
+void Map::addPVolume(int x, int y, double top, double bottom)
 {
-  grid_[x][y].addPVolume(top, bottom);
+  getCell(x,y)->addPVolume(top, bottom);
 }
 
-void Map::printVolumes(int x, int y)
+void Map::addNVolume(int x, int y, double top, double bottom)
 {
-  grid_[x][y].printPVolumes();
+  getCell(x,y)->addNVolume(top, bottom);
+}
+
+
+void Map::printPVolumes(int x, int y)
+{
+  getCell(x,y)->printPVolumes();
+}
+
+void Map::printNVolumes(int x, int y)
+{
+  getCell(x,y)->printNVolumes();
 }
 
 void Map::deleteGrid()
@@ -65,8 +78,14 @@ Cell* Map::getCell(double x, double y)
     // copy information over
     for (int i = 0; i < sizeX_; i++)
     for (int j = 0; j < sizeY_; j++)
+    {
       newGrid[i + sizeX_][j] = grid_[i][j];
+      newGrid[i + sizeX_][j].pVolumes = new Volume[grid_[i][j].pVolumesCount];
+      newGrid[i + sizeX_][j].nVolumes = new Volume[grid_[i][j].nVolumesCount];
 
+      memcpy(newGrid[i + sizeX_][j].pVolumes, grid_[i][j].pVolumes, grid_[i][j].pVolumesCount * VOLUME_BYTE_SIZE);
+      memcpy(newGrid[i + sizeX_][j].nVolumes, grid_[i][j].nVolumes, grid_[i][j].nVolumesCount * VOLUME_BYTE_SIZE);
+    }
     // delete old grid
     deleteGrid();
 
@@ -85,7 +104,14 @@ Cell* Map::getCell(double x, double y)
     // copy information over
     for (int i = 0; i < sizeX_; i++)
     for (int j = 0; j < sizeY_; j++)
+    {
       newGrid[i][j] = grid_[i][j];
+      newGrid[i][j].pVolumes = new Volume[grid_[i][j].pVolumesCount];
+      newGrid[i][j].nVolumes = new Volume[grid_[i][j].nVolumesCount];
+
+      memcpy(newGrid[i][j].pVolumes, grid_[i][j].pVolumes, grid_[i][j].pVolumesCount * VOLUME_BYTE_SIZE);
+      memcpy(newGrid[i][j].nVolumes, grid_[i][j].nVolumes, grid_[i][j].nVolumesCount * VOLUME_BYTE_SIZE);
+    }
 
     // delete old grid
     deleteGrid();
@@ -104,8 +130,14 @@ Cell* Map::getCell(double x, double y)
     // copy information over
     for (int i = 0; i < sizeX_; i++)
     for (int j = 0; j < sizeY_; j++)
+    {
       newGrid[i][j + sizeY_] = grid_[i][j];
+      newGrid[i][j + sizeY_].pVolumes = new Volume[grid_[i][j].pVolumesCount];
+      newGrid[i][j + sizeY_].nVolumes = new Volume[grid_[i][j].nVolumesCount];
 
+      memcpy(newGrid[i][j + sizeY_].pVolumes, grid_[i][j].pVolumes, grid_[i][j].pVolumesCount * VOLUME_BYTE_SIZE);
+      memcpy(newGrid[i][j + sizeY_].nVolumes, grid_[i][j].nVolumes, grid_[i][j].nVolumesCount * VOLUME_BYTE_SIZE);
+    }
     // delete old grid
     deleteGrid();
 
@@ -124,7 +156,14 @@ Cell* Map::getCell(double x, double y)
     // copy information over
     for (int i = 0; i < sizeX_; i++)
     for (int j = 0; j < sizeY_; j++)
+    {
       newGrid[i][j] = grid_[i][j];
+      newGrid[i][j].pVolumes = new Volume[grid_[i][j].pVolumesCount];
+      newGrid[i][j].nVolumes = new Volume[grid_[i][j].nVolumesCount];
+
+      memcpy(newGrid[i][j].pVolumes, grid_[i][j].pVolumes, grid_[i][j].pVolumesCount * VOLUME_BYTE_SIZE);
+      memcpy(newGrid[i][j].nVolumes, grid_[i][j].nVolumes, grid_[i][j].nVolumesCount * VOLUME_BYTE_SIZE);
+    }
 
     // delete old grid
     deleteGrid();
@@ -137,6 +176,38 @@ Cell* Map::getCell(double x, double y)
   }
 
   return &grid_[cx][cy];
+}
+
+double Map::getMemorySize()
+{
+    double gridSize = sizeX_ * sizeY_ * sizeof(Cell);
+
+    double dataSize = 0;
+    for (int i = 0; i< sizeX_; ++i)
+    for (int j = 0; j< sizeY_; ++j)
+      dataSize += (grid_[i][j].getPVolumesCount() + grid_[i][j].getPVolumesCount()) * VOLUME_BYTE_SIZE;
+
+    return (gridSize + dataSize)/1024.0;
+}
+
+void Map::test()
+{
+  addPVolume(0, 0, 9.0, 10.4);
+  addPVolume(0, 0, 7.0, 8.3);
+  addPVolume(0, 0, 5.0, 6.3);
+  addPVolume(0, 0, 3.0, 4.2);
+  addPVolume(0, 0, 1.0, 2.1);
+  addPVolume(0, 0, -1.0, -0.0);
+  addPVolume(0, 0, -3.0, -2.0);
+
+  printPVolumes(0, 0);
+
+  addNVolume(0, 0, 0, 5.0);
+
+  printNVolumes(0, 0);
+
+  MLVolumeVector m;
+  getCell(0,0)->createMLVolumes(m);
 }
 
 }

@@ -87,11 +87,11 @@ void MapDrawer3D::drawPVolumes()
   for (int i = 0; i < map_->sizeX_; ++i)
   for (int j = 0; j < map_->sizeY_; ++j)
   {
-    VolumeVector * volumes = map_->grid_[i][j].getPVolumes();
-    for (size_t v = 0; v < volumes->size(); ++v)
-    {
-      Volume * volume = &(*volumes)[v];
+    Volume * volumes = map_->grid_[i][j].getPVolumes();
+    int count = map_->grid_[i][j].getPVolumesCount();
 
+    for (int v = 0; v < count; ++v)
+    {
       double x = i - map_->offsetX_;
       double y = j - map_->offsetY_;
 
@@ -104,7 +104,7 @@ void MapDrawer3D::drawPVolumes()
       //if (useHeightColor_) 
       //  drawHeightColorVolume(volume->getBot(), volume->getTop());
       //else
-        drawSolidColorVolume(volume->getBot(), volume->getTop(), COLOR_P_VOLUMES);
+        drawSolidColorVolume(getBot(volumes[v]), getTop(volumes[v]), COLOR_P_VOLUMES);
 
 			glPopMatrix();
     } 
@@ -116,11 +116,11 @@ void MapDrawer3D::drawNVolumes()
   for (int i = 0; i < map_->sizeX_; ++i)
   for (int j = 0; j < map_->sizeY_; ++j)
   {
-    VolumeVector * volumes = map_->grid_[i][j].getNVolumes();
-    for (size_t v = 0; v < volumes->size(); ++v)
-    {
-      Volume * volume = &(*volumes)[v];
+    Volume * volumes = map_->grid_[i][j].getNVolumes();
+    int count = map_->grid_[i][j].getNVolumesCount();
 
+    for (int v = 0; v < count; ++v)
+    {
       double x = i - map_->offsetX_;
       double y = j - map_->offsetY_;
 
@@ -133,7 +133,7 @@ void MapDrawer3D::drawNVolumes()
       //if (useHeightColor_) 
       //  drawHeightColorVolume(volume->getBot(), volume->getTop());
       //else
-        drawSolidColorVolume(volume->getBot(), volume->getTop(), COLOR_N_VOLUMES);
+        drawSolidColorVolume(getBot(volumes[v]), getTop(volumes[v]), COLOR_N_VOLUMES);
 
 			glPopMatrix();
     } 

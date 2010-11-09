@@ -4,9 +4,9 @@ namespace MVOG
 {
 
 Mapper::Mapper(double resolution, double sizeXmeters, double sizeYmeters):
-        map(resolution, sizeXmeters, sizeYmeters)
+        map_(resolution, sizeXmeters, sizeYmeters)
 {
-
+  modelNegativeSpace_  = true;
 
 }
 
@@ -28,21 +28,24 @@ bool Mapper::getModelNegativeSpace() const
 
 Map * Mapper::getMap()
 {
-  return &map;
+  return &map_;
 }
 
-void Mapper::addLaserData(const sensor_msgs::LaserScanConstPtr& scan, btTransform w2l)
+void Mapper::addLaserData (const sensor_msgs::LaserScanConstPtr& scan, const btTransform& w2l)
 {
+  boost::mutex::scoped_lock(map_.mutex_);
+
   // position of the laser in the world coordinates
-	btVector3 laserPos = w2l * btVector3(0.0, 0.0, 0.0);
+	btVector3 origin = w2l * btVector3(0.0, 0.0, 0.0);
 
   double scanAngle = scan->angle_min;
   for (size_t i = 0; i < scan->ranges.size(); i++)
   {
-    if (scan->ranges[i] > scan->range_min || scan->ranges[i] < scan->range_max)
+    if (scan->ranges[i] > scan->range_min && scan->ranges[i] < scan->range_max)
     {
       // valid, in range reading
-      btVector3 origin;
+		  btVector3 obstacle = w2l * btVector3(cos(scanAngle)*scan->ranges[i], sin(scanAngle)*scan->ranges[i], 0.0);
+      addBeamReading(origin, obstacle);
     }
 		else if (scan->ranges[i] > scan->range_max || scan->ranges[i] == 0)
 		{
@@ -59,24 +62,29 @@ void Mapper::addLaserData(const sensor_msgs::LaserScanConstPtr& scan, btTransfor
   }
 }
 
-
-void Mapper::addBeamReading(btVector3 origin, btVector3 beam)
+void Mapper::addBeamReading(btVector3 origin, btVector3 obstacle)
 {
-  //addPositiveReading(obstacle);
-  //if (modelNegativeSpace_) addNegativeReading(
-
   // **** convert to grid scale
-  beam   /= map.getResolution();
-  origin /= map.getResolution();
+  origin   /= map_.getResolution();
+  obstacle /= map_.getResolution();
 
-  btVector3 obstacle = origin + beam;
+  addPositiveBeamSpace(obstacle);
+  if (modelNegativeSpace_) addNegativeBeamSpace(origin, obstacle);
+}
 
+void Mapper::addPositiveBeamSpace(btVector3 obstacle)
+{
   // **** add a positive volume
 
-  map.getCell(obstacle.getX(), obstacle.getY())->
+  map_.getCell(obstacle.getX(), obstacle.getY())->
     addPVolume(obstacle.getZ() - 0.5, obstacle.getZ() + 0.5);
+}
 
+void Mapper::addNegativeBeamSpace(btVector3 origin, btVector3 obstacle)
+{
   // **** precalculate some variables
+
+  btVector3 beam = obstacle - origin;
 
   double cx    = origin.getX();
   double cy    = origin.getY();
@@ -109,7 +117,7 @@ void Mapper::addBeamReading(btVector3 origin, btVector3 beam)
       double dx = floor(cx) + 1.0 - cx; // distance to right cell wall
       double dy = floor(cy) + 1.0 - cy; // distance to top cell wall
 
-      currentCell = map.getCell(cx, cy);
+      currentCell = map_.getCell(cx, cy);
 
       if (dy > dx * slopeYX)
       {
@@ -133,7 +141,7 @@ void Mapper::addBeamReading(btVector3 origin, btVector3 beam)
 
       if (dx == 0.0) dx = -1.0;
 
-      currentCell = map.getCell(cx + dx, cy);
+      currentCell = map_.getCell(cx + dx, cy);
 
       if (dy > dx * slopeYX)
       {
@@ -158,7 +166,7 @@ void Mapper::addBeamReading(btVector3 origin, btVector3 beam)
       if (dx == 0) dx = -1.0; 
       if (dy == 0) dy = -1.0;
 
-      currentCell = map.getCell(cx + dx, cy+dy);
+      currentCell = map_.getCell(cx + dx, cy+dy);
 
       if (dy < dx * slopeYX)
       {
@@ -182,7 +190,7 @@ void Mapper::addBeamReading(btVector3 origin, btVector3 beam)
 
       if (dy == 0.0) dy = -1.0;
 
-      currentCell = map.getCell(cx, cy + dy);
+      currentCell = map_.getCell(cx, cy + dy);
 
       if (dy < dx * slopeYX)
       {
@@ -221,6 +229,5 @@ void Mapper::addBeamReading(btVector3 origin, btVector3 beam)
     }
   }    
 }
-
 
 } // namespace MVOG

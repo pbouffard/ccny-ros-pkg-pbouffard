@@ -4,24 +4,6 @@ namespace MVOG
 {
 
 extern "C" G_MODULE_EXPORT 
-void on_winMain_destroy (GtkObject *object, gpointer user_data)
-{
-	gtk_main_quit();
-}
-
-extern "C" G_MODULE_EXPORT 
-void on_ntbkViewOptions_switch_page (GtkNotebook     * notebook,
-                                     GtkNotebookPage * page,
-                                     guint             page_num,
-                                     GTKGui          * gui)
-{
-	if (page_num == 0) gui->setDraw3D(true);
-	else               gui->setDraw3D(false);
-  
-	gtk_widget_draw(gui->getControls()->drawArea, NULL);
-}
-
-extern "C" G_MODULE_EXPORT 
 void on_winMain_realize(GtkWidget * widget,
                         GTKGui    * gui)
 {
@@ -32,11 +14,68 @@ void on_winMain_realize(GtkWidget * widget,
 }
 
 extern "C" G_MODULE_EXPORT 
+void on_winMain_destroy (GtkObject *object, GTKGui   * gui)
+{
+  printf("Closing GTK Gui.\n");
+}
+
+extern "C" G_MODULE_EXPORT 
+void on_btnView3D_toggled(GtkToggleButton * togglebutton,
+                          GTKGui          * gui)
+{
+	bool val = gtk_toggle_button_get_active(togglebutton);
+  gui->setView3D(val);
+	gui->setView();
+	gui->updateControls();
+}
+
+extern "C" G_MODULE_EXPORT 
+void on_btnView2D_toggled(GtkToggleButton * togglebutton,
+                          GTKGui          * gui)
+{
+	bool val = gtk_toggle_button_get_active(togglebutton);
+  gui->setView3D(!val);
+	gui->setView();
+	gui->updateControls();
+}
+
+extern "C" G_MODULE_EXPORT 
+void on_ntbkViewOptions_switch_page (GtkNotebook     * notebook,
+                                     GtkNotebookPage * page,
+                                     guint             page_num,
+                                     GTKGui          * gui)
+{
+
+}
+
+extern "C" G_MODULE_EXPORT 
+void on_btnDrawRawData_toggled (GtkToggleButton * togglebutton,
+                                GTKGui          * gui)
+{
+	bool val = gtk_toggle_button_get_active(togglebutton);
+  gui->setDrawRawData(val);
+	gui->setView();
+	gui->updateControls();
+}
+
+extern "C" G_MODULE_EXPORT 
+void on_btnDrawObstacles_toggled (GtkToggleButton * togglebutton,
+                                  GTKGui          * gui)
+{
+	bool val = gtk_toggle_button_get_active(togglebutton);
+  gui->setDrawRawData(!val);
+	gui->setView();
+	gui->updateControls();
+}
+
+
+extern "C" G_MODULE_EXPORT 
 void on_btnDrawPVolumes_toggled (GtkToggleButton * togglebutton,
                                  GTKGui          * gui)
 {
 	bool val = gtk_toggle_button_get_active(togglebutton);
 	gui->setDrawPVolumes(val);
+	gui->updateControls();
 }
 
 extern "C" G_MODULE_EXPORT 
@@ -45,6 +84,16 @@ void on_btnDrawNVolumes_toggled (GtkToggleButton * togglebutton,
 {
 	bool val = gtk_toggle_button_get_active(togglebutton);
 	gui->setDrawNVolumes(val);
+	gui->updateControls();
+}
+
+extern "C" G_MODULE_EXPORT 
+void on_btnColorByHeight_toggled (GtkToggleButton * togglebutton,
+                                  GTKGui          * gui)
+{
+  bool val = gtk_toggle_button_get_active(togglebutton);
+	gui->setColorByHeight(val);
+	gui->updateControls();
 }
 
 /*

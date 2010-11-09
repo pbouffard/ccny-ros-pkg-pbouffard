@@ -2,38 +2,79 @@
 #define MVOG_MODEL_CELL_H
 
 #include <cstdio>
+#include <string.h>
+#include <algorithm>
 #include <vector>
+#include <queue>
+
 #include <mvog_model/volume.h>
+
+#include <boost/numeric/interval.hpp>
 
 namespace MVOG 
 {
 
-typedef std::vector<Volume> VolumeVector;
+typedef Volume*               VolumeArray;
+typedef std::vector<MLVolume> MLVolumeVector;
+
+class Boundary 
+{
+  public:
+    float z_;
+    bool positive_;
+    int index_;
+  
+    Boundary() { }
+    Boundary(float z, bool positive, int index):z_(z), positive_(positive), index_(index) {}
+
+    bool operator<(const Boundary &other) const 
+    {
+      return (z_ >= other.z_);
+    }
+};
+
+
+
 
 class Cell
 {
-
+    friend class Map;
+  
   private:
 
-    VolumeVector pVolumes;
-    VolumeVector nVolumes;
+    VolumeArray pVolumes;
+    VolumeArray nVolumes;
+    
+    int pVolumesCount;
+    int nVolumesCount;
 
-    void addVolume(double bot, double top, VolumeVector& volumes);
-
+    void addVolume(float bot, float top, VolumeArray& volumes, int& volumesCount);
+   
   public:
 
     Cell();
     virtual ~Cell();
   
-    void addPVolume(double bot, double top);
-    void addNVolume(double bot, double top);
+    void addPVolume(float bot, float top);
+    void addNVolume(float bot, float top);
 
-    VolumeVector * getPVolumes() { return &pVolumes; }
-    VolumeVector * getNVolumes() { return &nVolumes; }
+    VolumeArray getPVolumes() { return pVolumes; }
+    VolumeArray getNVolumes() { return nVolumes; }
+
+    int getPVolumesCount() { return pVolumesCount; }
+    int getNVolumesCount() { return nVolumesCount; }
+
+    bool  getOccDensity(float z, float& density) const;
+    float getPDensity(float z) const;
+    float getNDensity(float z) const;
 
     void printPVolumes();
+    void printNVolumes();
 
+    void createMLVolumes(MLVolumeVector& mlVolumes);
 };
+
+
 
 }; // namespace MVOG
 

@@ -9,6 +9,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/mvog_server</url>
   <depend package="roscpp"/>
+  <depend package="tf"/>
   <depend package="mvog_model"/>
   <depend package="mvog_gtk_gui"/>
 

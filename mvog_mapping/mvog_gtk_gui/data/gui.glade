@@ -12,7 +12,6 @@
       <object class="GtkVBox" id="boxMain">
         <property name="visible">True</property>
         <property name="events"></property>
-        <property name="orientation">vertical</property>
         <child>
           <object class="GtkHBox" id="boxMapAndOptions">
             <property name="visible">True</property>
@@ -69,579 +68,649 @@
               </packing>
             </child>
             <child>
-              <object class="GtkVBox" id="boxOptions">
+              <object class="GtkNotebook" id="ntbkOptions">
                 <property name="visible">True</property>
-                <property name="orientation">vertical</property>
+                <property name="can_focus">True</property>
+                <signal name="switch_page" handler="on_ntbkViewOptions_switch_page"/>
                 <child>
-                  <object class="GtkNotebook" id="ntbkViewOptions">
+                  <object class="GtkAlignment" id="alnViewOptions">
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <signal name="switch_page" handler="on_ntbkViewOptions_switch_page"/>
+                    <property name="top_padding">3</property>
+                    <property name="left_padding">3</property>
+                    <property name="right_padding">3</property>
                     <child>
-                      <object class="GtkAlignment" id="alignment1">
+                      <object class="GtkVBox" id="box3DViewOptions">
                         <property name="visible">True</property>
-                        <property name="top_padding">3</property>
-                        <property name="left_padding">3</property>
-                        <property name="right_padding">3</property>
+                        <property name="spacing">2</property>
                         <child>
-                          <object class="GtkVBox" id="box3DViewOptions">
+                          <object class="GtkHBox" id="hbox1">
                             <property name="visible">True</property>
-                            <property name="orientation">vertical</property>
-                            <property name="spacing">2</property>
                             <child>
-                              <object class="GtkHBox" id="boxCamPos">
+                              <object class="GtkRadioButton" id="btnView3D">
+                                <property name="label" translatable="yes">3D View</property>
                                 <property name="visible">True</property>
-                                <child>
-                                  <object class="GtkLabel" id="label8">
-                                    <property name="visible">True</property>
-                                    <property name="xalign">0</property>
-                                    <property name="label" translatable="yes">Camera Pos:</property>
-                                  </object>
-                                  <packing>
-                                    <property name="position">0</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkEntry" id="txtCamPosX">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="invisible_char">&#x25CF;</property>
-                                    <property name="width_chars">5</property>
-                                    <property name="text" translatable="yes">0</property>
-                                    <property name="xalign">1</property>
-                                    <property name="truncate_multiline">True</property>
-                                    <signal name="focus_out_event" handler="on_txtCamPosX_focus_out_event"/>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">1</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkEntry" id="txtCamPosY">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="invisible_char">&#x25CF;</property>
-                                    <property name="width_chars">5</property>
-                                    <property name="text" translatable="yes">0</property>
-                                    <property name="xalign">1</property>
-                                    <property name="truncate_multiline">True</property>
-                                    <signal name="focus_out_event" handler="on_txtCamPosY_focus_out_event"/>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">2</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkEntry" id="txtCamPosZ">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="invisible_char">&#x25CF;</property>
-                                    <property name="width_chars">5</property>
-                                    <property name="text" translatable="yes">0</property>
-                                    <property name="xalign">1</property>
-                                    <property name="truncate_multiline">True</property>
-                                    <signal name="focus_out_event" handler="on_txtCamPosZ_focus_out_event"/>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">3</property>
-                                  </packing>
-                                </child>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="tooltip_markup">asd</property>
+                                <property name="tooltip_text" translatable="yes">asdf</property>
+                                <property name="active">True</property>
+                                <property name="draw_indicator">True</property>
+                                <property name="group">btnView2D</property>
+                                <signal name="toggled" handler="on_btnView3D_toggled"/>
                               </object>
                               <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">False</property>
                                 <property name="position">0</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkHBox" id="boxCamLook">
+                              <object class="GtkRadioButton" id="btnView2D">
+                                <property name="label" translatable="yes">2D View</property>
                                 <property name="visible">True</property>
-                                <child>
-                                  <object class="GtkLabel" id="label10">
-                                    <property name="visible">True</property>
-                                    <property name="xalign">0</property>
-                                    <property name="label" translatable="yes">Camera Look:</property>
-                                  </object>
-                                  <packing>
-                                    <property name="position">0</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkEntry" id="txtCamLookX">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="invisible_char">&#x25CF;</property>
-                                    <property name="width_chars">5</property>
-                                    <property name="text" translatable="yes">0</property>
-                                    <property name="xalign">1</property>
-                                    <property name="truncate_multiline">True</property>
-                                    <signal name="focus_out_event" handler="on_txtCamLookX_focus_out_event"/>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">1</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkEntry" id="txtCamLookY">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="invisible_char">&#x25CF;</property>
-                                    <property name="width_chars">5</property>
-                                    <property name="text" translatable="yes">0</property>
-                                    <property name="xalign">1</property>
-                                    <property name="truncate_multiline">True</property>
-                                    <signal name="focus_out_event" handler="on_txtCamLookY_focus_out_event"/>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">2</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkEntry" id="txtCamLookZ">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="invisible_char">&#x25CF;</property>
-                                    <property name="width_chars">5</property>
-                                    <property name="text" translatable="yes">0</property>
-                                    <property name="xalign">1</property>
-                                    <property name="truncate_multiline">True</property>
-                                    <signal name="focus_out_event" handler="on_txtCamLookZ_focus_out_event"/>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">3</property>
-                                  </packing>
-                                </child>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="draw_indicator">True</property>
+                                <signal name="toggled" handler="on_btnView2D_toggled"/>
                               </object>
                               <packing>
-                                <property name="expand">False</property>
                                 <property name="position">1</property>
                               </packing>
                             </child>
-                            <child>
-                              <object class="GtkLabel" id="label1">
-                                <property name="visible">True</property>
-                                <property name="xalign">0</property>
-                                <property name="label" translatable="yes">Use left mouse btn to pan/tilt
-Use right mouse btn to zoom in/out</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">False</property>
-                                <property name="position">2</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkHSeparator" id="hseparator1">
-                                <property name="visible">True</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">3</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkCheckButton" id="btnDrawIVolumes">
-                                <property name="label" translatable="yes">Draw obstacle volumes</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="draw_indicator">True</property>
-                                <signal name="toggled" handler="on_btnDrawIVolumes_toggled"/>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">4</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkCheckButton" id="btnDrawPVolumes">
-                                <property name="label" translatable="yes">Draw raw P-volumes</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="draw_indicator">True</property>
-                                <signal name="toggled" handler="on_btnDrawPVolumes_toggled"/>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">5</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkCheckButton" id="btnDrawNVolumes">
-                                <property name="label" translatable="yes">Draw raw N-volumes</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="draw_indicator">True</property>
-                                <signal name="toggled" handler="on_btnDrawNVolumes_toggled"/>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">6</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkCheckButton" id="btnDrawCloud">
-                                <property name="label" translatable="yes">Draw cloud points</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="draw_indicator">True</property>
-                                <signal name="toggled" handler="on_btnDrawCloud_toggled"/>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">7</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkCheckButton" id="btnDrawZPlane">
-                                <property name="label" translatable="yes">Draw cross-section Z</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="draw_indicator">True</property>
-                                <signal name="toggled" handler="on_btnDrawZPlane_toggled"/>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">8</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkCheckButton" id="btnCutOffZPlane">
-                                <property name="label" translatable="yes">Cut off at cross-section Z</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="draw_indicator">True</property>
-                                <signal name="toggled" handler="on_btnCutOffZPlane_toggled"/>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">9</property>
-                              </packing>
-                            </child>
                           </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
+                            <property name="position">0</property>
+                          </packing>
                         </child>
-                      </object>
-                    </child>
-                    <child type="tab">
-                      <object class="GtkLabel" id="label4">
-                        <property name="visible">True</property>
-                        <property name="label" translatable="yes">3D VIew</property>
-                      </object>
-                      <packing>
-                        <property name="tab_fill">False</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkAlignment" id="alignment4">
-                        <property name="visible">True</property>
-                        <property name="top_padding">3</property>
-                        <property name="left_padding">3</property>
-                        <property name="right_padding">3</property>
                         <child>
-                          <object class="GtkVBox" id="box2DViewOptions">
+                          <object class="GtkHSeparator" id="hseparator1">
                             <property name="visible">True</property>
-                            <property name="orientation">vertical</property>
-                            <property name="spacing">2</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkFrame" id="frameCamera">
+                            <property name="visible">True</property>
+                            <property name="label_xalign">0</property>
+                            <property name="shadow_type">none</property>
                             <child>
-                              <object class="GtkHBox" id="boxVisCenter">
+                              <object class="GtkAlignment" id="alignment2">
                                 <property name="visible">True</property>
+                                <property name="left_padding">12</property>
                                 <child>
-                                  <object class="GtkLabel" id="label9">
+                                  <object class="GtkVBox" id="vbox1">
                                     <property name="visible">True</property>
-                                    <property name="xalign">0</property>
-                                    <property name="label" translatable="yes">Visual center:</property>
+                                    <child>
+                                      <object class="GtkHBox" id="boxCamPos">
+                                        <property name="visible">True</property>
+                                        <child>
+                                          <object class="GtkLabel" id="label8">
+                                            <property name="visible">True</property>
+                                            <property name="xalign">0</property>
+                                            <property name="label" translatable="yes">Position:</property>
+                                          </object>
+                                          <packing>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkEntry" id="txtCamPosX">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="invisible_char">&#x25CF;</property>
+                                            <property name="width_chars">5</property>
+                                            <property name="text" translatable="yes">0</property>
+                                            <property name="xalign">1</property>
+                                            <property name="truncate_multiline">True</property>
+                                            <signal name="focus_out_event" handler="on_txtCamPosX_focus_out_event"/>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">1</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkEntry" id="txtCamPosY">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="invisible_char">&#x25CF;</property>
+                                            <property name="width_chars">5</property>
+                                            <property name="text" translatable="yes">0</property>
+                                            <property name="xalign">1</property>
+                                            <property name="truncate_multiline">True</property>
+                                            <signal name="focus_out_event" handler="on_txtCamPosY_focus_out_event"/>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">2</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkEntry" id="txtCamPosZ">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="invisible_char">&#x25CF;</property>
+                                            <property name="width_chars">5</property>
+                                            <property name="text" translatable="yes">0</property>
+                                            <property name="xalign">1</property>
+                                            <property name="truncate_multiline">True</property>
+                                            <signal name="focus_out_event" handler="on_txtCamPosZ_focus_out_event"/>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">3</property>
+                                          </packing>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkHBox" id="boxCamLook">
+                                        <property name="visible">True</property>
+                                        <child>
+                                          <object class="GtkLabel" id="label10">
+                                            <property name="visible">True</property>
+                                            <property name="xalign">0</property>
+                                            <property name="label" translatable="yes">Look at:</property>
+                                          </object>
+                                          <packing>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkEntry" id="txtCamLookX">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="invisible_char">&#x25CF;</property>
+                                            <property name="width_chars">5</property>
+                                            <property name="text" translatable="yes">0</property>
+                                            <property name="xalign">1</property>
+                                            <property name="truncate_multiline">True</property>
+                                            <signal name="focus_out_event" handler="on_txtCamLookX_focus_out_event"/>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">1</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkEntry" id="txtCamLookY">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="invisible_char">&#x25CF;</property>
+                                            <property name="width_chars">5</property>
+                                            <property name="text" translatable="yes">0</property>
+                                            <property name="xalign">1</property>
+                                            <property name="truncate_multiline">True</property>
+                                            <signal name="focus_out_event" handler="on_txtCamLookY_focus_out_event"/>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">2</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkEntry" id="txtCamLookZ">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="invisible_char">&#x25CF;</property>
+                                            <property name="width_chars">5</property>
+                                            <property name="text" translatable="yes">0</property>
+                                            <property name="xalign">1</property>
+                                            <property name="truncate_multiline">True</property>
+                                            <signal name="focus_out_event" handler="on_txtCamLookZ_focus_out_event"/>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">3</property>
+                                          </packing>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
                                   </object>
-                                  <packing>
-                                    <property name="position">0</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkEntry" id="txtVisCenterX">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="invisible_char">&#x25CF;</property>
-                                    <property name="width_chars">5</property>
-                                    <property name="text" translatable="yes">0</property>
-                                    <property name="xalign">1</property>
-                                    <property name="truncate_multiline">True</property>
-                                    <signal name="focus_out_event" handler="on_txtVisCenterX_focus_out_event"/>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">1</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkEntry" id="txtVisCenterY">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="invisible_char">&#x25CF;</property>
-                                    <property name="width_chars">5</property>
-                                    <property name="text" translatable="yes">0</property>
-                                    <property name="xalign">1</property>
-                                    <property name="truncate_multiline">True</property>
-                                    <signal name="focus_out_event" handler="on_txtVisCenterY_focus_out_event"/>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">2</property>
-                                  </packing>
                                 </child>
                               </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">0</property>
-                              </packing>
                             </child>
-                            <child>
-                              <object class="GtkHBox" id="boxVisSize">
+                            <child type="label">
+                              <object class="GtkLabel" id="lblFrameCamera">
                                 <property name="visible">True</property>
-                                <child>
-                                  <object class="GtkLabel" id="label11">
-                                    <property name="visible">True</property>
-                                    <property name="xalign">0</property>
-                                    <property name="label" translatable="yes">Visual size:</property>
-                                  </object>
-                                  <packing>
-                                    <property name="position">0</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkEntry" id="txtVisSize">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="invisible_char">&#x25CF;</property>
-                                    <property name="width_chars">5</property>
-                                    <property name="text" translatable="yes">0</property>
-                                    <property name="xalign">1</property>
-                                    <property name="truncate_multiline">True</property>
-                                    <signal name="focus_out_event" handler="on_txtVisSize_focus_out_event"/>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">1</property>
-                                  </packing>
-                                </child>
+                                <property name="label" translatable="yes">&lt;b&gt;Camera:&lt;/b&gt;</property>
+                                <property name="use_markup">True</property>
                               </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">1</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="label12">
-                                <property name="visible">True</property>
-                                <property name="xalign">0</property>
-                                <property name="label" translatable="yes">Use left mouse btn to scroll
-Use right mouse btn to zoom in/out</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">2</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkHSeparator" id="hseparator3">
-                                <property name="visible">True</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">3</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkRadioButton" id="btnDrawProbability">
-                                <property name="label" translatable="yes">Draw probability</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="active">True</property>
-                                <property name="draw_indicator">True</property>
-                                <signal name="toggled" handler="on_btnDrawProbability_toggled"/>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">4</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkRadioButton" id="btnDrawPDensity">
-                                <property name="label" translatable="yes">Draw positive density</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="active">True</property>
-                                <property name="draw_indicator">True</property>
-                                <property name="group">btnDrawProbability</property>
-                                <signal name="toggled" handler="on_btnDrawPDensity_toggled"/>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">5</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkRadioButton" id="btnDrawNDensity">
-                                <property name="label" translatable="yes">Draw negative density</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="active">True</property>
-                                <property name="draw_indicator">True</property>
-                                <property name="group">btnDrawProbability</property>
-                                <signal name="toggled" handler="on_btnDrawNDensity_toggled"/>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">6</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkHSeparator" id="hseparator2">
-                                <property name="visible">True</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">7</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkCheckButton" id="btnHighlightUnknown">
-                                <property name="label" translatable="yes">highlight unknown space</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="draw_indicator">True</property>
-                                <signal name="toggled" handler="on_btnHighlightUnknown_toggled"/>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">False</property>
-                                <property name="position">8</property>
-                              </packing>
                             </child>
                           </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
+                            <property name="position">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkFrame" id="frame3DMapOptions">
+                            <property name="visible">True</property>
+                            <property name="label_xalign">0</property>
+                            <property name="shadow_type">none</property>
+                            <child>
+                              <object class="GtkAlignment" id="alnDrawOptions">
+                                <property name="visible">True</property>
+                                <property name="left_padding">12</property>
+                                <child>
+                                  <object class="GtkVBox" id="vboxDrawOptions">
+                                    <property name="visible">True</property>
+                                    <child>
+                                      <object class="GtkRadioButton" id="btnDrawObstacles">
+                                        <property name="label" translatable="yes">draw obstacles </property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">False</property>
+                                        <property name="active">True</property>
+                                        <property name="draw_indicator">True</property>
+                                        <property name="group">btnDrawRawData</property>
+                                      </object>
+                                      <packing>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkRadioButton" id="btnDrawRawData">
+                                        <property name="label" translatable="yes">draw raw data</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">False</property>
+                                        <property name="draw_indicator">True</property>
+                                        <signal name="toggled" handler="on_btnDrawRawData_toggled"/>
+                                      </object>
+                                      <packing>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkVBox" id="vboxObstacleOptions">
+                                        <property name="visible">True</property>
+                                        <child>
+                                          <object class="GtkCheckButton" id="btnColorByHeight">
+                                            <property name="label" translatable="yes">Color by height</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">False</property>
+                                            <property name="active">True</property>
+                                            <property name="draw_indicator">True</property>
+                                            <signal name="toggled" handler="on_btnColorByHeight_toggled"/>
+                                          </object>
+                                          <packing>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkAlignment" id="alnheightColorOptions">
+                                            <property name="visible">True</property>
+                                            <property name="left_padding">20</property>
+                                            <child>
+                                              <object class="GtkVBox" id="vboxColorByHeightOptions">
+                                                <property name="visible">True</property>
+                                                <child>
+                                                  <object class="GtkHBox" id="hboxHeightColorMin">
+                                                    <property name="visible">True</property>
+                                                    <child>
+                                                      <object class="GtkLabel" id="label2">
+                                                        <property name="visible">True</property>
+                                                        <property name="label" translatable="yes">Min height</property>
+                                                      </object>
+                                                      <packing>
+                                                        <property name="expand">False</property>
+                                                        <property name="position">0</property>
+                                                      </packing>
+                                                    </child>
+                                                    <child>
+                                                      <object class="GtkSpinButton" id="txtVerticalScale">
+                                                        <property name="visible">True</property>
+                                                        <property name="can_focus">True</property>
+                                                        <property name="invisible_char">&#x25CF;</property>
+                                                        <property name="width_chars">5</property>
+                                                        <property name="xalign">1</property>
+                                                        <property name="adjustment">adjVerticalScale</property>
+                                                        <property name="digits">2</property>
+                                                        <signal name="value_changed" handler="on_txtVerticalScale_value_changed"/>
+                                                      </object>
+                                                      <packing>
+                                                        <property name="expand">False</property>
+                                                        <property name="fill">False</property>
+                                                        <property name="padding">4</property>
+                                                        <property name="pack_type">end</property>
+                                                        <property name="position">1</property>
+                                                      </packing>
+                                                    </child>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="position">0</property>
+                                                  </packing>
+                                                </child>
+                                                <child>
+                                                  <object class="GtkHBox" id="hbox3">
+                                                    <property name="visible">True</property>
+                                                    <child>
+                                                      <object class="GtkLabel" id="label16">
+                                                        <property name="visible">True</property>
+                                                        <property name="label" translatable="yes">Max height</property>
+                                                      </object>
+                                                      <packing>
+                                                        <property name="expand">False</property>
+                                                        <property name="position">0</property>
+                                                      </packing>
+                                                    </child>
+                                                    <child>
+                                                      <object class="GtkSpinButton" id="txtVerticalOffset">
+                                                        <property name="visible">True</property>
+                                                        <property name="can_focus">True</property>
+                                                        <property name="invisible_char">&#x25CF;</property>
+                                                        <property name="width_chars">5</property>
+                                                        <property name="xalign">1</property>
+                                                        <property name="adjustment">adjVerticalOffset</property>
+                                                        <property name="digits">2</property>
+                                                        <signal name="value_changed" handler="on_txtVerticalOffset_value_changed"/>
+                                                      </object>
+                                                      <packing>
+                                                        <property name="expand">False</property>
+                                                        <property name="fill">False</property>
+                                                        <property name="padding">4</property>
+                                                        <property name="pack_type">end</property>
+                                                        <property name="position">1</property>
+                                                      </packing>
+                                                    </child>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="position">1</property>
+                                                  </packing>
+                                                </child>
+                                              </object>
+                                            </child>
+                                          </object>
+                                          <packing>
+                                            <property name="position">1</property>
+                                          </packing>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="position">2</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkVBox" id="vboxRawOptions">
+                                        <property name="visible">True</property>
+                                        <child>
+                                          <object class="GtkCheckButton" id="btnDrawPVolumes">
+                                            <property name="label" translatable="yes">Draw positive volumes</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">False</property>
+                                            <property name="yalign">0.49000000953674316</property>
+                                            <property name="draw_indicator">True</property>
+                                            <signal name="toggled" handler="on_btnDrawPVolumes_toggled"/>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkCheckButton" id="btnDrawNVolumes">
+                                            <property name="label" translatable="yes">Draw negative volumes</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">False</property>
+                                            <property name="draw_indicator">True</property>
+                                            <signal name="toggled" handler="on_btnDrawNVolumes_toggled"/>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">1</property>
+                                          </packing>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="position">3</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child type="label">
+                              <object class="GtkLabel" id="label15">
+                                <property name="visible">True</property>
+                                <property name="label" translatable="yes">&lt;b&gt;Map visualization&lt;/b&gt;</property>
+                                <property name="use_markup">True</property>
+                              </object>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
+                            <property name="position">3</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkFrame" id="frame3DOtherOptions">
+                            <property name="visible">True</property>
+                            <property name="label_xalign">0</property>
+                            <property name="shadow_type">none</property>
+                            <child>
+                              <object class="GtkAlignment" id="alignment6">
+                                <property name="visible">True</property>
+                                <property name="left_padding">12</property>
+                                <child>
+                                  <object class="GtkVBox" id="vboxOtherDrawOptions">
+                                    <property name="visible">True</property>
+                                    <child>
+                                      <object class="GtkCheckButton" id="btnDrawCloud">
+                                        <property name="label" translatable="yes">Draw coordinates</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">False</property>
+                                        <property name="draw_indicator">True</property>
+                                        <signal name="toggled" handler="on_btnDrawCloud_toggled"/>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkHBox" id="hbox2">
+                                        <property name="visible">True</property>
+                                        <child>
+                                          <object class="GtkCheckButton" id="btnDrawCloud1">
+                                            <property name="label" translatable="yes">Draw grid at:</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">False</property>
+                                            <property name="draw_indicator">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkSpinButton" id="txtObstacleCutoff1">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="invisible_char">&#x25CF;</property>
+                                            <property name="width_chars">5</property>
+                                            <property name="xalign">1</property>
+                                            <property name="adjustment">adjObstacleCuttoff</property>
+                                            <property name="digits">2</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="padding">4</property>
+                                            <property name="pack_type">end</property>
+                                            <property name="position">1</property>
+                                          </packing>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkHBox" id="hbox4">
+                                        <property name="visible">True</property>
+                                        <child>
+                                          <object class="GtkCheckButton" id="btnDrawCloud2">
+                                            <property name="label" translatable="yes">Cutoff below:</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">False</property>
+                                            <property name="draw_indicator">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkSpinButton" id="txtObstacleCutoff2">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="invisible_char">&#x25CF;</property>
+                                            <property name="width_chars">5</property>
+                                            <property name="xalign">1</property>
+                                            <property name="adjustment">adjObstacleCuttoff</property>
+                                            <property name="digits">2</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="padding">4</property>
+                                            <property name="pack_type">end</property>
+                                            <property name="position">1</property>
+                                          </packing>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="position">2</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkHBox" id="hbox5">
+                                        <property name="visible">True</property>
+                                        <child>
+                                          <object class="GtkCheckButton" id="btnDrawCloud3">
+                                            <property name="label" translatable="yes">Cutoff above:</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">False</property>
+                                            <property name="draw_indicator">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkSpinButton" id="txtObstacleCutoff3">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="invisible_char">&#x25CF;</property>
+                                            <property name="width_chars">5</property>
+                                            <property name="xalign">1</property>
+                                            <property name="adjustment">adjObstacleCuttoff</property>
+                                            <property name="digits">2</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="padding">4</property>
+                                            <property name="pack_type">end</property>
+                                            <property name="position">1</property>
+                                          </packing>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="position">3</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child type="label">
+                              <object class="GtkLabel" id="label17">
+                                <property name="visible">True</property>
+                                <property name="label" translatable="yes">&lt;b&gt;Other visualization options&lt;/b&gt;</property>
+                                <property name="use_markup">True</property>
+                              </object>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
+                            <property name="position">4</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <placeholder/>
                         </child>
                       </object>
-                      <packing>
-                        <property name="position">1</property>
-                      </packing>
-                    </child>
-                    <child type="tab">
-                      <object class="GtkLabel" id="label7">
-                        <property name="visible">True</property>
-                        <property name="label" translatable="yes">2D View</property>
-                      </object>
-                      <packing>
-                        <property name="position">1</property>
-                        <property name="tab_fill">False</property>
-                      </packing>
                     </child>
                   </object>
+                </child>
+                <child type="tab">
+                  <object class="GtkLabel" id="label4">
+                    <property name="visible">True</property>
+                    <property name="xalign">0.4699999988079071</property>
+                    <property name="label" translatable="yes">View</property>
+                  </object>
                   <packing>
-                    <property name="expand">False</property>
-                    <property name="padding">8</property>
-                    <property name="position">0</property>
+                    <property name="tab_fill">False</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkFrame" id="frameOptions">
+                  <object class="GtkAlignment" id="alignment4">
                     <property name="visible">True</property>
-                    <property name="label_xalign">0</property>
+                    <property name="top_padding">3</property>
+                    <property name="left_padding">3</property>
+                    <property name="right_padding">3</property>
                     <child>
-                      <object class="GtkAlignment" id="alignment3">
+                      <object class="GtkVBox" id="box2DViewOptions">
                         <property name="visible">True</property>
-                        <property name="xalign">0</property>
-                        <property name="left_padding">3</property>
+                        <property name="spacing">2</property>
                         <child>
-                          <object class="GtkVBox" id="boxOption">
+                          <object class="GtkHBox" id="boxVisCenter">
                             <property name="visible">True</property>
-                            <property name="orientation">vertical</property>
                             <child>
-                              <object class="GtkHBox" id="boxZPlane">
+                              <object class="GtkLabel" id="label9">
                                 <property name="visible">True</property>
-                                <child>
-                                  <object class="GtkLabel" id="label6">
-                                    <property name="visible">True</property>
-                                    <property name="xalign">0</property>
-                                    <property name="label" translatable="yes">Cross-section Z: </property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">False</property>
-                                    <property name="position">0</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkSpinButton" id="txtZPlane">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="invisible_char">&#x25CF;</property>
-                                    <property name="width_chars">5</property>
-                                    <property name="xalign">1</property>
-                                    <property name="adjustment">adjZPlane</property>
-                                    <property name="digits">2</property>
-                                    <property name="snap_to_ticks">True</property>
-                                    <property name="numeric">True</property>
-                                    <signal name="value_changed" handler="on_txtZPlane_value_changed"/>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">False</property>
-                                    <property name="padding">4</property>
-                                    <property name="pack_type">end</property>
-                                    <property name="position">1</property>
-                                  </packing>
-                                </child>
+                                <property name="xalign">0</property>
+                                <property name="label" translatable="yes">Visual center:</property>
                               </object>
                               <packing>
-                                <property name="expand">False</property>
                                 <property name="position">0</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkHBox" id="boxVerticalScale">
+                              <object class="GtkEntry" id="txtVisCenterX">
                                 <property name="visible">True</property>
-                                <child>
-                                  <object class="GtkLabel" id="label2">
-                                    <property name="visible">True</property>
-                                    <property name="label" translatable="yes">Vertical coloring scale:</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">0</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkSpinButton" id="txtVerticalScale">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="invisible_char">&#x25CF;</property>
-                                    <property name="width_chars">5</property>
-                                    <property name="xalign">1</property>
-                                    <property name="adjustment">adjVerticalScale</property>
-                                    <property name="digits">2</property>
-                                    <signal name="value_changed" handler="on_txtVerticalScale_value_changed"/>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">False</property>
-                                    <property name="padding">4</property>
-                                    <property name="pack_type">end</property>
-                                    <property name="position">1</property>
-                                  </packing>
-                                </child>
+                                <property name="can_focus">True</property>
+                                <property name="invisible_char">&#x25CF;</property>
+                                <property name="width_chars">5</property>
+                                <property name="text" translatable="yes">0</property>
+                                <property name="xalign">1</property>
+                                <property name="truncate_multiline">True</property>
+                                <signal name="focus_out_event" handler="on_txtVisCenterX_focus_out_event"/>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -649,93 +718,152 @@ Use right mouse btn to zoom in/out</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkHBox" id="boxVerticalOffset">
+                              <object class="GtkEntry" id="txtVisCenterY">
                                 <property name="visible">True</property>
-                                <child>
-                                  <object class="GtkLabel" id="label13">
-                                    <property name="visible">True</property>
-                                    <property name="label" translatable="yes">Vertical coloring offset:</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">0</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkSpinButton" id="txtVerticalOffset">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="invisible_char">&#x25CF;</property>
-                                    <property name="width_chars">5</property>
-                                    <property name="xalign">1</property>
-                                    <property name="adjustment">adjVerticalOffset</property>
-                                    <property name="digits">2</property>
-                                    <signal name="value_changed" handler="on_txtVerticalOffset_value_changed"/>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">False</property>
-                                    <property name="padding">4</property>
-                                    <property name="pack_type">end</property>
-                                    <property name="position">1</property>
-                                  </packing>
-                                </child>
+                                <property name="can_focus">True</property>
+                                <property name="invisible_char">&#x25CF;</property>
+                                <property name="width_chars">5</property>
+                                <property name="text" translatable="yes">0</property>
+                                <property name="xalign">1</property>
+                                <property name="truncate_multiline">True</property>
+                                <signal name="focus_out_event" handler="on_txtVisCenterY_focus_out_event"/>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
                                 <property name="position">2</property>
                               </packing>
                             </child>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkHBox" id="boxVisSize">
+                            <property name="visible">True</property>
                             <child>
-                              <object class="GtkHBox" id="boxVerticalOffset1">
+                              <object class="GtkLabel" id="label11">
                                 <property name="visible">True</property>
-                                <child>
-                                  <object class="GtkLabel" id="label14">
-                                    <property name="visible">True</property>
-                                    <property name="label" translatable="yes">Obstacle cutoff:</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">0</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkSpinButton" id="txtObstacleCutoff">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="invisible_char">&#x25CF;</property>
-                                    <property name="width_chars">5</property>
-                                    <property name="xalign">1</property>
-                                    <property name="adjustment">adjObstacleCuttoff</property>
-                                    <property name="digits">2</property>
-                                    <signal name="value_changed" handler="on_txtObstacleCutoff_value_changed"/>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">False</property>
-                                    <property name="padding">4</property>
-                                    <property name="pack_type">end</property>
-                                    <property name="position">1</property>
-                                  </packing>
-                                </child>
+                                <property name="xalign">0</property>
+                                <property name="label" translatable="yes">Visual size:</property>
                               </object>
                               <packing>
-                                <property name="expand">False</property>
-                                <property name="position">3</property>
+                                <property name="position">0</property>
                               </packing>
                             </child>
                             <child>
-                              <placeholder/>
+                              <object class="GtkEntry" id="txtVisSize">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="invisible_char">&#x25CF;</property>
+                                <property name="width_chars">5</property>
+                                <property name="text" translatable="yes">0</property>
+                                <property name="xalign">1</property>
+                                <property name="truncate_multiline">True</property>
+                                <signal name="focus_out_event" handler="on_txtVisSize_focus_out_event"/>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="position">1</property>
+                              </packing>
                             </child>
                           </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">1</property>
+                          </packing>
                         </child>
-                      </object>
-                    </child>
-                    <child type="label">
-                      <object class="GtkLabel" id="label3">
-                        <property name="visible">True</property>
-                        <property name="label" translatable="yes">Options</property>
-                        <property name="use_markup">True</property>
+                        <child>
+                          <object class="GtkLabel" id="label12">
+                            <property name="visible">True</property>
+                            <property name="xalign">0</property>
+                            <property name="label" translatable="yes">Use left mouse btn to scroll
+Use right mouse btn to zoom in/out</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkHSeparator" id="hseparator3">
+                            <property name="visible">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">3</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkRadioButton" id="btnDrawProbability">
+                            <property name="label" translatable="yes">Draw probability</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="active">True</property>
+                            <property name="draw_indicator">True</property>
+                            <signal name="toggled" handler="on_btnDrawProbability_toggled"/>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">4</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkRadioButton" id="btnDrawPDensity">
+                            <property name="label" translatable="yes">Draw positive density</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="draw_indicator">True</property>
+                            <property name="group">btnDrawProbability</property>
+                            <signal name="toggled" handler="on_btnDrawPDensity_toggled"/>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">5</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkRadioButton" id="btnDrawNDensity">
+                            <property name="label" translatable="yes">Draw negative density</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="draw_indicator">True</property>
+                            <property name="group">btnDrawProbability</property>
+                            <signal name="toggled" handler="on_btnDrawNDensity_toggled"/>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">6</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkHSeparator" id="hseparator2">
+                            <property name="visible">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">7</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton" id="btnHighlightUnknown">
+                            <property name="label" translatable="yes">highlight unknown space</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="draw_indicator">True</property>
+                            <signal name="toggled" handler="on_btnHighlightUnknown_toggled"/>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
+                            <property name="position">8</property>
+                          </packing>
+                        </child>
                       </object>
                     </child>
                   </object>
@@ -743,10 +871,20 @@ Use right mouse btn to zoom in/out</property>
                     <property name="position">1</property>
                   </packing>
                 </child>
+                <child type="tab">
+                  <object class="GtkLabel" id="label7">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">2D View</property>
+                  </object>
+                  <packing>
+                    <property name="position">1</property>
+                    <property name="tab_fill">False</property>
+                  </packing>
+                </child>
               </object>
               <packing>
                 <property name="expand">False</property>
-                <property name="fill">False</property>
+                <property name="padding">8</property>
                 <property name="position">1</property>
               </packing>
             </child>

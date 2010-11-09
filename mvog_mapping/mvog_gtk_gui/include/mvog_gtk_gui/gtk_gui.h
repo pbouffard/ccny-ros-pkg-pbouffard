@@ -34,8 +34,23 @@ class GTKGui
     struct Controls 
     {
       GtkWidget * winMain; 
-	    GtkWidget * btn1;
 	    GtkWidget * drawArea;
+
+	    GtkToggleButton * btnView2D;
+	    GtkToggleButton * btnView3D;
+
+      GtkWidget * frameCamera;
+      GtkWidget * frame3DMapOptions;
+      GtkWidget * frame3DOtherOptions;
+
+      GtkToggleButton * btnDrawRawData;
+      GtkToggleButton * btnDrawObstacles;
+
+      GtkWidget * vboxRawOptions;
+      GtkWidget * vboxObstacleOptions;
+      GtkWidget * vboxColorByHeightOptions;
+
+      GtkToggleButton * btnColorByHeight;
 
 	    GtkNotebook * ntbkViewOptions;
 
@@ -68,11 +83,13 @@ class GTKGui
 
     struct Options
     {
-      bool draw3D;
+      bool view3D;
 
+      bool drawRawData;
       bool drawPVolumes;
       bool drawNVolumes;    
 
+      bool colorByHeight;
     };
 
     Controls controls_;
@@ -109,13 +126,17 @@ class GTKGui
 
     void start();
 
-    void setDraw3D(bool draw3D) { options_.draw3D = draw3D; }
+    void setView3D(bool view3D) { options_.view3D = view3D; }
 
     void setDrawPVolumes(bool drawPVolumes);
     void setDrawNVolumes(bool drawNVolumes);
+    void setDrawRawData (bool drawRawData);
+    void setColorByHeight (bool colorByHeight);
 
     bool getDrawPVolumes() const;
     bool getDrawNVolumes() const;
+    bool getDrawRawData() const;
+    bool getColorByHeight() const;
 
     void setCanvasWidth (double canvasWidth ) { canvasWidth_  = canvasWidth;  }
     void setCanvasHeight(double canvasHeight) { canvasHeight_ = canvasHeight; }
@@ -131,6 +152,8 @@ class GTKGui
     void mouseMove(double x, double y);
 
     void draw();
+
+    void spinOnce() {  gtk_main_iteration(); }
 };
 
 void* startGTK(void *);
