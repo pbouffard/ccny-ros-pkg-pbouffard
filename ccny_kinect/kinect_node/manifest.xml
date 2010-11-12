@@ -9,8 +9,10 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/ccny_kinect</url>
   <depend package="roscpp"/>
+  <depend package="camera_info_manager"/>
   <depend package="libfreenect_install"/>
   <depend package="sensor_msgs"/>
+  <depend package="image_transport"/>
   <rosdep name="libusb"/>
 
 </package>
