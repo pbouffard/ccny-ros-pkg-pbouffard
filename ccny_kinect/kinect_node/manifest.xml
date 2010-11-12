@@ -1,13 +1,11 @@
 <package>
-  <description brief="kinect_node">
-
-     kinect_node
-
+	<description brief="kinect_node">
+		This is a driver for the Kinect RGB-D camera
   </description>
-  <author>Ivan Dryanovski</author>
-  <license>BSD</license>
+  <author>Ivan Dryanovski, William Morris, Stéphane Magnenat</author>
+  <license>GPL</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/ccny_kinect</url>
+  <url>http://ros.org/wiki/kinect_node</url>
   <depend package="roscpp"/>
   <depend package="camera_info_manager"/>
   <depend package="libfreenect_install"/>

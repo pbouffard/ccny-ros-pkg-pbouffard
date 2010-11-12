@@ -1,3 +1,26 @@
+/*
+ *  Kinect Driver (based on libfreenect)
+ *  Copyright (C) 2010, CCNY Robotics Lab
+ *  Ivan Dryanovski <ivan.dryanovski@gmail.com>
+ *  William Morris <morris@ee.ccny.cuny.edu>
+ *  Stéphane Magnenat <stephane.magnenat@mavt.ethz.ch>
+ *
+ *  http://robotics.ccny.cuny.edu
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "kinect_node/kinect.h"
 
 Kinect::Kinect()
@@ -48,7 +71,6 @@ Kinect::Kinect()
 
   // **** publishers and subscribers
 
-  //rgbImagePub   = nh_private.advertise<sensor_msgs::Image>("rgb_image", 16);
   image_transport::ImageTransport it(nh_private);
   rgb_image_pub_ = it.advertiseCamera("image_raw", 1);
   pointCloudPub = nh_private.advertise<sensor_msgs::PointCloud>("cloud", 16);
@@ -159,7 +181,6 @@ void Kinect::publish()
   // **** publish the messages
 
 	pointCloudPub.publish(cloud);
-	//rgbImagePub.publish(image); 
 	rgb_image_pub_.publish(image, cam_info_); 
 
   rgbSent_   = true;
