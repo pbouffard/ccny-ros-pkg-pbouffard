@@ -1,1 +1,23 @@
-Copy this file to /etc/udev/rules.d to set permissions to access the Kinect automatically.
+Udev can automatically set the access permissions as devices are mounted.
+The setup proper permissions for the Kinect follow the instructions below.
+
+SETUP (Hack)
+----------------
+1) Plug in Kinect
+2) Run 'roscd kinect_node' followed by 'roslaunch launch/kinect_node.launch'
+3) Examine error log
+process[kinect_node-3]: started with pid [12720]
+libusb couldn't open USB device /dev/bus/usb/001/081: Permission denied.
+libusb requires write access to USB device nodes.
+[ WARN] [1289605200.543461611]: Could not open Kinect device, exiting
+4) sudo chown myusername /dev/bus/usb/001/081
+
+SETUP (Ubuntu)
+----------------
+1a) Make sure that the current (or desired) user is a member of
+    group 'video' or change the group name listed in 32-kinect.rules
+1b) If the current user is not a member of group 'video' you must
+    log out and log back in.
+2) Copy 32-kinect.rules to /etc/udev/rules.d/.
+3) sudo /etc/init.d/udev restart or sudo service udev restart
+4) Disconnect and reconnect the camera.
