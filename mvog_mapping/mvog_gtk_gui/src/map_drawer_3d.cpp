@@ -20,12 +20,41 @@ void MapDrawer3D::draw()
   drawGrid();
   drawAxes();
 
-  if (gui_->getDrawPVolumes()) drawPVolumes();
-  if (gui_->getDrawNVolumes()) drawNVolumes();
+  if (gui_->getDrawRawData())
+  {
+    if (gui_->getDrawPVolumes()) drawPVolumes();
+    if (gui_->getDrawNVolumes()) drawNVolumes();
+  }
+  else
+  {
+    drawMLolumes();
+  }
 }
 
-void MapDrawer3D::drawObstacleVolumes()
+void MapDrawer3D::drawMLolumes()
 {
+
+  for (int i = 0; i < map_->sizeX_; ++i)
+  for (int j = 0; j < map_->sizeY_; ++j)
+  {
+    MLVolumeVector vect;
+    map_->grid_[i][j].createMLVolumes(vect);
+
+    double x = i - map_->offsetX_;
+    double y = j - map_->offsetY_;
+
+		glPushMatrix();
+
+    glScalef(map_->resolution_, map_->resolution_, map_->resolution_);
+		glTranslatef(x, y, 0.0);
+
+    for (size_t c = 0; c < vect.size(); ++c)
+    {
+      drawSolidColorVolume(vect[c].top, vect[c].bot, COLOR_ML_VOLUMES);  
+    }
+
+    glPopMatrix();
+  }
 
 }
 

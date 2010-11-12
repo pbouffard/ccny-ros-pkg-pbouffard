@@ -49,6 +49,8 @@ class Cell
     int nVolumesCount;
 
     void addVolume(float bot, float top, VolumeArray& volumes, int& volumesCount);
+
+    float getCombinedDensity(int cp, int cn);
    
   public:
 
@@ -70,6 +72,10 @@ class Cell
 
     void printPVolumes();
     void printNVolumes();
+
+    bool validate();
+
+    void clear();
 
     void createMLVolumes(MLVolumeVector& mlVolumes);
 };

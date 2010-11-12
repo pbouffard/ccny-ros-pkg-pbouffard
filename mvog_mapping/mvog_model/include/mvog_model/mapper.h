@@ -14,7 +14,6 @@ class Mapper
 
     Map map_;
 
-
     // **** map building options
     
     bool modelNegativeSpace_;

@@ -42,15 +42,11 @@ class Map
 
     void test();
 
-    void addPVolume(int x, int y, double top, double bottom);
-    void addNVolume(int x, int y, double top, double bottom);
-
-    void printPVolumes(int x, int y);
-    void printNVolumes(int x, int y);
-
     boost::mutex mutex_;
 
-    double getMemorySize();
+    double getMemorySize(); 
+
+    void validate();
 
 };
 

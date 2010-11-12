@@ -1,0 +1,9 @@
+<launch>
+  <node pkg="tf" type="static_transform_publisher" name="world_to_kinect" 
+    args="0 0 1.10 -1.57 0 -1.57 /world /kinect 10" />
+
+  <node pkg="ccny_kinect" type="kinect_node" name="kinect_node" output="screen"/>
+
+</launch>
+
+

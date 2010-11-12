@@ -105,6 +105,7 @@ void GTKGui::setDrawNVolumes(bool drawNVolumes)
 void GTKGui::setDrawRawData(bool drawRawData) 
 {
   options_.drawRawData = drawRawData; 
+  drawer3D_->getMap()->validate();
 }
 
 void GTKGui::setColorByHeight(bool colorByHeight) 

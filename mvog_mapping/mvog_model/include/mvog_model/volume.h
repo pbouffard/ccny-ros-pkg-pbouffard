@@ -21,7 +21,13 @@ namespace MVOG
   void setTop (Volume& volume, float top);
   void setMass(Volume& volume, float mass);
 
-  typedef float MLVolume[2];
+  struct MLVolume
+  {
+    float bot;
+    float top;
+  };
+
+  void createMLVolume(const Volume& volume, MLVolume& mlVolume);
 
 }; // namespace MVOG
 

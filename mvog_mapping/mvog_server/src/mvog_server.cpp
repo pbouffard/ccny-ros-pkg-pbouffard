@@ -53,12 +53,7 @@ MVOGServer::MVOGServer ()
 
   // **** testing
 
-/*
-  mapper_->addBeamReading(btVector3( 0.05,  0.05, 0.0),
-                          btVector3(-15,  1, 2.0));
-*/
-
-  mapper_->getMap()->test();
+  //mapper_->getMap()->test();
 
   // **** subscribe to laser scan messages
   scanFilterSub_ = new message_filters::Subscriber < sensor_msgs::LaserScan > (nh, scanTopic_, 10);

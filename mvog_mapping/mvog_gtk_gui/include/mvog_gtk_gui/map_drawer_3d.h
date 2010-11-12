@@ -13,8 +13,9 @@ namespace MVOG
 
 class GTKGui;
 
-const double COLOR_P_VOLUMES[3] = {0.75, 0.00, 0.00};
-const double COLOR_N_VOLUMES[3] = {0.00, 0.00, 0.75};
+const double COLOR_P_VOLUMES[3]  = {0.75, 0.00, 0.00};
+const double COLOR_N_VOLUMES[3]  = {0.00, 0.00, 0.75};
+const double COLOR_ML_VOLUMES[3] = {0.00, 0.75, 0.00};
 const double GRID_COLOR[3]      = {0.70, 0.70, 0.70};
 
 class MapDrawer3D
@@ -26,7 +27,7 @@ class MapDrawer3D
 
     Camera camera_;
     
-    void drawObstacleVolumes();
+    void drawMLolumes();
 		void drawPVolumes();
 		void drawNVolumes();
 
@@ -58,6 +59,7 @@ class MapDrawer3D
 
     void setView();
     void setMap(MVOG::Map * map) { map_ = map; }
+    Map * getMap() {return map_;}
 };
 
 } // namespace MVOG

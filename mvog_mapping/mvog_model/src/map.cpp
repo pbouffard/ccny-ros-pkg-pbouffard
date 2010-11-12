@@ -5,8 +5,6 @@ namespace MVOG
 
 Map::Map (double resolution, double sizeXmeters, double sizeYmeters)
 {
-  printf("%d {}\n", sizeof(Volume));
-
   resolution_ = resolution;
 
   sizeX_ = sizeXmeters / resolution_ + 1;
@@ -27,25 +25,11 @@ Map::~Map ()
 
 }
 
-void Map::addPVolume(int x, int y, double top, double bottom)
+void Map::validate()
 {
-  getCell(x,y)->addPVolume(top, bottom);
-}
-
-void Map::addNVolume(int x, int y, double top, double bottom)
-{
-  getCell(x,y)->addNVolume(top, bottom);
-}
-
-
-void Map::printPVolumes(int x, int y)
-{
-  getCell(x,y)->printPVolumes();
-}
-
-void Map::printNVolumes(int x, int y)
-{
-  getCell(x,y)->printNVolumes();
+  for (int i = 0; i < sizeX_; i++)
+  for (int j = 0; j < sizeY_; j++)
+    grid_[i][j].validate();
 }
 
 void Map::deleteGrid()
@@ -180,34 +164,41 @@ Cell* Map::getCell(double x, double y)
 
 double Map::getMemorySize()
 {
-    double gridSize = sizeX_ * sizeY_ * sizeof(Cell);
+  double gridSize = sizeX_ * sizeY_ * sizeof(Cell);
 
-    double dataSize = 0;
-    for (int i = 0; i< sizeX_; ++i)
-    for (int j = 0; j< sizeY_; ++j)
-      dataSize += (grid_[i][j].getPVolumesCount() + grid_[i][j].getPVolumesCount()) * VOLUME_BYTE_SIZE;
+  double dataSize = 0;
+  for (int i = 0; i< sizeX_; ++i)
+  for (int j = 0; j< sizeY_; ++j)
+    dataSize += (grid_[i][j].getPVolumesCount() + grid_[i][j].getPVolumesCount()) * VOLUME_BYTE_SIZE;
 
-    return (gridSize + dataSize)/1024.0;
+  return (gridSize + dataSize)/1024.0;
 }
 
 void Map::test()
 {
-  addPVolume(0, 0, 9.0, 10.4);
-  addPVolume(0, 0, 7.0, 8.3);
-  addPVolume(0, 0, 5.0, 6.3);
-  addPVolume(0, 0, 3.0, 4.2);
-  addPVolume(0, 0, 1.0, 2.1);
-  addPVolume(0, 0, -1.0, -0.0);
-  addPVolume(0, 0, -3.0, -2.0);
+  srand(time(NULL));
 
-  printPVolumes(0, 0);
+  while(true)
+  {
+    getCell(0,0)->clear();
 
-  addNVolume(0, 0, 0, 5.0);
+    // add random volumes
 
-  printNVolumes(0, 0);
+    float rnd_1, rnd_2;
 
-  MLVolumeVector m;
-  getCell(0,0)->createMLVolumes(m);
+    for (int i = 0; i <5; i++)
+    {
+      rnd_1 = (rand() % 100) / 10.0;
+      rnd_2 = (rand() % 100) / 10.0;
+      getCell(0,0)->addNVolume(rnd_1, rnd_2);      
+    }
+
+    if (!getCell(0,0)->validate()) break;
+    printf(".\n");
+  }
+
+//  getCell(0,0)->printNVolumes();
+
 }
 
 }

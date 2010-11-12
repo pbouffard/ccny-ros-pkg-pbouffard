@@ -39,4 +39,10 @@ void setBot (Volume& volume, float bot)  { volume[0] = bot;  }
 void setTop (Volume& volume, float top)  { volume[1] = top;  }
 void setMass(Volume& volume, float mass) { volume[2] = mass; }
 
+void createMLVolume(const Volume& volume, MLVolume& mlVolume)
+{
+  mlVolume.bot = getBot(volume);
+  mlVolume.top = getTop(volume);
+}
+
 }
