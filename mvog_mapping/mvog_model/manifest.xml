@@ -1,0 +1,20 @@
+<package>
+  <description brief="mvog_model">
+
+     mvog_model
+
+  </description>
+  <author>Ivan Dryanovski</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mvog_model</url>
+  <depend package="roscpp"/>
+  <depend package="bullet"/>
+  <depend package="sensor_msgs"/>
+
+  <export>
+    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -lMVOG"/>
+  </export>
+</package>
+
+

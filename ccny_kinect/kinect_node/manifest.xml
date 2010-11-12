@@ -1,0 +1,18 @@
+<package>
+  <description brief="kinect_node">
+
+     kinect_node
+
+  </description>
+  <author>Ivan Dryanovski</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ccny_kinect</url>
+  <depend package="roscpp"/>
+  <depend package="libfreenect_install"/>
+  <depend package="sensor_msgs"/>
+  <rosdep name="libusb"/>
+
+</package>
+
+

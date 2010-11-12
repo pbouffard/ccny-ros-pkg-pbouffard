@@ -1,0 +1,38 @@
+# fixes memory trash in rgb callback
+# thanks to Stéphane Magnenat
+
+*** lib/cameras.c	2010-11-12 11:23:20.380163383 -0500
+--- lib/cameras_fixed.c	2010-11-12 11:26:58.340105544 -0500
+***************
+*** 128,142 ****
+  				} else {
+  					rgb_frame[3*i] = rgb_buf[i];
+  					rgb_frame[3*i+3] = rgb_buf[i];
+! 					rgb_frame[3*(i-640)] = rgb_buf[i];
+! 					rgb_frame[3*(i-640)+3] = rgb_buf[i];
+  				}
+  			} else {
+  				if (y&1) {
+  					rgb_frame[3*i+2] = rgb_buf[i];
+  					rgb_frame[3*i-1] = rgb_buf[i];
+! 					rgb_frame[3*(i+640)+2] = rgb_buf[i];
+! 					rgb_frame[3*(i+640)-1] = rgb_buf[i];
+  				} else {
+  					rgb_frame[3*i+1] = rgb_buf[i];
+  					rgb_frame[3*i-2] = rgb_buf[i];
+--- 128,142 ----
+  				} else {
+  					rgb_frame[3*i] = rgb_buf[i];
+  					rgb_frame[3*i+3] = rgb_buf[i];
+! 					rgb_frame[3*(i+640)] = rgb_buf[i];
+! 					rgb_frame[3*(i+640)+3] = rgb_buf[i];
+  				}
+  			} else {
+  				if (y&1) {
+  					rgb_frame[3*i+2] = rgb_buf[i];
+  					rgb_frame[3*i-1] = rgb_buf[i];
+! 					rgb_frame[3*(i-640)+2] = rgb_buf[i];
+! 					rgb_frame[3*(i-640)-1] = rgb_buf[i];
+  				} else {
+  					rgb_frame[3*i+1] = rgb_buf[i];
+  					rgb_frame[3*i-2] = rgb_buf[i];

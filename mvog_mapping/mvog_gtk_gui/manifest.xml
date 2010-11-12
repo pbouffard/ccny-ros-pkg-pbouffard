@@ -1,0 +1,20 @@
+<package>
+  <description brief="mvog_gtk_gui">
+
+     mvog_gtk_gui
+
+  </description>
+  <author>Ivan Dryanovski</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mvog_gtk_gui</url>
+  <depend package="roscpp"/>
+  <depend package="mvog_model"/>
+
+  <export>
+    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -lMVOGGTK"/>
+  </export>
+
+</package>
+
+
