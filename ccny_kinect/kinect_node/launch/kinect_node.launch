@@ -1,6 +1,8 @@
 <launch>
-  <node pkg="tf" type="static_transform_publisher" name="world_to_kinect" 
-    args="0 0 1.10 -1.57 0 -1.57 /world /kinect 10" />
+  <node pkg="tf" type="static_transform_publisher" name="world_to_kinect_rgb" 
+    args="0 0 1.10 -1.57 0 -1.57 /world /kinect_rgb 10" />
+  <node pkg="tf" type="static_transform_publisher" name="kinect_rgb_to_kinect_depth" 
+    args="-0.03 0.0 0.0 0.0 0.0 0.0 /kinect_rgb /kinect_depth 10" />
 
   <node pkg="kinect_node" type="kinect_node" name="kinect_node" output="screen"/>
 
