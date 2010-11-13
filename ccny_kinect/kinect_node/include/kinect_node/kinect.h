@@ -56,7 +56,8 @@ class Kinect
     image_transport::CameraPublisher rgb_image_pub_;
     ros::Publisher pointCloudPub;
 
-    std::string kinectFrame_;
+    std::string kinectRGBFrame_;
+    std::string kinectDepthFrame_;
     double maxRange_;
 
     double horizontalFOV_;

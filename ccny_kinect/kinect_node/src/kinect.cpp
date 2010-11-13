@@ -46,8 +46,10 @@ Kinect::Kinect()
 
   // **** parameters
 
-  if (!nh_private.getParam ("kinect_frame", kinectFrame_))
-    kinectFrame_ = "/kinect";
+  if (!nh_private.getParam ("kinect_rgb_frame", kinectRGBFrame_))
+    kinectRGBFrame_ = "/kinect_rgb";
+  if (!nh_private.getParam ("kinect_depth_frame", kinectDepthFrame_))
+    kinectDepthFrame_ = "/kinect_depth";
   if (!nh_private.getParam ("max_range", maxRange_))
     maxRange_ = 5.0;
   if (!nh_private.getParam ("width", width_))
@@ -122,7 +124,7 @@ void Kinect::publish()
 
 	sensor_msgs::PointCloud cloud;
 	cloud.header.stamp = time;
-	cloud.header.frame_id = kinectFrame_;
+	cloud.header.frame_id = kinectDepthFrame_;
 
 	for (int x=0; x<width_; x+=2) 
 	for (int y=0; y<height_; y+=2)
@@ -136,7 +138,7 @@ void Kinect::publish()
     int py = y - height_/2;
   
     double wx = px * (horizontalFOV_ / (double)width_);
-    double wy = py * (horizontalFOV_ / (double)height_);
+    double wy = py * (verticalFOV_ / (double)height_);
     double wz = 1.0;
   
     double range = -325.616 / ((double)reading + -1084.61);
@@ -158,7 +160,7 @@ void Kinect::publish()
 
 	sensor_msgs::Image image;
 	image.header.stamp = time;
-	image.header.frame_id = kinectFrame_;
+	image.header.frame_id = kinectRGBFrame_;
 	image.height = height_;
 	image.width = width_;
 	image.encoding = "rgb8";
