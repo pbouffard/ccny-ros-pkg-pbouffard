@@ -48,7 +48,7 @@ Kinect::Kinect()
 
   if (!nh_private.getParam ("kinect_frame", kinectFrame_))
     kinectFrame_ = "/kinect";
-  if (!nh_private.getParam ("kinect_frame", maxRange_))
+  if (!nh_private.getParam ("max_range", maxRange_))
     maxRange_ = 5.0;
   if (!nh_private.getParam ("width", width_))
     width_ = 640;
