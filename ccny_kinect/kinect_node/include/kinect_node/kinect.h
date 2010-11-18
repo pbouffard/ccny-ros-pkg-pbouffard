@@ -30,11 +30,21 @@
 #include <ros/ros.h>
 #include <ros/package.h>
 #include <boost/thread/mutex.hpp>
-#include <sensor_msgs/PointCloud.h>
+#include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
+
+#include <geometry_msgs/Point32.h>
+
+#include <tf/transform_listener.h>
+
 #include <camera_info_manager/camera_info_manager.h>
 #include <image_transport/image_transport.h>
+
+#include <pcl/point_types.h>
+#include <pcl/ros/publisher.h>
+
+#include <image_geometry/pinhole_camera_model.h>
 
 extern "C" {
 #include "libfreenect.h"
@@ -53,8 +63,12 @@ class Kinect
     bool rgbSent_; 
 
     //ros::Publisher rgbImagePub;
-    image_transport::CameraPublisher rgb_image_pub_;
-    ros::Publisher pointCloudPub;
+    image_transport::CameraPublisher rgbImagePub_;
+    image_transport::CameraPublisher depthImagePub_;
+    //image_transport::CameraPublisher depthImagePub_;
+    point_cloud::Publisher<pcl::PointXYZRGB> pointCloudPub_;
+
+    //ros::Publisher depthImagePub_;
 
     std::string kinectRGBFrame_;
     std::string kinectDepthFrame_;
@@ -68,12 +82,23 @@ class Kinect
 
     void publish();
 
+    void depthBufferTo8BitImage(const uint16_t *depthBuf, sensor_msgs::Image& image);
+    double readingToRange(int reading) const;
+    uint8_t rangeTo8BitColor(double range) const;
+
+    void createRectificationMatrix();
+    bool haveMatrix_;
+    cv::Point3d * rectMatrix_;
+
   public:
 
     std::string cam_name_;
-    std::string cam_info_url_;
-    sensor_msgs::CameraInfo cam_info_;
-    CameraInfoManager *cam_info_manager_;
+    std::string rgb_cam_info_url_;
+    std::string depth_cam_info_url_;
+    sensor_msgs::CameraInfo rgb_cam_info_;
+    CameraInfoManager *rgb_cam_info_manager_;
+    sensor_msgs::CameraInfo depth_cam_info_;
+    CameraInfoManager *depth_cam_info_manager_;
 
     boost::mutex rgbMutex_;
     boost::mutex depthMutex_;

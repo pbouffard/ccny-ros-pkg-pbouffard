@@ -4,7 +4,10 @@
   <node pkg="tf" type="static_transform_publisher" name="kinect_rgb_to_kinect_depth" 
     args="-0.03 0.0 0.0 0.0 0.0 0.0 /kinect_rgb /kinect_depth 10" />
 
-  <node pkg="kinect_node" type="kinect_node" name="kinect_node" output="screen"/>
+  <node pkg="kinect_node" type="kinect_node" name="kinect_node" output="screen">
+    <param name="max_range" value="5.00"/>
+
+  </node>
 
 </launch>
 

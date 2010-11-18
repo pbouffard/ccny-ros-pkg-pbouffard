@@ -27,7 +27,10 @@ Kinect::Kinect()
 {
   ROS_INFO("Creating Kinect");
   ros::NodeHandle nh_private("~");
-  cam_info_manager_ = new CameraInfoManager(nh_private);
+  ros::NodeHandle nh_private_rgb("~/rgb");
+  ros::NodeHandle nh_private_depth("~/depth");
+  rgb_cam_info_manager_ = new CameraInfoManager(nh_private_rgb);
+  depth_cam_info_manager_ = new CameraInfoManager(nh_private_depth);
 
   // **** constants
 
@@ -44,6 +47,8 @@ Kinect::Kinect()
   depthSent_ = false;
   rgbSent_ = false; 
 
+  haveMatrix_ = false;
+
   // **** parameters
 
   if (!nh_private.getParam ("kinect_rgb_frame", kinectRGBFrame_))
@@ -57,25 +62,43 @@ Kinect::Kinect()
   if (!nh_private.getParam ("height", height_))
     height_ = 480;
   nh_private.param("camera_name", cam_name_, std::string("camera"));
-  nh_private.param("camera_info_url",cam_info_url_,std::string("auto"));
-  if (cam_info_url_.compare("auto") == 0) {
-    cam_info_url_ = std::string("file://")+ros::package::getPath(ROS_PACKAGE_NAME)+std::string("/info/calibration.yaml");
+  nh_private.param("rgb_camera_info_url",rgb_cam_info_url_,std::string("auto"));
+  nh_private.param("depth_camera_info_url",depth_cam_info_url_,std::string("auto"));
+  if (rgb_cam_info_url_.compare("auto") == 0) {
+    rgb_cam_info_url_ = std::string("file://")+ros::package::getPath(ROS_PACKAGE_NAME)+std::string("/info/rgb_calibration.yaml");
   }
-  ROS_INFO("Calibration URL: %s",cam_info_url_.c_str());
-  if (cam_info_manager_->validateURL(cam_info_url_)) {
-    cam_info_manager_->loadCameraInfo(cam_info_url_);
+  if (depth_cam_info_url_.compare("auto") == 0) {
+    depth_cam_info_url_ = std::string("file://")+ros::package::getPath(ROS_PACKAGE_NAME)+std::string("/info/depth_calibration.yaml");
+  }
+  ROS_INFO("RGB Calibration URL: %s",rgb_cam_info_url_.c_str());
+  ROS_INFO("Depth Calibration URL: %s",depth_cam_info_url_.c_str());
+  if (rgb_cam_info_manager_->validateURL(rgb_cam_info_url_)) {
+    rgb_cam_info_manager_->loadCameraInfo(rgb_cam_info_url_);
   } else {
-    ROS_ERROR("Invalid Calibration URL");
+    ROS_ERROR("Invalid RGB Calibration URL");
     ROS_BREAK();
   }
-  cam_info_manager_->setCameraName(cam_name_);
+  if (depth_cam_info_manager_->validateURL(depth_cam_info_url_)) {
+    depth_cam_info_manager_->loadCameraInfo(depth_cam_info_url_);
+  } else {
+    ROS_ERROR("Invalid Depth Calibration URL");
+    ROS_BREAK();
+  }
+  rgb_cam_info_manager_->setCameraName(cam_name_);
+  depth_cam_info_manager_->setCameraName(cam_name_);
 
 
   // **** publishers and subscribers
 
   image_transport::ImageTransport it(nh_private);
-  rgb_image_pub_ = it.advertiseCamera("image_raw", 1);
-  pointCloudPub = nh_private.advertise<sensor_msgs::PointCloud>("cloud", 16);
+  rgbImagePub_ = it.advertiseCamera("rgb/image_raw", 1);
+  depthImagePub_ = it.advertiseCamera("depth/image_raw", 1);
+  //depthImagePub_ = nh_private.advertise<sensor_msgs::Image>("depth_image_raw", 1);
+
+  //point_cloud::Publisher<pcl::PointXYZRGB> pub(nh_private, "cloud", 16);
+
+  //pointCloudPub_ = nh_private.advertise<pcl::PointXYZRGB>("cloud", 16);
+  pointCloudPub_.advertise (nh_private, "cloud", 16);
 }
 
 Kinect::~Kinect()
@@ -116,44 +139,108 @@ void Kinect::rgbImgCb(uint8_t *buf)
   bufferMutex_.unlock();
 }
 
+void Kinect::depthBufferTo8BitImage(const uint16_t *depthBuf, sensor_msgs::Image& image)
+{
+  image.header.frame_id = kinectDepthFrame_;
+	image.height = height_;
+	image.width = width_;
+	image.encoding = "rgb8";
+	image.step = width_ * 3;
+	for (int y=0; y<height_; y+=1)
+  for (int x=0; x<width_; x+=1) 
+
+  {
+    int index(y*width_ + x);
+    int reading = depthBuf_[index];
+    double range = readingToRange(reading);
+
+    if (range > maxRange_ || range < 0) 
+      range = 0;
+
+    uint8_t color = rangeTo8BitColor(range);
+    image.data.push_back(color);
+    image.data.push_back(color);
+    image.data.push_back(color);
+  }
+}
+
+double Kinect::readingToRange(int reading) const
+{
+  double range = -325.616 / ((double)reading + -1084.61);
+  return range;
+}
+
+uint8_t Kinect::rangeTo8BitColor(double range) const
+{
+  uint8_t color = 255 * range / maxRange_;
+  if (color == 0) color = 255;
+  return color;
+}
+
 void Kinect::publish()
 {
+  if (!haveMatrix_)
+  {
+    createRectificationMatrix();
+    haveMatrix_ = true;
+  }
+
   ros::Time time = ros::Time::now();
+
+
+
+  // **** publish depth image
+
+  sensor_msgs::Image depthImage;
+  depthImage.header.stamp = time;
+  depthBufferTo8BitImage(depthBuf_, depthImage);
 
   // **** publish point cloud
 
-	sensor_msgs::PointCloud cloud;
+  pcl::PointCloud<pcl::PointXYZRGB> cloud;
 	cloud.header.stamp = time;
 	cloud.header.frame_id = kinectDepthFrame_;
 
-	for (int x=0; x<width_; x+=2) 
+  cloud.width = width_/2;
+  cloud.height = height_/2;
+  cloud.points.resize(cloud.width * cloud.height);
+
 	for (int y=0; y<height_; y+=2)
+	for (int x=0; x<width_; x+=2) 
   {
     int index(y*width_ + x);
     int reading = depthBuf_[index];
 
     if (reading  >= 2048 || reading <= 0) continue;
 
-    int px = x - width_/2;
-    int py = y - height_/2;
+    double range = readingToRange(reading);
   
-    double wx = px * (horizontalFOV_ / (double)width_);
-    double wy = py * (verticalFOV_ / (double)height_);
-    double wz = 1.0;
-  
-    double range = -325.616 / ((double)reading + -1084.61);
-    
+    cv::Point3d rectRay = rectMatrix_[(y/2)*(width_/2) + x/2];
+
+    rectRay *= range;
+
     if (range > maxRange_ || range <= 0) continue;
 
-    wx*=range;
-    wy*=range;
-    wz*=range;
+    // **** project cloud point onto rgb image frame
 
-	  geometry_msgs::Point32 point;
-    point.x = wx;
-    point.y = wy;
-    point.z = wz;
-  	cloud.points.push_back(point);
+    btTransform depthToRgbTf;
+    depthToRgbTf.setIdentity();
+    depthToRgbTf.setOrigin(btVector3(-0.03, 0, 0));
+
+    // ****
+
+    pcl::PointXYZRGB point;
+    point.x = rectRay.x;
+    point.y = rectRay.y;
+    point.z = rectRay.z;
+
+    uint8_t r = rgbBuf_[index*3+0];
+    uint8_t g = rgbBuf_[index*3+1];
+    uint8_t b = rgbBuf_[index*3+2];
+    int32_t rgb = (r << 16) | (g << 8) | b;
+    point.rgb = *(float*)(&rgb);
+
+  	cloud.points[(y/2)*(width_/2) + x/2] = point;
   }
 
   // **** publish RGB Image
@@ -169,22 +256,60 @@ void Kinect::publish()
   
 	copy(rgbBuf_, rgbBuf_ + width_*height_*3, back_inserter(image.data));
 
-  // **** publish Camera Info
-  cam_info_ = cam_info_manager_->getCameraInfo();
-  if (cam_info_.height != (unsigned int)image.height
-      || cam_info_.width != (unsigned int)image.width) {
-    ROS_DEBUG_THROTTLE(60,"Uncalibrated Camera");
+  // **** publish RGB Camera Info
+  rgb_cam_info_ = rgb_cam_info_manager_->getCameraInfo();
+  if (rgb_cam_info_.height != (unsigned int)image.height
+      || rgb_cam_info_.width != (unsigned int)image.width) {
+    ROS_DEBUG_THROTTLE(60,"Uncalibrated RGB Camera");
   }
-  cam_info_.header.stamp = image.header.stamp;
-  cam_info_.height = image.height;
-  cam_info_.width = image.width;
-  cam_info_.header.frame_id = image.header.frame_id;
+  rgb_cam_info_.header.stamp = image.header.stamp;
+  rgb_cam_info_.height = image.height;
+  rgb_cam_info_.width = image.width;
+  rgb_cam_info_.header.frame_id = image.header.frame_id;
+
+  // **** publish Depth Camera Info
+  depth_cam_info_ = depth_cam_info_manager_->getCameraInfo();
+  if (depth_cam_info_.height != (unsigned int)image.height
+      || depth_cam_info_.width != (unsigned int)image.width) {
+    ROS_DEBUG_THROTTLE(60,"Uncalibrated Depth Camera");
+  }
+  depth_cam_info_.header.stamp = image.header.stamp;
+  depth_cam_info_.height = image.height;
+  depth_cam_info_.width = image.width;
+  depth_cam_info_.header.frame_id = kinectDepthFrame_;
 
   // **** publish the messages
 
-	pointCloudPub.publish(cloud);
-	rgb_image_pub_.publish(image, cam_info_); 
+	pointCloudPub_.publish(cloud);
+	rgbImagePub_.publish(image, rgb_cam_info_); 
+	depthImagePub_.publish(depthImage, depth_cam_info_); 
+  // depthImagePub_.publish(depthImage);
 
   rgbSent_   = true;
   depthSent_ = true;
+}
+
+void Kinect::createRectificationMatrix()
+{
+  image_geometry::PinholeCameraModel pcm;
+  pcm.fromCameraInfo(depth_cam_info_manager_->getCameraInfo());
+
+  rectMatrix_ = new cv::Point3d[height_/2 * width_/2];
+
+  for (int y=0; y<height_; y+=2)
+	for (int x=0; x<width_; x+=2) 
+  {
+    int index = y*width_ + x;
+
+    cv::Point2d rawPoint(x, y);
+    cv::Point2d rectPoint;
+    cv::Point3d rectRay;
+
+    pcm.rectifyPoint(rawPoint, rectPoint);
+    pcm.projectPixelTo3dRay(rectPoint, rectRay);
+
+    rectRay *= 1.0/rectRay.z;
+
+    rectMatrix_[(y/2)*(width_/2) + x/2] = rectRay;
+  }
 }

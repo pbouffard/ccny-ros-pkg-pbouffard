@@ -7,10 +7,14 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/kinect_node</url>
   <depend package="roscpp"/>
+  <depend package="tf"/>
   <depend package="camera_info_manager"/>
   <depend package="libfreenect_install"/>
   <depend package="sensor_msgs"/>
   <depend package="image_transport"/>
+  <depend package="image_geometry"/>
+  <depend package="geometry_msgs"/>
+  <depend package="pcl"/>
   <rosdep name="libusb"/>
 
 </package>
