@@ -1,0 +1,77 @@
+Background\ ColorR=0
+Background\ ColorG=0
+Background\ ColorB=0
+Fixed\ Frame=/world
+Target\ Frame=/world
+Camera.Alpha=0.5
+Camera.Enabled=1
+Camera.Image\ Topic=/kinect_node/image_raw
+Camera.Transport\ Hint=raw
+Grid.Alpha=0.4
+Grid.Cell\ Size=1
+Grid.ColorR=1
+Grid.ColorG=0
+Grid.ColorB=0
+Grid.Enabled=0
+Grid.Line\ Style=0
+Grid.Line\ Width=0.03
+Grid.Normal\ Cell\ Count=0
+Grid.OffsetX=0
+Grid.OffsetY=0
+Grid.OffsetZ=0
+Grid.Plane=0
+Grid.Plane\ Cell\ Count=80
+Grid.Reference\ Frame=<Fixed Frame>
+Point\ Cloud.Alpha=0.25
+Point\ Cloud.Billboard\ Size=0.01
+Point\ Cloud.Color\ Transformer=Flat Color
+Point\ Cloud.Decay\ Time=0
+Point\ Cloud.Enabled=1
+Point\ Cloud.Position\ Transformer=XYZ
+Point\ Cloud.Selectable=1
+Point\ Cloud.Style=2
+Point\ Cloud.Topic=/kinect_node/cloud
+Point\ Cloud..Flat\ ColorColorR=0.941176
+Point\ Cloud..Flat\ ColorColorG=0.941176
+Point\ Cloud..Flat\ ColorColorB=0.941176
+Point\ Cloud..IntensityAutocompute\ Intensity\ Bounds=1
+Point\ Cloud..IntensityMax\ ColorR=1
+Point\ Cloud..IntensityMax\ ColorG=1
+Point\ Cloud..IntensityMax\ ColorB=1
+Point\ Cloud..IntensityMax\ Intensity=4096
+Point\ Cloud..IntensityMin\ ColorR=0
+Point\ Cloud..IntensityMin\ ColorG=0
+Point\ Cloud..IntensityMin\ ColorB=0
+Point\ Cloud..IntensityMin\ Intensity=0
+TF.All\ Enabled=0
+TF.Enabled=1
+TF.Frame\ Timeout=15
+TF.Show\ Arrows=0
+TF.Show\ Axes=0
+TF.Show\ Names=1
+TF.Update\ Interval=0
+Tool\ 2D\ Nav\ GoalTopic=goal
+Tool\ 2D\ Pose\ EstimateTopic=initialpose
+Camera\ Type=rviz::OrbitViewController
+Camera\ Config=1.02903 0.774994 7.45763 -1.13472e-05 1.34328 -2.5296
+Property\ Grid\ State=selection=Point Cloud.Enabled.Point Cloud..Flat ColorColor;expanded=.Global Options,TF.Enabled,TF./kinect_depth/kinect_depth,TF./kinect_rgb/kinect_rgb,TF./world/world,TF.Enabled.TF.Tree,TF./worldTree/world,TF./kinect_rgbTree/kinect_rgb,TF./kinect_depthTree/kinect_depth,Point Cloud.Enabled,Camera.Enabled;scrollpos=0,5;splitterpos=174,332;ispageselected=1
+[Display0]
+Name=TF
+Package=rviz
+ClassName=rviz::TFDisplay
+[Display1]
+Name=Grid
+Package=rviz
+ClassName=rviz::GridDisplay
+[Display2]
+Name=Point Cloud
+Package=rviz
+ClassName=rviz::PointCloudDisplay
+[Display3]
+Name=Camera
+Package=rviz
+ClassName=rviz::CameraDisplay
+[TF.]
+kinect_depthEnabled=1
+kinect_rgbEnabled=1
+worldEnabled=1

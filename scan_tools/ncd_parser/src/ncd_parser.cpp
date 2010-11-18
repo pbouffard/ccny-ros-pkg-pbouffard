@@ -60,8 +60,8 @@ NCDParser::NCDParser(char* filename):filename_(filename)
 
   // **** topics
 
-  leftLaserPublisher_  = nh.advertise<sensor_msgs::LaserScan>("scan_left",  100);
-  rightLaserPublisher_ = nh.advertise<sensor_msgs::LaserScan>("scan_right", 100);
+  leftLaserPublisher_  = nh.advertise<sensor_msgs::LaserScan>("scan",  100);
+  rightLaserPublisher_ = nh.advertise<sensor_msgs::LaserScan>("scan", 100);
 }
 
 NCDParser::~NCDParser()

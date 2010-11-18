@@ -1,0 +1,18 @@
+<package>
+  <description brief="libfreenect_install">
+
+     Downloads, patches and compiles libfreenect by Hector Martin. http://git.marcansoft.com/?p=libfreenect.git
+
+  </description>
+  <author>Ivan Dryanovski</author>
+  <license>GPL</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/libfreenect_install</url>
+
+  <export>
+    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -freenect"/>
+  </export>
+
+</package>
+
+

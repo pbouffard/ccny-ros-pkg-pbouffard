@@ -1,0 +1,9 @@
+<stack>
+  <description brief="mvog_mapping">mvog_mapping</description>
+  <author>Maintained by Ivan Dryanovski</author>
+  <license>BSD</license>  
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mvog_mapping</url>
+  <depend stack="ros" />
+
+</stack>

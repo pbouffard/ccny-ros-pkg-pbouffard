@@ -1,0 +1,3 @@
+ATTRS{idVendor}=="045e", ATTRS{idProduct}=="02ae", MODE="0664", GROUP="video"
+ATTRS{idVendor}=="045e", ATTRS{idProduct}=="02ad", MODE="0664", GROUP="video"
+ATTRS{idVendor}=="045e", ATTRS{idProduct}=="02b0", MODE="0664", GROUP="video"
