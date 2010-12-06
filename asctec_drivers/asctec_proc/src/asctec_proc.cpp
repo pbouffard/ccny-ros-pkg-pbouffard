@@ -97,7 +97,7 @@ void AsctecProc::createHeightMsg(const asctec_msgs::IMUCalcDataConstPtr& imuCalc
                                        asctec_msgs::Height& heightMsg)
 {
   // set header info
-  heightMsg.header.stamp    = ros::Time::now();
+  heightMsg.header.stamp    = imuCalcDataMsg->header.stamp; //ros::Time::now();
   heightMsg.header.frame_id = "imu";             // the frame seems arbitrary here
 
   heightMsg.height = imuCalcDataMsg->height_reference  * ASC_TO_ROS_HEIGHT;
@@ -108,7 +108,7 @@ void AsctecProc::createHeightFilteredMsg(const asctec_msgs::IMUCalcDataConstPtr&
                                                asctec_msgs::Height& heightMsg)
 {
   // set header info
-  heightMsg.header.stamp    = ros::Time::now();
+  heightMsg.header.stamp    = imuCalcDataMsg->header.stamp; //ros::Time::now();
   heightMsg.header.frame_id = "imu";             // the frame seems arbitrary here
 
   heightMsg.height = imuCalcDataMsg->height  * ASC_TO_ROS_HEIGHT;
@@ -119,7 +119,7 @@ void AsctecProc::createImuMsg(const asctec_msgs::IMUCalcDataConstPtr& imuCalcDat
                                     sensor_msgs::Imu& imuMsg)
 {
   // set header info
-  imuMsg.header.stamp    = ros::Time::now();
+  imuMsg.header.stamp    = imuCalcDataMsg->header.stamp; //ros::Time::now();
   imuMsg.header.frame_id = "imu";
 
   // copy over linear acceleration
