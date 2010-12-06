@@ -181,9 +181,13 @@ namespace asctec
   }
   void Telemetry::estopCallback(const std_msgs::Bool msg)
   {
+    static bool info_printed = false;
     if (msg.data) {
       estop_ = true;
-      ROS_INFO("Heard e-stop command!");
+      if (!info_printed) {
+        ROS_INFO("Heard e-stop command!");
+        info_printed = true;
+      }
     } else {
       ROS_WARN("Got e-stop message, but value was false");
     }
