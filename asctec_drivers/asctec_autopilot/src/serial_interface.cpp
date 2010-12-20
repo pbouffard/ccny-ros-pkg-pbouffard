@@ -312,14 +312,20 @@ namespace asctec
     //ROS_INFO ("sendControl completed" );
   }
 
-  void SerialInterface::sendEstop (Telemetry * telemetry)
+  void SerialInterface::sendEstop(Telemetry * telemetry)
   {
-    if(!telemetry->controlEnabled_) return;
+    static bool sent_estop_reported = false;
+    if (!telemetry->controlEnabled_)
+      return;
     //ROS_DEBUG ("sendControl started");
     flush();
     unsigned char cmd[] = ">*>me";
-    output(cmd,5);
-    ROS_INFO("Sent E-Stop command!");
+    output(cmd, 5);
+    if (!sent_estop_reported)
+    {
+      ROS_INFO("Sent E-Stop command!");
+      sent_estop_reported = true;
+    }
   }
 
   bool SerialInterface::getPackets (Telemetry * telemetry)
